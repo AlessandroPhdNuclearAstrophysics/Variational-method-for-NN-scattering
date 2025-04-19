@@ -21,6 +21,8 @@ FFLAGS := -g -Wall -fdefault-real-8 -fdefault-double-8 -frange-check \
 		-fcheck=all -fbacktrace -fcheck=bounds \
 		-fcheck=recursion -fcheck=pointer
 
+FLIBS := -llapack -lblas
+
 all: $(TARGET)
 
 prepare:
@@ -33,7 +35,7 @@ $(OBJ_F): %_f.o: $(SRC_DIR)/%.f
 	$(CF) $(FFLAGS) -c $< -o $@
 
 $(TARGET): ../bin/%.x: %.o $(OBJ_F90)
-	$(CF) $(F90FLAGS) $^ -o $@
+	$(CF) $(F90FLAGS) $(FLIBS) $^ -o $@
 	@echo "Build complete: $@"
 
 print_dirs:
