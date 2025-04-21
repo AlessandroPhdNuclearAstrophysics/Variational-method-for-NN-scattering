@@ -6,7 +6,7 @@ FC = gfortran
 FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -fbacktrace
 LDFLAGS = -Wall -O2
 LDFLAGS = -Wall -g
-LDFLAGS += -lgsl -lgslcblas
+LDFLAGS += -lgsl -lgslcblas -llapack -lblas
 
 # Define directory paths
 SRC_DIR := src
