@@ -8,7 +8,7 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/tests/test_potentials/test_av18.x",
+      "program": "${workspaceFolder}/bin/runnner.sh",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",

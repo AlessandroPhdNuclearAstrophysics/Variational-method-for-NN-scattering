@@ -54,6 +54,10 @@ $(LOG_DIR):
 $(DEP_DIR):
 	mkdir -p $(DEP_DIR)
 
+# Run the script in bin directory
+run:
+	./bin/runner.sh
+
 # Clean rule to delete all build artifacts
 clean:
 	rm -rvf $(BUILD_DIR)
@@ -61,4 +65,4 @@ clean:
 # Include all dependency files if they exist
 -include $(DEPFILES)
 
-.PHONY: all clean
+.PHONY: all clean run
