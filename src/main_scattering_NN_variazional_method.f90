@@ -23,7 +23,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   L = 0
   S = 1
   TZ = 0
-  E = 0.0D0
+  E = 1.0D0
   IPOT = 18
   ILB = 1
   LEMP = 1
@@ -39,7 +39,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
     ! If no arguments, write the namelist and allow user to modify it
     WRITE(*, NML=IN)
     PRINT *, "Modify the above values if needed and press Enter to continue."
-    READ(*, *)
+    ! READ(*, NML=IN)
   END IF
 
   ! Print the final values of the namelist

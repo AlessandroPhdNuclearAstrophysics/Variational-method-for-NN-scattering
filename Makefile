@@ -2,8 +2,10 @@
 FC = gfortran
 
 # Compiler and linker flags
-FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O2 -fcheck=all -fbacktrace
+# FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O2 -fcheck=all -fbacktrace
+FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -fbacktrace
 LDFLAGS = -Wall -O2
+LDFLAGS = -Wall -g
 LDFLAGS += -lgsl -lgslcblas
 
 # Define directory paths

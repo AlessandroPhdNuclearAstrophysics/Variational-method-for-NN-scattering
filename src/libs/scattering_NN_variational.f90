@@ -141,7 +141,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
 
 ! Preparing the matrix elements for the diagonalization
 
-
+  stop
 ! Solving the eigenvalue problem using LAPACK dgesv
 ! Evaluating for the "c_{n, alpha}" coefficients
   CALL DGESV(NDIM, 1, CC , NNN, IPIV, CARR, NNN, INFO)
@@ -206,7 +206,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
   END SUBROUTINE CORE_CORE_MATRIX_ELEMENTS
 
   SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS(CAR, CAI)
-    USE gsl_coulomb
     IMPLICIT NONE
     DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX), INTENT(OUT) :: CAR, CAI
     DOUBLE PRECISION :: H5, HR ! Step size in r
@@ -214,8 +213,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     DOUBLE PRECISION :: XX(NNR), AJ(NNR), YYB(NNR), YYL(NNR), A(NNR)
     DOUBLE PRECISION :: U0(0:NNE, NNR), U1(0:NNE, NNR), U2(0:NNE, NNR) 
     DOUBLE PRECISION :: V0(0:NNE, NNR), V1(0:NNE, NNR), V2(0:NNE, NNR) 
-    DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP
-    INTEGER :: NEQC
+    DOUBLE PRECISION :: FBES(NCH_MAX, NNR), GBES(NCH_MAX, NNR)
+    DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
+    INTEGER :: NEQC, L, S, J, T1Z, T2Z
+    DOUBLE PRECISION :: VPW(2, 2), VV(NNR, NCH_MAX, NCH_MAX)
 
     IF (VARIATIONAL_PARAMS%RANGE.LT.H5 .OR. VARIATIONAL_PARAMS%RANGE.GT.200.D0) THEN
       PRINT *, "Error: RANGE out of bounds"
@@ -262,15 +263,77 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
                     - 0.5D0*GAMMA*V1(I,M) )
       ENDDO
     ENDDO
-
+    
     NEQ = NCH
     NEQC= NCH
+    
+    ! Prepare the Bessel functions
+    CALL SPHERICAL_BESSEL_FUNCTIONS()
+    ! DO I = 1, NCH
+    !   DO M = 1, NX
+    !     WRITE(20+I, *) YYB(M), FBES(I,M), GBES(I,M)
+    !   ENDDO
+    ! ENDDO
+    
+    ! Prepare the potential 
+    L = LC(1)
+    S = VARIATIONAL_PARAMS%S
+    J = VARIATIONAL_PARAMS%J
+    IF (VARIATIONAL_PARAMS%TZ.EQ.1) THEN
+      T1Z = 1
+      T2Z = 1
+    ELSEIF (VARIATIONAL_PARAMS%TZ.EQ.0) THEN
+      T1Z = 1
+      T2Z = -1
+    ELSEIF (VARIATIONAL_PARAMS%TZ.EQ.-1) THEN
+      T1Z = -1
+      T2Z = -1
+    ELSE
+      PRINT *, "Invalid TZ value"
+      STOP
+    ENDIF
+
+    DO I = 1, NX
+      RR = XX(I)
+      CALL AV18PW90(1, LC(1), S, J, T, T1Z, T2Z, RR, VPW)
+      VV(I, 1, 1) = VPW(1, 1)
+      VV(I, 1, 2) = VPW(1, 2)
+      VV(I, 2, 1) = VPW(2, 1)
+      VV(I, 2, 2) = VPW(2, 2)
+      ! WRITE(23, *) XX(I), VV(I, 1, 1), VV(I, 1, 2), VV(I, 2, 1), VV(I, 2, 2)  
+    ENDDO
 
     STOP
 
 
     ! Add the implementation of the asymptotic core matrix elements here
 
+  CONTAINS
+    SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS()
+      use gsl_bessel
+      IMPLICIT NONE
+      
+      DOUBLE PRECISION :: AG, GBSS, FBSS
+      INTEGER :: L
+      
+      DO I=1,NCH
+        DO M=1, NX                                 
+          XG=YYB(M)
+          AG=A(M)
+          L=LC(I)
+          IF(K.LE.1.D-8)THEN                                   !(K->0)
+            FBES(I,M)=XX(M)**L
+            GBES(I,M)=-1./((2*L+1.)*XX(M)**(L+1.D0))*AG**(2*L+1.D0)
+          ELSE  
+            FBSS = GSL_SF_BESSEL_JL(L, XG)
+            GBSS = GSL_SF_BESSEL_YL(L, XG)
+            FBES(I,M)=K**(L+0.5D0)*FBSS/(K**L)
+            GBES(I,M)=-(GBSS*K**(L+1.D0)*AG**(2*L+1.D0))/(K**(L+0.5D0))
+          ENDIF
+        ENDDO
+      ENDDO
+
+    END SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS
   END SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
   SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)

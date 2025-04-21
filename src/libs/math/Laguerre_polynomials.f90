@@ -2,7 +2,7 @@ SUBROUTINE LAGUERRE_POLYNOMIAL(XX,NX,APF,N1,U,U1,U2)
 !*calcula el polinomio de laguerre en las absisas xx(1,...nx) con numeros
 !*cuanticos apf,n con n=0,....n1
   IMPLICIT NONE
-  INTEGER, PARAMETER :: NNR=200,NNE=80
+  INTEGER, PARAMETER :: NNR=100000,NNE=80
   INTEGER, INTENT(IN) :: NX
   INTEGER, INTENT(INOUT) :: N1
   DOUBLE PRECISION, INTENT(IN) :: XX(NNR), APF
