@@ -76,7 +76,7 @@ cat > "$NAMELIST_FILE" << EOF
 EOF
 
 # Run the Fortran program with the namelist file
-./bin/scattering_NN_variazional_method.x "$NAMELIST_FILE"
+./build/main_scattering_NN_variazional_method.x "$NAMELIST_FILE"
 
 # Clean up the temporary file
 rm -f "$NAMELIST_FILE"
