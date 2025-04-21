@@ -217,6 +217,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
     INTEGER :: NEQC, L, S, J, T1Z, T2Z
     DOUBLE PRECISION :: VPW(2, 2), VV(NNR, NCH_MAX, NCH_MAX)
+    INTEGER :: ICONT(NNN, NNN)
+    INTEGER :: IAB, IAK, LIK, IL, IB
+    DOUBLE PRECISION :: FUN1(NNR)
+    DOUBLE PRECISION :: AXXM1(NNN, NCH_MAX), AXX1
+    DOUBLE PRECISION, EXTERNAL :: B5
 
     IF (VARIATIONAL_PARAMS%RANGE.LT.H5 .OR. VARIATIONAL_PARAMS%RANGE.GT.200.D0) THEN
       PRINT *, "Error: RANGE out of bounds"
@@ -303,6 +308,34 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
       ! WRITE(23, *) XX(I), VV(I, 1, 1), VV(I, 1, 2), VV(I, 2, 1), VV(I, 2, 2)  
     ENDDO
 
+    ! Prepare the indeces for the matrix elements
+    CALL PREPARE_INDECES()
+
+
+    ! Evaluate the matrix elements
+    DO IAB = 1, NEQC
+      DO IAK = 1, NEQ
+        LIK = LC(IAB)*(LC(IAB)+1)
+
+        DO IL = 1, VARIATIONAL_PARAMS%NNL
+          IB = ICONT(IAB, IL)
+
+          ! Normalization core-irregular (axx1)
+          axxm1(ib,iak)=0.d0
+          if(iab.eq.iak)then 
+            fun1(1)=0.d0                                         
+            do i=1,nx  
+            fun1(i+1)=aj(i)*v0(il,i)*gbes(iak,i)                              
+            enddo
+            axx1=VARIATIONAL_PARAMS%E*b5(1,nx,0,0,h5,0.d0,0.d0,fun1,1)
+            axxm1(ib,iak)=axx1
+          endif       
+
+
+
+        ENDDO
+      ENDDO
+    ENDDO 
     STOP
 
 
@@ -332,8 +365,22 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
           ENDIF
         ENDDO
       ENDDO
-
     END SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS
+
+    SUBROUTINE PREPARE_INDECES()
+      IMPLICIT NONE
+      INTEGER II, J
+
+      II = 0
+      DO I=1, NEQC
+        DO J=1, VARIATIONAL_PARAMS%NNL
+          II = II + 1
+          ICONT(I, J) = II
+        ENDDO
+      ENDDO
+    END SUBROUTINE PREPARE_INDECES
+
+
   END SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
   SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)
