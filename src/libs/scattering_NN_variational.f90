@@ -25,7 +25,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     INTEGER :: J, L, S, TZ, IPOT, ILB, LEMP
     LOGICAL :: VCOUL
     DOUBLE PRECISION :: E
-    DOUBLE PRECISION :: HR1, RANGE, GAMMA, EPS
+    DOUBLE PRECISION :: HR1, H, RANGE, GAMMA, EPS, AF
     INTEGER :: NNL
   END TYPE VARIATIONAL_PARAMETERS
 
@@ -33,6 +33,7 @@ MODULE SCATTERING_NN_VARIATIONAL
 
   PUBLIC :: SET_VARIATIONAL_PARAMETERS
   PUBLIC :: NN_SCATTERING_VARIATIONAL
+  PRIVATE:: PRINT_DIVIDER
 
 CONTAINS
   SUBROUTINE SET_VARIATIONAL_PARAMETERS(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
@@ -50,7 +51,9 @@ CONTAINS
     VARIATIONAL_PARAMS%LEMP = LEMP
     VARIATIONAL_PARAMS%E = E
     VARIATIONAL_PARAMS%VCOUL = VCOUL
-    VARIATIONAL_PARAMS%HR1 = 0.1D0
+    VARIATIONAL_PARAMS%HR1 = 0.01D0
+    VARIATIONAL_PARAMS%H   = 0.02D0
+    VARIATIONAL_PARAMS%AF  = 1.02D0
     VARIATIONAL_PARAMS%RANGE = 40.0D0
     VARIATIONAL_PARAMS%GAMMA = 4.D0
     VARIATIONAL_PARAMS%EPS = 0.25D0
@@ -141,9 +144,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
   CALL PRINT_INFO()
 
 ! Evaluating the matrix elements
+  CALL PRINT_DIVIDER
   CALL ASYMPTOTIC_CORE_MATRIX_ELEMENTS      (CAR, CAI)
+  CALL PRINT_DIVIDER
   CALL CORE_CORE_MATRIX_ELEMENTS            (C)
+  CALL PRINT_DIVIDER
   CALL ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)
+  CALL PRINT_DIVIDER
 
 ! Preparing the matrix elements for the diagonalization
 
@@ -193,17 +200,16 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
       PRINT 10, "T:     ",                T
       PRINT 10, "TZ:    ",                VARIATIONAL_PARAMS%TZ
 
-  10 FORMAT(" ",A, I2)
-  END SUBROUTINE PRINT_INFO
-
+      10 FORMAT(" ",A, I2)
+    END SUBROUTINE PRINT_INFO
 
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
 
 
 
-  SUBROUTINE CORE_CORE_MATRIX_ELEMENTS(C)
+  SUBROUTINE CORE_CORE_MATRIX_ELEMENTS(AM)
     IMPLICIT NONE
-    DOUBLE PRECISION, DIMENSION(NNN, NNN), INTENT(OUT) :: C
+    DOUBLE PRECISION, DIMENSION(NNN, NNN), INTENT(OUT) :: AM
     INTEGER, PARAMETER :: NNR=200
     DOUBLE PRECISION :: XPNT(NNR), PWEIGHT(NNR)
     DOUBLE PRECISION :: XX(NNR), WG(NNR), YY(NNR)
@@ -211,10 +217,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     DOUBLE PRECISION :: V0(NNE,NNR), V1(NNE,NNR), V2(NNE,NNR)
     DOUBLE PRECISION :: GAMMA, APF, XG, ANL, R
     INTEGER :: I, M, NX, NMX
-    INTEGER :: L, S, J
+    INTEGER :: L, S, J, NNL
     DOUBLE PRECISION :: V(NNR, NCH_MAX, NCH), VPW(NCH_MAX, NCH_MAX)
+    INTEGER :: ICONT(NCH_MAX,NNE), LIK, IAB, IAK, IL, IR, IB, IK
+    DOUBLE PRECISION :: SUM, AKEM(NNN,NNN), APEM(NNN,NNN), AXX(NNN,NNN),FUN(NNR)
 
     GAMMA = VARIATIONAL_PARAMS%GAMMA
+    NNL = VARIATIONAL_PARAMS%NNL
 
     NX = 100
     CALL GAULAG(NX, XPNT,PWEIGHT)
@@ -229,15 +238,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
      
     NMX = VARIATIONAL_PARAMS%NNL-1                                   
     APF=2.D0
-    CALL LAGUERRE_POLYNOMIAL(XX, NX, APF, NMX, U0, U1, U2)
+    CALL LAGUERRE_POLYNOMIAL(YY, NX, APF, NMX, U0, U1, U2)
     DO M=1, NX
-      XG = YY(I)
       DO I=0, NMX
         ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))
 
         V0(I+1,M ) = ANL * U0(I,M)
         V1(I+1,M ) = ANL * GAMMA * (U1(I,M) - 0.5D0*U0(I,M))
-        V1(I+1,M ) = ANL * GAMMA**2 * (U2(I,M) - 0.5D0*U1(I,M)) &
+        V2(I+1,M ) = ANL * GAMMA**2 * (U2(I,M) - 0.5D0*U1(I,M)) &
                           - 0.5D0*GAMMA*V1(I+1,M )
       ENDDO
     ENDDO
@@ -247,6 +255,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     J = VARIATIONAL_PARAMS%J
 
     DO I=1, NX
+      R = XX(I)
       CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, VPW)
       V(I,1,1) = VPW(1,1)
       V(I,1,2) = VPW(1,2)
@@ -254,10 +263,77 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
       V(I,2,2) = VPW(2,2)
     ENDDO
 
+    CALL PREPARE_INDECES
 
-    stop
+    DO IAB=1,NEQ          
+    DO IAK=1,NEQ
+           
+      LIK=LC(IAK)*(LC(IAK)+1)
+
+      DO IL=1,NNL            
+      DO IR=1,NNL            
+              
+        IB=ICONT(IAB,IL)       
+        IK=ICONT(IAK,IR)       
+
+  ! SI CALCOLA LA NORMA
+        AXX(IB,IK)=0.D0
+        IF(IB.EQ.IK) AXX(IB,IK) = VARIATIONAL_PARAMS%E
+  ! SI CALCOLA ENERGIA CINETICA
+        AKEM(IB,IK)=0.D0              
+        IF(IAB.EQ.IAK)THEN
+          SUM=0.D0
+          DO I=1,NX
+            FUN(I)=V0(IL,I)*(V2(IR,I)+2.D0*V1(IR,I)/XX(I) &  
+                            -LIK*V0(IR,I)/XX(I)**2 )
+            SUM=SUM + XX(I)**2*FUN(I)*WG(I) 
+          ENDDO                                                                 
+          AKEM(IB,IK)=-HTM*SUM/GAMMA                                       
+        ENDIF
+
+        IF(IB.EQ.1.AND.IK.EQ.1)THEN
+          WRITE(*,*)
+          WRITE(*,*)'C-C MATRIX'
+          WRITE(*,*)'KINETIC',AKEM(1,1)
+        ENDIF
+
+  ! SI CALCOLA ENERGIA POTENZIALE
+        SUM=0.D0                                         
+        DO I=1,NX
+          FUN(I)=V0(IL,I)*V0(IR,I)*V(I,IAB,IAK)     
+          SUM=SUM+XX(I)*XX(I)*FUN(I)*WG(I)
+        ENDDO
+        APEM(IB,IK)=1./GAMMA*SUM                                    
+
+  ! SI CALCOLA HAMILTONIANA    
+        AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
+        IF(IB.EQ.1.AND.IK.EQ.1)THEN
+          WRITE(*,*)'POTENTIAL',APEM(1,1)
+          WRITE(*,*)'C-C MATRIX',HTM*AM(IB,IK)
+        ENDIF
+
+      ENDDO ! IR
+      ENDDO ! IL
+
+    ENDDO ! IAK
+    ENDDO ! IAB
+
+  CONTAINS 
+    SUBROUTINE PREPARE_INDECES()
+      IMPLICIT NONE
+      INTEGER II, J
+
+      II = 0
+      DO I=1, NEQ
+        DO J=1, VARIATIONAL_PARAMS%NNL
+          II = II + 1
+          ICONT(I, J) = II
+        ENDDO
+      ENDDO
+    END SUBROUTINE PREPARE_INDECES
   END SUBROUTINE CORE_CORE_MATRIX_ELEMENTS
 
+!
   SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS(AM, AM1)
     IMPLICIT NONE
     DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX), INTENT(OUT) :: AM(NNN, NCH_MAX), AM1(NNN, NCH_MAX)
@@ -388,6 +464,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
              AKEM1(IB,IAK)=AKE1
           ENDIF
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
             WRITE(*,*)'C-A MATRIX'
             WRITE(*,*)'IRREGULAR A'
             WRITE(*,*)'NORM ',AXXM1(1,1)
@@ -406,6 +483,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
           APEM(IB,IAK)=APE
           APE1=B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
           APEM1(IB,IAK)=APE1
+          IF(IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
+            WRITE(*,*)'C-A MATRIX'
+            WRITE(*,*)'IRREGULAR A'
+            WRITE(*,*)'POTENTIAL ',APEM1(1,1)
+            WRITE(*,*)'REGULAR A'
+            WRITE(*,*)'POTENTIAL ',APEM(1,1)
+          ENDIF
 
         ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
 
@@ -413,6 +498,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
           AM1(IB,IAK)= 1.D0/HTM * (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK))
           
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
             WRITE(6,*)'C-A MATRIX'     ,IB,IAK
             WRITE(6,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
             WRITE(6,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
@@ -466,15 +552,70 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
 
 
 
-  SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)
+  SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(AM, AM1, AM2, AM3)
     USE gsl_coulomb
     IMPLICIT NONE
-    DOUBLE PRECISION, DIMENSION(NCH, NCH), INTENT(OUT) :: ARI, AIR, ARR, AII
+    DOUBLE PRECISION, DIMENSION(NCH, NCH), INTENT(OUT) :: AM, AM1, AM2, AM3
+    INTEGER, PARAMETER :: NNR = 200
+    DOUBLE PRECISION :: H, H5, RANGE, R
+    DOUBLE PRECISION :: AF, EPS, XX(NNR), AJ(NNR), YY(NNR), A(NNR), B(NNR)
+    DOUBLE PRECISION, DIMENSION(NCH_MAX,NNR) :: GBES, GBES0, GBES1, GBES2, FBES, HNOR
+    INTEGER :: I, NX, M, L
+    DOUBLE PRECISION :: XG, AG, BG
 
-    ! Add the implementation of the asymptotic-asymptotic matrix elements here
+    H = VARIATIONAL_PARAMS%H
+    H5= H/22.5D0
+    RANGE = VARIATIONAL_PARAMS%RANGE
+    AF = VARIATIONAL_PARAMS%AF
+    CALL EXPONENTIALLY_GROWING_GRID(H, AF, RANGE, XX, AJ, NNR, NX)
+    VARIATIONAL_PARAMS%RANGE = RANGE
+    WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
 
+    EPS = VARIATIONAL_PARAMS%EPS
+    DO I=1, NX
+      R = XX(I)
+      YY(I) = R*K
+      A (I) = 1.0 - DEXP(-EPS*R)
+      B (I) = EPS * DEXP(-EPS*R)
+    ENDDO
+
+    !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici
+
+    DO I=1, NEQ
+      DO M=1, NX                       
+        XG=YY(M)
+        AG=A(M)
+        BG=B(M)
+        L=LC(I)
+        IF(K.LE.1.D-8) THEN
+          GBES(I,M)=-1./((2*L+1.)*XX(M)**(L+1.D0))*AG**(2*L+1.D0)
+          FBES(I,M)=XX(M)**L
+          GBES0(I,M)=1./((2*L+1.)*XX(M)**(L+1.D0)) &
+                    *(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
+                    +2*(2*L+1.)*BG*(AG/XX(M))-L*(L+1.)*(AG/XX(M))**2)
+          GBES1(I,M)=-2.*AG*((2*L+1.)*BG+AG/XX(M)) &
+                    *(L+1.)/((2*L+1.)*XX(M)**(L+2.))
+          GBES2(I,M)=AG**2*(L+1.)*(L+2.)/((2*L+1.)*XX(M)**(L+3.))
+          HNOR(I,M)=AG**(2*L-1.)
+        ELSE
+          GBES(I,M)=-(GBSS(L,XG)*K**(L+1.D0)*AG**(2*L &
+                              +1.D0))/(K**(L+0.5D0))
+          GBES0(I,M)=GBSS(L,XG)*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
+                    +2*(2*L+1.)*BG*(AG/XX(M))-L*(L+1.)*(AG/XX(M))**2)
+          GBES1(I,M)=GBSS1(L,XG)*2.*K*AG*((2*L+1.)*BG+AG/XX(M))                   
+          GBES2(I,M)=(K**2)*(AG**2)*GBSS2(L,XG)
+          FBES(I,M)=K**(L+0.5D0)*FBSS(L,XG)/(K**L)
+          HNOR(I,M)=(K**(L+1.D0))*(AG**(2*L-1.))/(K**(L+0.5D0))
+        ENDIF
+      ENDDO
+    ENDDO
+
+    STOP
   END SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
-
+  SUBROUTINE PRINT_DIVIDER()
+    IMPLICIT NONE
+    WRITE(*,*) '====================================================================================='
+  END SUBROUTINE PRINT_DIVIDER
 
 END MODULE SCATTERING_NN_VARIATIONAL
