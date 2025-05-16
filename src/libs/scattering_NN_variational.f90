@@ -507,8 +507,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     S = VARIATIONAL_PARAMS%S
     J = VARIATIONAL_PARAMS%J
 
-    ! Here T1Z and T2Z are 0, but they should be set according to the module? 
-
     DO I = 1, NX
       RR = XX(I)
       CALL AV18PW90(1, LC(1), S, J, T, T1Z, T2Z, RR, VPW, VARIATIONAL_PARAMS%LEMP)
