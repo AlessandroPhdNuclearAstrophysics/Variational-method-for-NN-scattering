@@ -745,19 +745,25 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
 
     DOUBLE PRECISION :: H5, HR ! Step size in r
     INTEGER :: I, IX, NX, NMX ! Number evenly spaced points
-    DOUBLE PRECISION :: XX(NNR), AJ(NNR), YYB(NNR), YYL(NNR), A(NNR)
+    DOUBLE PRECISION :: YYB(NNR)
     DOUBLE PRECISION :: U0(0:NNE, NNR), U1(0:NNE, NNR), U2(0:NNE, NNR) 
-    DOUBLE PRECISION :: V0(NNE, NNR), V1(NNE, NNR), V2(NNE, NNR) 
     DOUBLE PRECISION :: FBES(NCH_MAX, NNR), GBES(NCH_MAX, NNR)
     DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
-    INTEGER :: NEQC, L, S, J
-    DOUBLE PRECISION :: VPW(2, 2), VV(NNR, NCH_MAX, NCH_MAX)
-    INTEGER :: ICONT(NCH_MAX, NNE)
+    INTEGER :: L, S, J
+    DOUBLE PRECISION :: VPW(2, 2)
     INTEGER :: IAB, IAK, LIK, IL, IB
     DOUBLE PRECISION :: FUN(NNR), FUN1(NNR)
     DOUBLE PRECISION :: AXXM1(NNN, NCH_MAX), AXX1
     DOUBLE PRECISION :: AKEM(NNN, NCH_MAX), AKE1, AKEM1(NNN, NCH_MAX)
     DOUBLE PRECISION :: APE, APE1, APEM(NNN, NCH_MAX), APEM1(NNN, NCH_MAX)
+    
+    INTEGER, SAVE :: NEQC
+    DOUBLE PRECISION, SAVE :: XX(NNR), AJ(NNR), YYL(NNR), A(NNR)
+    DOUBLE PRECISION, SAVE :: V0(NNE, NNR), V1(NNE, NNR), V2(NNE, NNR) 
+    DOUBLE PRECISION, SAVE :: VV(NNR, NCH_MAX, NCH_MAX)
+    INTEGER, SAVE :: ICONT(NCH_MAX, NNE)
+    LOGICAL, SAVE :: FIRST_CALL = .TRUE.
+    
     DOUBLE PRECISION, EXTERNAL :: B5
 
     GAMMA = VARIATIONAL_PARAMS%GAMMA
@@ -771,7 +777,6 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       STOP
     ENDIF
 
-
     IF (ABS(NX).GT.NNR) THEN
       PRINT *, "Error: NX exceeds NNR"
       STOP
@@ -779,32 +784,38 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
 
   ! Initialize grid with r values
     !  WRITE(*,*)'NX =',NX
-    DO I=1, NX
-      XX(I)   = HR*I
-      AJ(I)   = XX(I)**2
-      YYB(I)  = K*XX(I)
-      YYL(I)  = GAMMA*XX(I)
-      A(I)    = 1.D0 - DEXP(-VARIATIONAL_PARAMS%EPS*XX(I))
-    ENDDO
+    IF (FIRST_CALL) THEN
+      DO I=1, NX
+        XX(I)   = HR*I
+        AJ(I)   = XX(I)**2
+        YYB(I)  = K*XX(I)
+        YYL(I)  = GAMMA*XX(I)
+        A(I)    = 1.D0 - DEXP(-VARIATIONAL_PARAMS%EPS*XX(I))
+      ENDDO
+    ELSE
+      YYB = K*XX
+    ENDIF
     !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX),NX
 
   ! Laguerre polynomial and their first two derivatives grid
-    NMX = VARIATIONAL_PARAMS%NNL - 1
-    APF = 2.D0
+    IF (FIRST_CALL) THEN
+      NMX = VARIATIONAL_PARAMS%NNL - 1
+      APF = 2.D0
 
-    CALL LAGUERRE_POLYNOMIAL(YYL, NX, APF, NMX, U0, U1, U2)
-    DO IX = 1, NX
-      XG = YYL(IX)
-      FEXP = DEXP(-XG/2.D0)
-      DO I = 0, NMX
-        ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))*FEXP
+      CALL LAGUERRE_POLYNOMIAL(YYL, NX, APF, NMX, U0, U1, U2)
+      DO IX = 1, NX
+        XG = YYL(IX)
+        FEXP = DEXP(-XG/2.D0)
+        DO I = 0, NMX
+          ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))*FEXP
 
-        V0(I+1, IX) = ANL * U0(I,IX)
-        V1(I+1, IX) = ANL * GAMMA * ( U1(I,IX) -0.5D0*U0(I,IX) )
-        V2(I+1, IX) = ANL * GAMMA * ( GAMMA * ( U2(I,IX) -0.5D0*U1(I,IX) ) ) &
-                    - 0.5D0*GAMMA*V1(I+1,IX) 
+          V0(I+1, IX) = ANL * U0(I,IX)
+          V1(I+1, IX) = ANL * GAMMA * ( U1(I,IX) -0.5D0*U0(I,IX) )
+          V2(I+1, IX) = ANL * GAMMA * ( GAMMA * ( U2(I,IX) -0.5D0*U1(I,IX) ) ) &
+                      - 0.5D0*GAMMA*V1(I+1,IX) 
+        ENDDO
       ENDDO
-    ENDDO
+    ENDIF
     
     NEQ = NCH
     NEQC= NCH
@@ -829,18 +840,21 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
     S = VARIATIONAL_PARAMS%S
     J = VARIATIONAL_PARAMS%J
 
-    DO I = 1, NX
-      RR = XX(I)
-      CALL AV18PW90(1, LC(1), S, J, T, T1Z, T2Z, RR, VPW, VARIATIONAL_PARAMS%LEMP)
-      VV(I, 1, 1) = VPW(1, 1)
-      VV(I, 1, 2) = VPW(1, 2)
-      VV(I, 2, 1) = VPW(2, 1)
-      VV(I, 2, 2) = VPW(2, 2)
-      ! WRITE(23, *) XX(I), VV(I, 1, 1), VV(I, 1, 2), VV(I, 2, 1), VV(I, 2, 2)  
-    ENDDO
-
-  ! Prepare the indeces for the matrix elements
-    CALL PREPARE_INDECES()
+    IF (FIRST_CALL) THEN
+      DO I = 1, NX
+        RR = XX(I)
+        CALL AV18PW90(1, LC(1), S, J, T, T1Z, T2Z, RR, VPW, VARIATIONAL_PARAMS%LEMP)
+        VV(I, 1, 1) = VPW(1, 1)
+        VV(I, 1, 2) = VPW(1, 2)
+        VV(I, 2, 1) = VPW(2, 1)
+        VV(I, 2, 2) = VPW(2, 2)
+        ! WRITE(23, *) XX(I), VV(I, 1, 1), VV(I, 1, 2), VV(I, 2, 1), VV(I, 2, 2)  
+      ENDDO
+      
+      ! Prepare the indeces for the matrix elements
+      CALL PREPARE_INDECES()
+      FIRST_CALL = .FALSE.
+    ENDIF
 
 
     ! Evaluate the matrix elements
