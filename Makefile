@@ -2,10 +2,23 @@
 FC = gfortran
 
 # Compiler and linker flags
-# FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O2 -fcheck=all -fbacktrace
-FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace -fdefault-real-8 -fdefault-double-8
-LDFLAGS = -Wall -O2 -fcheck=all -finit-real=snan -finit-local-zero -fdefault-real-8 -fdefault-double-8
-LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero
+# Set DEBUG to 1 for debug build, 0 for release (default)
+DEBUG ?= 0
+GMON ?= 0
+
+ifeq ($(DEBUG),1)
+  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace -fdefault-real-8 -fdefault-double-8
+  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero
+else
+  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O3 -fdefault-real-8 -fdefault-double-8
+  LDFLAGS = -Wall -O3
+endif
+
+ifeq ($(GMON),1)
+	FFLAGS += -pg
+	LDFLAGS += -pg
+endif
+
 LDFLAGS += -lgsl -lgslcblas -llapack -lblas
 
 # Define directory paths
