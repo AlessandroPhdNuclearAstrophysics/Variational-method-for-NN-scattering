@@ -700,7 +700,7 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
         APEM(IB,IK)=1./GAMMA*SUM                                    
 
   ! SI CALCOLA HAMILTONIANA    
-        AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
+        ! AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
         IF(IB.EQ.1.AND.IK.EQ.1)THEN
           !  WRITE(*,*)'POTENTIAL',APEM(1,1)
           !  WRITE(*,*)'C-C MATRIX',HTM*AM(IB,IK)
@@ -711,6 +711,8 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
 
     ENDDO ! IAK
     ENDDO ! IAB
+
+    AM = ( AKEM + APEM - AXX ) / HTM
 
   CONTAINS 
     SUBROUTINE PREPARE_INDECES()
