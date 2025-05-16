@@ -128,15 +128,16 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
 
 ! VARIABLES AND PARAMETERS FOR DGESV
   DOUBLE PRECISION, DIMENSION(NNN, NNN) :: C, CC, CCC
-  DOUBLE PRECISION, DIMENSION(NNN, NNN) :: CAR, CARR, CAI, CAII
+  DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX) :: CAR, CAI
+  DOUBLE PRECISION, DIMENSION(NNN)      :: CARR, CAII
   DOUBLE PRECISION, DIMENSION(NCH_MAX, NNN) :: XRCOEFF, XICOEFF
-  DOUBLE PRECISION, DIMENSION(NNN, NNN) :: IPIV
-  INTEGER :: INFO
+  DOUBLE PRECISION, DIMENSION(NNN) :: IPIV
+  INTEGER :: INFO, IAK, IAB
 
 ! MATRICES FOR THE VARIATIONAL METHOD
-  DOUBLE PRECISION, DIMENSION(NNN, NNN) :: AMM, ANN
-  DOUBLE PRECISION, DIMENSION(NNN, NNN) :: AMM2, ANN2
   DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: ARI, AIR, ARR, AII
+  DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: BD1, BD2, BD3, BD4
+  DOUBLE PRECISION, DIMENSION(NCH_MAX,NCH_MAX) :: AM, AN, AMM, ANN
   
 ! INITIALIZE THE VARIATIONAL PARAMETERS
   CALL SET_VARIATIONAL_PARAMETERS(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
@@ -149,21 +150,85 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
   CALL PRINT_DIVIDER
   CALL CORE_CORE_MATRIX_ELEMENTS            (C)
   CALL PRINT_DIVIDER
+
+  DO IAK=1, NEQ
+! Preparing the matrix elements for the diagonalization
+    CARR =-CAR(:,IAK)
+    CAII =-CAI(:,IAK)
+    CC  = C
+    CCC = C
+
+  ! Solving the eigenvalue problem using LAPACK dgesv
+  ! Evaluating for the "c_{n, alpha}" coefficients
+    CALL DGESV(NDIM, 1, CC , NNN, IPIV, CARR, NNN, INFO)
+    CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
+    WRITE(*,*) "INFO: ", INFO
+    CALL DGESV(NDIM, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
+    CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
+    WRITE(*,*) "INFO: ", INFO
+
+    XRCOEFF(IAK,:) = CARR
+    XICOEFF(IAK,:) = CAII
+  ENDDO
+
+! Calculating R coefficients
+  write(*,*) neq, NDIM
+  WRITE(900,'(F20.16)') XICOEFF
+  WRITE(901,'(F20.16)') XRCOEFF
+  WRITE(902,'(F20.16)') CAR
+  WRITE(903,'(F20.16)') CAI
+  WRITE(904,'(F50.16)') C
+
+
+  CALL MATRIX_MULTIPLY(BD1,XICOEFF,CAI)
+  CALL MATRIX_MULTIPLY(BD2,XRCOEFF,CAI)
+  CALL MATRIX_MULTIPLY(BD3,XICOEFF,CAR)
+  CALL MATRIX_MULTIPLY(BD4,XRCOEFF,CAR)
+
+  CALL PRINT_DIVIDER
   CALL ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)
   CALL PRINT_DIVIDER
 
-! Preparing the matrix elements for the diagonalization
+  WRITE(*,*) "ARI = ", ARI
+  WRITE(*,*) "AIR = ", AIR
+  WRITE(*,*) "ARR = ", ARR
+  WRITE(*,*) "AII = ", AII
+  WRITE(*,*) "BD1 = ", BD1
+  WRITE(*,*) "BD2 = ", BD2
+  WRITE(*,*) "BD3 = ", BD3
+  WRITE(*,*) "BD4 = ", BD4
 
-! Solving the eigenvalue problem using LAPACK dgesv
-! Evaluating for the "c_{n, alpha}" coefficients
-  CALL DGESV(NDIM, 1, CC , NNN, IPIV, CARR, NNN, INFO)
-  CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-  CALL DGESV(NDIM, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
-  CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
+  DO IAB=1,NEQ       
+  DO IAK=1,NEQ
+    AM(IAB,IAK)=BD1(IAK,IAB)+BD1(IAB,IAK)+AII(IAB,IAK)+AII(IAK,IAB)
+    AN(IAB,IAK)=BD2(IAK,IAB)+BD3(IAB,IAK)+2.D0*AIR(IAB,IAK)   
+    WRITE(*,*) "---> ", BD1(IAK,IAB), BD1(IAB,IAK), AII(IAB,IAK), AII(IAK,IAB)
+    WRITE(*,*) "---> ", BD2(IAK,IAB), BD3(IAB,IAK), AIR(IAB,IAK)
+  ENDDO
+  ENDDO
+
+  
+
+  AMM = AM
+  ANN =-AN
+  CALL PRINT_DIVIDER
+  WRITE(*,*) "AMM = ", AMM
+  WRITE(*,*) "ANN = ", ANN
+  CALL PRINT_DIVIDER
+
 
 ! Evaluating the "R_{alpha, beta}" matrix elements
   CALL DGESV(NEQ, NEQ, AMM, NCH_MAX, IPIV, ANN, NCH_MAX, INFO)
   CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
+  WRITE(*,*) "INFO: ", INFO
+
+  DO IAB=1,NEQ
+  DO IAK=1,NEQ
+    WRITE(*,*)"COEFF R",ANN(IAB,IAK)
+  ENDDO 
+  ENDDO 
+  
+  STOP
 
 
 ! Evaluating the "R_{alpha, beta}" matrix elements to the second order
@@ -202,6 +267,23 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
 
       10 FORMAT(" ",A, I2)
     END SUBROUTINE PRINT_INFO
+
+    SUBROUTINE MATRIX_MULTIPLY(A,B,C)
+      IMPLICIT NONE
+      DOUBLE PRECISION, INTENT(OUT), DIMENSION(NCH_MAX,NCH_MAX) :: A
+      DOUBLE PRECISION, INTENT(IN), DIMENSION(NCH_MAX, NNN) :: B
+      DOUBLE PRECISION, INTENT(IN), DIMENSION(NNN, NCH_MAX) :: C
+      INTEGER :: I, J, L
+
+      A = 0
+      DO I = 1, NEQ
+      DO J = 1, NEQ
+        DO L = 1, NDIM
+          A(I,J) = A(I,J) + B(I,L)*C(L,J)
+        ENDDO
+      ENDDO
+      ENDDO
+    END SUBROUTINE MATRIX_MULTIPLY
 
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
 
@@ -330,6 +412,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
           ICONT(I, J) = II
         ENDDO
       ENDDO
+      NDIM = II
     END SUBROUTINE PREPARE_INDECES
   END SUBROUTINE CORE_CORE_MATRIX_ELEMENTS
 
@@ -406,6 +489,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     
   ! Prepare the Bessel functions
     CALL SPHERICAL_BESSEL_FUNCTIONS()
+    do m=1, NX
+      do i=0, nmx
+        Write(1000,*) yyl(M), v0(i+1,m), v1(i+1,m), v2(i+1,m), aj(m)
+      enddo
+    enddo
+
+
     ! DO I = 1, NCH
     !   DO M = 1, NX
     !     WRITE(20+I, *) YYB(M), FBES(I,M), GBES(I,M)
@@ -448,8 +538,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
             ! WRITE(150,*) DSQRT(AJ(I)), V0(IL,I), GBES(IAK,I)
             ENDDO
             ! STOP
+            !  WRITE(111,*) FUN1
+
             AXX1=VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
             AXXM1(IB,IAK)=AXX1
+            write(111,*) iab, iak, il, IB, axx1
           ENDIF
 
         ! Evaluate the kinetic energy core-irregular (ake1)
@@ -462,6 +555,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
              ENDDO
              AKE1= -HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)                                
              AKEM1(IB,IAK)=AKE1
+            write(112,*) iab, iak, il, IB, ake1
           ENDIF
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
             WRITE(*,*)
@@ -483,6 +577,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
           APEM(IB,IAK)=APE
           APE1=B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
           APEM1(IB,IAK)=APE1
+          write(113,*) iab, iak, il, IB, ape, ape1
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
             WRITE(*,*)
             WRITE(*,*)'C-A MATRIX'
@@ -525,10 +620,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
             FBES(I,M)=XX(M)**L
             GBES(I,M)=-1./((2*L+1.)*XX(M)**(L+1.D0))*AG**(2*L+1.D0)
           ELSE  
-            FBSS = GSL_SF_BESSEL_JL(L, XG)
-            GBSS = GSL_SF_BESSEL_YL(L, XG)
+            FBSS = SPHERICAL_J(L, XG)
+            GBSS = SPHERICAL_Y(L, XG)
             FBES(I,M)=K**(L+0.5D0)*FBSS/(K**L)
             GBES(I,M)=-(GBSS*K**(L+1.D0)*AG**(2*L+1.D0))/(K**(L+0.5D0))
+            write(500+l,*) xg, FBSS, GBSS, fbes(i,m), gbes(i,m)
           ENDIF
         ENDDO
       ENDDO
@@ -553,15 +649,23 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
 
 
   SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(AM, AM1, AM2, AM3)
-    USE gsl_coulomb
+    USE gsl_bessel
     IMPLICIT NONE
     DOUBLE PRECISION, DIMENSION(NCH, NCH), INTENT(OUT) :: AM, AM1, AM2, AM3
     INTEGER, PARAMETER :: NNR = 200
     DOUBLE PRECISION :: H, H5, RANGE, R
     DOUBLE PRECISION :: AF, EPS, XX(NNR), AJ(NNR), YY(NNR), A(NNR), B(NNR)
     DOUBLE PRECISION, DIMENSION(NCH_MAX,NNR) :: GBES, GBES0, GBES1, GBES2, FBES, HNOR
-    INTEGER :: I, NX, M, L
+    INTEGER :: I, NX, M, L, IAB, IAK
     DOUBLE PRECISION :: XG, AG, BG
+    DOUBLE PRECISION :: GBSS, GBSS1, GBSS2, FBSS
+    INTEGER :: S, J
+    DOUBLE PRECISION :: VPW(NCH_MAX,NCH_MAX), VV(NNR,NCH_MAX,NCH_MAX)
+    DOUBLE PRECISION, DIMENSION(NNR) :: FUN, FUN1, FUN2, FUN3
+    DOUBLE PRECISION :: AXX, AXX3, AKE, AKE3, APE, APE1, APE2, APE3
+    DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: AXXM, AXXM3, AKEM, AKEM3, APEM, APEM1, APEM2, APEM3, VER
+
+    DOUBLE PRECISION, EXTERNAL :: B5
 
     H = VARIATIONAL_PARAMS%H
     H5= H/22.5D0
@@ -574,43 +678,158 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, VCOUL)
     EPS = VARIATIONAL_PARAMS%EPS
     DO I=1, NX
       R = XX(I)
-      YY(I) = R*K
-      A (I) = 1.0 - DEXP(-EPS*R)
-      B (I) = EPS * DEXP(-EPS*R)
+      YY(I) = K*R
+      A(I)  = 1.0 - DEXP(-EPS*R)
+      B(I)  = EPS * DEXP(-EPS*R)
     ENDDO
 
-    !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici
-
+  !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici  
     DO I=1, NEQ
+      L=LC(I)
+      write(*,*) "Preparing Bessels for L = ", L, " with k = ", K
       DO M=1, NX                       
         XG=YY(M)
         AG=A(M)
         BG=B(M)
-        L=LC(I)
         IF(K.LE.1.D-8) THEN
-          GBES(I,M)=-1./((2*L+1.)*XX(M)**(L+1.D0))*AG**(2*L+1.D0)
           FBES(I,M)=XX(M)**L
-          GBES0(I,M)=1./((2*L+1.)*XX(M)**(L+1.D0)) &
-                    *(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
+          GBES(I,M)=-1./((2*L+1.)*XX(M)**(L+1.D0))*AG**(2*L+1.D0)
+          GBES0(I,M)=1./((2*L+1.)*XX(M)**(L+1.D0))*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
                     +2*(2*L+1.)*BG*(AG/XX(M))-L*(L+1.)*(AG/XX(M))**2)
-          GBES1(I,M)=-2.*AG*((2*L+1.)*BG+AG/XX(M)) &
-                    *(L+1.)/((2*L+1.)*XX(M)**(L+2.))
+          GBES1(I,M)=-2.*AG*((2*L+1.)*BG+AG/XX(M))*(L+1.)/((2*L+1.)*XX(M)**(L+2.))
           GBES2(I,M)=AG**2*(L+1.)*(L+2.)/((2*L+1.)*XX(M)**(L+3.))
           HNOR(I,M)=AG**(2*L-1.)
+          WRITE(200+L,*) XX(M), FBES(I,M), GBES(I,M), GBES1(I,M), GBES2(I,M)
         ELSE
-          GBES(I,M)=-(GBSS(L,XG)*K**(L+1.D0)*AG**(2*L &
-                              +1.D0))/(K**(L+0.5D0))
-          GBES0(I,M)=GBSS(L,XG)*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
+          FBSS = SPHERICAL_J(L, XG)
+          GBSS = SPHERICAL_Y(L, XG)
+          GBSS1= SPHERICAL_YP(L, XG)
+          GBSS2= SPHERICAL_YPP(L, XG)
+          
+          FBES(I,M)=K**(L+0.5D0)*FBSS/(K**L)
+          GBES(I,M)=-(GBSS*K**(L+1.D0)*AG**(2*L+1.D0))/(K**(L+0.5D0))
+          GBES0(I,M)=GBSS*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
                     +2*(2*L+1.)*BG*(AG/XX(M))-L*(L+1.)*(AG/XX(M))**2)
-          GBES1(I,M)=GBSS1(L,XG)*2.*K*AG*((2*L+1.)*BG+AG/XX(M))                   
-          GBES2(I,M)=(K**2)*(AG**2)*GBSS2(L,XG)
-          FBES(I,M)=K**(L+0.5D0)*FBSS(L,XG)/(K**L)
+          GBES1(I,M)=GBSS1*2.*K*AG*((2*L+1.)*BG + AG/XX(M))                   
+          GBES2(I,M)=(K**2)*(AG**2)*GBSS2
           HNOR(I,M)=(K**(L+1.D0))*(AG**(2*L-1.))/(K**(L+0.5D0))
+          ! WRITE(200+L,*) XX(M), FBES(I,M), GBES(I,M), GBES1(I,M), GBES2(I,M), HNOR(I,M)
         ENDIF
       ENDDO
     ENDDO
 
-    STOP
+  ! si tabula il potenziale per i vari canali
+    L = LC(1)
+    S = VARIATIONAL_PARAMS%S
+    J = VARIATIONAL_PARAMS%J
+    DO I=1, NX
+      R = XX(I)
+      CALL AV18PW90(1,L,S,J,T,T1Z,T2Z,R,VPW)
+      VV(I,1,1) = VPW(1,1)
+      VV(I,1,2) = VPW(1,2)
+      VV(I,2,1) = VPW(2,1)
+      VV(I,2,2) = VPW(2,2)
+    ENDDO
+
+  !SI CALCOLANO ELEMENTI MATRICE  
+    DO IAB=1,NEQ          
+    DO IAK=1,NEQ
+  ! SI CALCOLA NORMA DEL CASO REGOLARE-IRREGOLARE (AXX), CASO IRREGOLARE-IRREGOLARE (AXX3)  
+      AXX=0.D0
+      AXX3=0.D0
+      AXXM(IAB,IAK)=0.D0
+      AXXM3(IAB,IAK)=0.D0
+      IF(IAB.EQ.IAK)THEN 
+          FUN(1)=0.D0
+          FUN3(1)=0.D0                                     
+        DO I=1,NX
+          FUN(I+1)= AJ(I)*FBES(IAB,I)*GBES(IAK,I)
+          FUN3(I+1)=AJ(I)*GBES(IAB,I)*GBES(IAK,I)                                             
+        ENDDO
+        AXX=  VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
+        AXXM(IAB,IAK)=AXX
+        AXX3= VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN3,1)
+        AXXM3(IAB,IAK)=AXX3
+      ENDIF    
+      IF (IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'NORM RI(1,1)', AXX
+        WRITE(*,*) 'NORM II(1,1)', AXX3
+      ENDIF
+
+  ! SI CALCOLA ENERGIA CINETICA DEL CASO REGOLARE-IRREGOLARE (AKE) E CASO IRREGOLARE-IRREGOLARE (AKE3)
+      AKE=0.D0
+      AKE3=0.D0
+      AKEM(IAB,IAK)=0.D0 
+      AKEM3(IAB,IAK)=0.D0       
+      IF(IAB.EQ.IAK)THEN
+        FUN(1)=0.D0
+        FUN3(1)=0.D0
+        DO I=1,NX
+          FUN(I+1) =AJ(I)*FBES(IAB,I)*HNOR(IAK,I)*(GBES2(IAK,I)+GBES1(IAK,I)+GBES0(IAK,I))
+          FUN3(I+1)=AJ(I)*GBES(IAB,I)*HNOR(IAK,I)*(GBES2(IAK,I)+GBES1(IAK,I)+GBES0(IAK,I))
+        ENDDO
+        AKE=  HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)                                         
+        AKEM(IAB,IAK)=AKE
+        AKE3= HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN3,1)
+        AKEM3(IAB,IAK)=AKE3
+      ENDIF 
+      IF (IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'KINETIC RI(1,1)', AKE
+        WRITE(*,*) 'KINETIC II(1,1)', AKE3
+      ENDIF
+
+  ! SI CALCOLA ENERGIA POTENZIALE DEL CASO REGOLARE-IRREGOLARE (APE), 
+  !      IRREGOLARE-REGOLARE (APE1), REGOLARE-REGOLARE (APE2), IRREGOLARE-IRREGOLARE (APE3)
+      APE=0.D0
+      APE1=0.D0
+      APE2=0.D0
+      APE3=0.D0
+      FUN(1)=0.D0 
+      FUN1(1)=0.D0
+      FUN2(1)=0.D0 
+      FUN3(1)=0.D0                                          
+      DO I=1,NX
+        FUN(I+1) =AJ(I)*FBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK) 
+        FUN1(I+1)=AJ(I)*GBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)  
+        FUN2(I+1)=AJ(I)*FBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)
+        FUN3(I+1)=AJ(I)*GBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK)
+      ENDDO
+      APE=  B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
+      APEM(IAB,IAK)=APE
+      APE1= B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
+      APEM1(IAB,IAK)=APE1
+      APE2= B5(1,NX,0,0,H5,0.D0,0.D0,FUN2,1)
+      APEM2(IAB,IAK)=APE2
+      APE3= B5(1,NX,0,0,H5,0.D0,0.D0,FUN3,1)
+      APEM3(IAB,IAK)=APE3
+      IF (IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
+        WRITE(*,*) 'POTENTIAL RI(1,1)', APE
+        WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
+        WRITE(*,*) 'POTENTIAL II(1,1)', APE3
+      ENDIF
+
+
+
+  ! SI CALCOLA HAMILTONIANA PER I VARI CASI:REGOLARE-IRREGOLARE(AM), IRREGOLARE-REGOLARE(AM1),
+  !         REGOLARE-REGOLARE(AM2),IRREGOLARE-IRREGOLARE(AM3)
+      AM(IAB,IAK)= 1.D0/HTM*(AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) 
+      AM1(IAB,IAK)=1.D0/HTM*APEM1(IAB,IAK)
+      AM2(IAB,IAK)=1.D0/HTM*APEM2(IAB,IAK)
+      AM3(IAB,IAK)=1.D0/HTM*(AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK))
+
+      VER(IAB,IAK)=(AM1(IAB,IAK)-AM(IAB,IAK)) 
+    ENDDO 
+    ENDDO 
+
+    write(*,*)
+    WRITE(*,*)'A-A MATRIX'      
+    DO IAB=1,NEQ
+    DO IAK=1,NEQ
+      WRITE(6,'(2I6,4D17.7)') IAB,IAK,AM2(IAB,IAK),AM(IAB,IAK),AM1(IAB,IAK),AM3(IAB,IAK)
+      WRITE(*,*)"1=",VER(IAB,IAK)
+    END DO
+    END DO
   END SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
   SUBROUTINE PRINT_DIVIDER()
