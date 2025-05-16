@@ -26,7 +26,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   E = 1.0D0
   IPOT = 18
   ILB = 1
-  LEMP = 1
+  LEMP = 0
   VCOUL = .FALSE.
 
   ! If there are arguments, treat the first as the namelist input file

@@ -3,8 +3,8 @@ FC = gfortran
 
 # Compiler and linker flags
 # FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O2 -fcheck=all -fbacktrace
-FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace
-LDFLAGS = -Wall -O2 -fcheck=all -finit-real=snan -finit-local-zero
+FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace -fdefault-real-8 -fdefault-double-8
+LDFLAGS = -Wall -O2 -fcheck=all -finit-real=snan -finit-local-zero -fdefault-real-8 -fdefault-double-8
 LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero
 LDFLAGS += -lgsl -lgslcblas -llapack -lblas
 

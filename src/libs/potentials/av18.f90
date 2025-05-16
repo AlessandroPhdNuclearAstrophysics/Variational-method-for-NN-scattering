@@ -112,9 +112,11 @@
 !      v(1,2) = 0                     v(1,2) = v(l<->l+2)
 !      v(2,2) = 0                     v(2,2) = v(l+2,s,j,t,t1z,t2z)
 ! ----------------------------------------------------------------------
-SUBROUTINE AV18PW90(LPOT,L,S,J,T,T1Z,T2Z,R,VPW)
+SUBROUTINE AV18PW90(LPOT,L,S,J,T,T1Z,T2Z,R,VPW,LEMP)
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: LPOT, L, S, J, T, T1Z, T2Z
+  DOUBLE PRECISION, PARAMETER :: ALPHA = 1.D0 / 137.035989D0
+  DOUBLE PRECISION, PARAMETER :: HC = 197.327053D0
+  INTEGER, INTENT(IN) :: LPOT, L, S, J, T, T1Z, T2Z, LEMP
   DOUBLE PRECISION, INTENT(INOUT) :: R
   DOUBLE PRECISION, INTENT(OUT) :: VPW(2,2)
 !
@@ -138,7 +140,12 @@ SUBROUTINE AV18PW90(LPOT,L,S,J,T,T1Z,T2Z,R,VPW)
 ! ---------------------
 ! electromagnetic terms
 ! ---------------------
-  CALL EMPOT90(LPOT,R,VEM)
+  VEM = 0
+  IF (LEMP.EQ.0) THEN
+    IF (T1Z+T2Z .EQ. 2) VEM(1) = ALPHA*HC/R
+  ELSE
+    CALL EMPOT90(LPOT,R,VEM)
+  ENDIF
   SELECT CASE (T1Z+T2Z)
   CASE (-2)
     VC=VC+S1DS2*VEM(7)
