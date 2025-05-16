@@ -614,105 +614,114 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
     INTEGER :: L, S, J, NNL
     DOUBLE PRECISION :: V(NNRCC, NCH_MAX, NCH), VPW(NCH_MAX, NCH_MAX)
     INTEGER :: ICONT(NCH_MAX,NNE), LIK, IAB, IAK, IL, IR, IB, IK
-    DOUBLE PRECISION :: SUM, AKEM(NNN,NNN), APEM(NNN,NNN), AXX(NNN,NNN),FUN(NNRCC)
+    DOUBLE PRECISION :: SUM, AKEM(NNN,NNN), APEM(NNN,NNN), FUN(NNRCC)
+
+    DOUBLE PRECISION, SAVE :: HM(NNN,NNN), AXX(NNN,NNN)
+    LOGICAL, SAVE :: FIRST_CALL = .TRUE.
 
     GAMMA = VARIATIONAL_PARAMS%GAMMA
     NNL = VARIATIONAL_PARAMS%NNL
 
     NX = 100
-    CALL GAULAG(NX, XPNT,PWEIGHT)
+    IF (FIRST_CALL) THEN
+      CALL GAULAG(NX, XPNT,PWEIGHT)
 
-    DO I=1,NX                                                    
-      XX(I)=XPNT(I)/GAMMA
-      WG(I)=PWEIGHT(I)                                   
-      YY(I)=XPNT(I)     ! grid for evaluating Laguerre
-    ENDDO  
+      DO I=1,NX                                                    
+        XX(I)=XPNT(I)/GAMMA
+        WG(I)=PWEIGHT(I)                                   
+        YY(I)=XPNT(I)     ! grid for evaluating Laguerre
+      ENDDO  
 
-    !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
-     
-    NMX = VARIATIONAL_PARAMS%NNL-1                                   
-    APF=2.D0
-    CALL LAGUERRE_POLYNOMIAL(YY, NX, APF, NMX, U0, U1, U2)
-    DO IX=1, NX
-      DO I=0, NMX
-        ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))
+      !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
+      
+      NMX = VARIATIONAL_PARAMS%NNL-1                                   
+      APF=2.D0
+      CALL LAGUERRE_POLYNOMIAL(YY, NX, APF, NMX, U0, U1, U2)
+      DO IX=1, NX
+        DO I=0, NMX
+          ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))
 
-        V0(I+1,IX) = ANL * U0(I,IX)
-        V1(I+1,IX) = ANL * GAMMA * (U1(I,IX) - 0.5D0*U0(I,IX))
-        V2(I+1,IX) = ANL * GAMMA**2 * (U2(I,IX) - 0.5D0*U1(I,IX)) &
-                      - 0.5D0*GAMMA*V1(I+1,IX)
-      ENDDO
-    ENDDO
-
-    L = LC(1)
-    S = VARIATIONAL_PARAMS%S
-    J = VARIATIONAL_PARAMS%J
-
-    DO I=1, NX
-      R = XX(I)
-      CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, VPW, VARIATIONAL_PARAMS%LEMP)
-      V(I,1,1) = VPW(1,1)
-      V(I,1,2) = VPW(1,2)
-      V(I,2,1) = VPW(2,1)
-      V(I,2,2) = VPW(2,2)
-    ENDDO
-
-    CALL PREPARE_INDECES
-
-    DO IAB=1,NEQ          
-    DO IAK=1,NEQ
-           
-      LIK=LC(IAK)*(LC(IAK)+1)
-
-      DO IL=1,NNL            
-      DO IR=1,NNL            
-              
-        IB=ICONT(IAB,IL)       
-        IK=ICONT(IAK,IR)       
-
-  ! SI CALCOLA LA NORMA
-        AXX(IB,IK)=0.D0
-        IF(IB.EQ.IK) AXX(IB,IK) = VARIATIONAL_PARAMS%E
-  ! SI CALCOLA ENERGIA CINETICA
-        AKEM(IB,IK)=0.D0              
-        IF(IAB.EQ.IAK)THEN
-          SUM=0.D0
-          DO I=1,NX
-            FUN(I)=V0(IL,I)*(V2(IR,I)+2.D0*V1(IR,I)/XX(I) &  
-                            -LIK*V0(IR,I)/XX(I)**2 )
-            SUM=SUM + XX(I)**2*FUN(I)*WG(I) 
-          ENDDO                                                                 
-          AKEM(IB,IK)=-HTM*SUM/GAMMA                                       
-        ENDIF
-
-        IF(IB.EQ.1.AND.IK.EQ.1)THEN
-          !  WRITE(*,*)
-          !  WRITE(*,*)'C-C MATRIX'
-          !  WRITE(*,*)'KINETIC',AKEM(1,1)
-        ENDIF
-
-  ! SI CALCOLA ENERGIA POTENZIALE
-        SUM=0.D0                                         
-        DO I=1,NX
-          FUN(I)=V0(IL,I)*V0(IR,I)*V(I,IAB,IAK)     
-          SUM=SUM+XX(I)*XX(I)*FUN(I)*WG(I)
+          V0(I+1,IX) = ANL * U0(I,IX)
+          V1(I+1,IX) = ANL * GAMMA * (U1(I,IX) - 0.5D0*U0(I,IX))
+          V2(I+1,IX) = ANL * GAMMA**2 * (U2(I,IX) - 0.5D0*U1(I,IX)) &
+                        - 0.5D0*GAMMA*V1(I+1,IX)
         ENDDO
-        APEM(IB,IK)=1./GAMMA*SUM                                    
+      ENDDO
 
-  ! SI CALCOLA HAMILTONIANA    
-        ! AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
-        IF(IB.EQ.1.AND.IK.EQ.1)THEN
-          !  WRITE(*,*)'POTENTIAL',APEM(1,1)
-          !  WRITE(*,*)'C-C MATRIX',HTM*AM(IB,IK)
-        ENDIF
+      L = LC(1)
+      S = VARIATIONAL_PARAMS%S
+      J = VARIATIONAL_PARAMS%J
 
-      ENDDO ! IR
-      ENDDO ! IL
+      DO I=1, NX
+        R = XX(I)
+        CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, VPW, VARIATIONAL_PARAMS%LEMP)
+        V(I,1,1) = VPW(1,1)
+        V(I,1,2) = VPW(1,2)
+        V(I,2,1) = VPW(2,1)
+        V(I,2,2) = VPW(2,2)
+      ENDDO
 
-    ENDDO ! IAK
-    ENDDO ! IAB
+      CALL PREPARE_INDECES
 
-    AM = ( AKEM + APEM - AXX ) / HTM
+      DO IAB=1,NEQ          
+      DO IAK=1,NEQ
+            
+        LIK=LC(IAK)*(LC(IAK)+1)
+
+        DO IL=1,NNL            
+        DO IR=1,NNL            
+                
+          IB=ICONT(IAB,IL)       
+          IK=ICONT(IAK,IR)       
+
+    ! SI CALCOLA LA NORMA
+          AXX(IB,IK)=0.D0
+          IF(IB.EQ.IK) AXX(IB,IK) = 1.D0
+    ! SI CALCOLA ENERGIA CINETICA
+          AKEM(IB,IK)=0.D0              
+          IF(IAB.EQ.IAK)THEN
+            SUM=0.D0
+            DO I=1,NX
+              FUN(I)=V0(IL,I)*(V2(IR,I)+2.D0*V1(IR,I)/XX(I) &  
+                              -LIK*V0(IR,I)/XX(I)**2 )
+              SUM=SUM + XX(I)**2*FUN(I)*WG(I) 
+            ENDDO                                                                 
+            AKEM(IB,IK)=-HTM*SUM/GAMMA                                       
+          ENDIF
+
+          IF(IB.EQ.1.AND.IK.EQ.1)THEN
+            !  WRITE(*,*)
+            !  WRITE(*,*)'C-C MATRIX'
+            !  WRITE(*,*)'KINETIC',AKEM(1,1)
+          ENDIF
+
+    ! SI CALCOLA ENERGIA POTENZIALE
+          SUM=0.D0                                         
+          DO I=1,NX
+            FUN(I)=V0(IL,I)*V0(IR,I)*V(I,IAB,IAK)     
+            SUM=SUM+XX(I)*XX(I)*FUN(I)*WG(I)
+          ENDDO
+          APEM(IB,IK)=1./GAMMA*SUM                                    
+
+    ! SI CALCOLA HAMILTONIANA    
+          ! AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
+          IF(IB.EQ.1.AND.IK.EQ.1)THEN
+            !  WRITE(*,*)'POTENTIAL',APEM(1,1)
+            !  WRITE(*,*)'C-C MATRIX',HTM*AM(IB,IK)
+          ENDIF
+
+        ENDDO ! IR
+        ENDDO ! IL
+
+      ENDDO ! IAK
+      ENDDO ! IAB
+      FIRST_CALL = .FALSE.
+      HM = ( AKEM + APEM )
+    ENDIF
+
+    AM = (HM - AXX * VARIATIONAL_PARAMS%E )/ HTM
+    !  WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
+
 
   CONTAINS 
     SUBROUTINE PREPARE_INDECES()
