@@ -8,11 +8,14 @@ GMON ?= 0
 
 ifeq ($(DEBUG),1)
   FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero
+  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fdefault-real-8 -fdefault-double-8
 else
   FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O3 -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -O3
+  LDFLAGS = -Wall -O3 -fdefault-real-8 -fdefault-double-8
 endif
+
+# FFLAGS += -fopenmp
+# LDFLAGS += -fopenmp
 
 ifeq ($(GMON),1)
 	FFLAGS += -pg

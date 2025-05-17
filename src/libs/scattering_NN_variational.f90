@@ -785,15 +785,13 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
   ! Initialize grid with r values
     !  WRITE(*,*)'NX =',NX
     IF (FIRST_CALL) THEN
-      DO I=1, NX
-        XX(I)   = HR*I
-        AJ(I)   = XX(I)**2
-        YYB(I)  = K*XX(I)
-        YYL(I)  = GAMMA*XX(I)
-        A(I)    = 1.D0 - DEXP(-VARIATIONAL_PARAMS%EPS*XX(I))
-      ENDDO
+      XX(1:NX) = HR * [(I, I=1,NX)]
+      AJ   = XX**2
+      YYB  = K*XX
+      YYL  = GAMMA*XX
+      A    = 1.D0 - DEXP(-VARIATIONAL_PARAMS%EPS*XX)
     ELSE
-      YYB = K*XX
+      YYB(1:NX) = K*XX(1:NX)
     ENDIF
     !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX),NX
 
@@ -868,13 +866,8 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
         ! Evaluate the normalization core-irregular (axx1)
           AXXM1(IB,IAK)=0.D0
           IF(IAB.EQ.IAK)THEN 
-            FUN1(1)=0.D0                                         
-            DO I=1,NX  
-            FUN1(I+1)=AJ(I)*V0(IL,I)*GBES(IAK,I)
-            ! WRITE(150,*) DSQRT(AJ(I)), V0(IL,I), GBES(IAK,I)
-            ENDDO
-            ! STOP
-            !  WRITE(111,*) FUN1
+            FUN1(1)=0.D0
+            FUN1(2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*GBES(IAK,1:NX)
 
             AXX1=VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
             AXXM1(IB,IAK)=AXX1
@@ -885,12 +878,12 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
           AKE1=0.D0
           AKEM1(IB,IAK)=0.D0     
           IF(IAB.EQ.IAK)THEN
-             FUN1(1)=0.D0
-             DO I=1,NX
-              FUN1(I+1)=AJ(I)*GBES(IAK,I)*(V2(IL,I) + 2.D0*V1(IL,I)/XX(I)-LIK*V0(IL,I)/XX(I)**2)
-             ENDDO
-             AKE1= -HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)                                
-             AKEM1(IB,IAK)=AKE1
+            FUN1(1)=0.D0
+            FUN1(2:NX+1) = AJ(1:NX)*GBES(IAK,1:NX)*( V2(IL,1:NX) &
+                    + 2.D0*V1(IL,1:NX)/XX(1:NX) - LIK*V0(IL,1:NX)/XX(1:NX)**2)
+
+            AKE1= -HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)                                
+            AKEM1(IB,IAK)=AKE1
             ! write(112,*) iab, iak, il, IB, ake1
           ENDIF
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
@@ -904,11 +897,10 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
         
         ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
           FUN(1)=0.D0
-          FUN1(1)=0.D0                                 
-          DO I=1,NX   
-            FUN(I+1)=AJ(I)*V0(IL,I)*FBES(IAK,I)*VV(I,IAB,IAK)     
-            FUN1(I+1)=AJ(I)*V0(IL,I)*GBES(IAK,I)*VV(I,IAB,IAK)                             
-          ENDDO
+          FUN1(1)=0.D0    
+          FUN (2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+          FUN1(2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+
           APE=B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
           APEM(IB,IAK)=APE
           APE1=B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
@@ -948,10 +940,10 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       INTEGER :: LL
       
       DO I=1,NCH
+        LL=LC(I)
         DO IX=1, NX                                 
           XG=YYB(IX)
           AG=A(IX)
-          LL=LC(I)
           IF(K.LE.1.D-8)THEN                                   !(K->0)
             FBES(I,IX)=XX(IX)**LL
             GBES(I,IX)=-1./((2*LL+1.)*XX(IX)**(LL+1.D0))*AG**(2*LL+1.D0)
@@ -1011,22 +1003,17 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
     H5= H/22.5D0
     RANGE = VARIATIONAL_PARAMS%RANGE
     AF = VARIATIONAL_PARAMS%AF
-    IF (FIRST_CALL) CALL EXPONENTIALLY_GROWING_GRID(H, AF, RANGE, XX, AJ, NNR, NX)
+    IF (FIRST_CALL) CALL EXPONENTIALLY_GROWING_GRID(H, AF, RANGE, XX, AJ, NNRAA, NX)
     VARIATIONAL_PARAMS%RANGE = RANGE
     !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
 
     EPS = VARIATIONAL_PARAMS%EPS
     IF (FIRST_CALL) THEN
-      DO I=1, NX
-        R = XX(I)
-        YY(I) = K*R
-        A(I)  = 1.0 - DEXP(-EPS*R)
-        B(I)  = EPS * DEXP(-EPS*R)
-      ENDDO
+      YY(1:NX) = K*XX(1:NX)
+      A(1:NX)  = 1.D0 - DEXP(-EPS*XX(1:NX))
+      B(1:NX)  = EPS * DEXP(-EPS*XX(1:NX))
     ELSE
-      DO I=1, NX
-        YY(I) = K*XX(I)
-      ENDDO
+      YY(1:NX) = K*XX(1:NX)
     ENDIF
 
   !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici  
@@ -1089,12 +1076,11 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       AXXM(IAB,IAK)=0.D0
       AXXM3(IAB,IAK)=0.D0
       IF(IAB.EQ.IAK)THEN 
-          FUN(1)=0.D0
-          FUN3(1)=0.D0                                     
-        DO I=1,NX
-          FUN(I+1)= AJ(I)*FBES(IAB,I)*GBES(IAK,I)
-          FUN3(I+1)=AJ(I)*GBES(IAB,I)*GBES(IAK,I)                                             
-        ENDDO
+        FUN (1)=0.D0
+        FUN3(1)=0.D0
+        FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)
+        FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)
+
         AXX=  VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
         AXXM(IAB,IAK)=AXX
         AXX3= VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN3,1)
@@ -1113,10 +1099,9 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       IF(IAB.EQ.IAK)THEN
         FUN(1)=0.D0
         FUN3(1)=0.D0
-        DO I=1,NX
-          FUN(I+1) =AJ(I)*FBES(IAB,I)*HNOR(IAK,I)*(GBES2(IAK,I)+GBES1(IAK,I)+GBES0(IAK,I))
-          FUN3(I+1)=AJ(I)*GBES(IAB,I)*HNOR(IAK,I)*(GBES2(IAK,I)+GBES1(IAK,I)+GBES0(IAK,I))
-        ENDDO
+        FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
+        FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
+        
         AKE=  HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)                                         
         AKEM(IAB,IAK)=AKE
         AKE3= HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN3,1)
@@ -1136,13 +1121,17 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       FUN(1)=0.D0 
       FUN1(1)=0.D0
       FUN2(1)=0.D0 
-      FUN3(1)=0.D0                                          
-      DO I=1,NX
-        FUN(I+1) =AJ(I)*FBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK) 
-        FUN1(I+1)=AJ(I)*GBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)  
-        FUN2(I+1)=AJ(I)*FBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)
-        FUN3(I+1)=AJ(I)*GBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK)
-      ENDDO
+      FUN3(1)=0.D0
+      FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK) 
+      FUN1(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)  
+      FUN2(2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+      FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+      ! DO I=1,NX
+      !   FUN (I+1) = AJ(I)*FBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK) 
+      !   FUN1(I+1) = AJ(I)*GBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)  
+      !   FUN2(I+1) = AJ(I)*FBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)
+      !   FUN3(I+1) = AJ(I)*GBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK)
+      ! ENDDO
       APE=  B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
       APEM(IAB,IAK)=APE
       APE1= B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
