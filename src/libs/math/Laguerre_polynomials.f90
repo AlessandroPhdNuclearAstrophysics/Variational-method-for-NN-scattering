@@ -10,13 +10,6 @@ CONTAINS
     NX = SIZE(XX)
     NMAX = UBOUND(U,1) - 1
 
-    print *, 'SIZE(XX) =', SIZE(XX)
-    print *, 'LBOUND(XX) =', LBOUND(XX)
-    print *, 'UBOUND(XX) =', UBOUND(XX)
-    print *, 'SIZE(U) =', SIZE(U,1)
-    print *, 'LBOUND(U) =', LBOUND(U,1)
-    print *, 'UBOUND(U) =', UBOUND(U,1)
-
     DO I = 1, NX
       X = XX(I)
       U (0,I) = 1.D0

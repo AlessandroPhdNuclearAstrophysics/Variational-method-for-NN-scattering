@@ -755,25 +755,24 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
   SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS(AM, AM1)
     USE LAGUERRE_POLYNOMIAL_MOD
     IMPLICIT NONE
-    INTEGER, PARAMETER :: NNRAC = 100000
     DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX), INTENT(OUT) :: AM(NNN, NCH_MAX), AM1(NNN, NCH_MAX)
 
     DOUBLE PRECISION :: H5, HR ! Step size in r
     INTEGER :: I, IX, NX, NMX ! Number evenly spaced points
     DOUBLE PRECISION, ALLOCATABLE :: U0(:,:), U1(:,:), U2(:,:) 
-    DOUBLE PRECISION :: FBES(NCH_MAX, NNRAC), GBES(NCH_MAX, NNRAC)
     DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
     INTEGER :: L, S, J
     DOUBLE PRECISION :: VPW(NCH_MAX, NCH_MAX)
-    INTEGER :: IAB, IAK, LIK, IL, IB
-    DOUBLE PRECISION :: FUN(NNRAC), FUN1(NNRAC)
+    INTEGER :: IAB, IAK, LIK, IL, IB, NNL
     DOUBLE PRECISION :: AXXM1(NNN, NCH_MAX), AXX1
     DOUBLE PRECISION :: AKEM(NNN, NCH_MAX), AKE1, AKEM1(NNN, NCH_MAX)
     DOUBLE PRECISION :: APE, APE1, APEM(NNN, NCH_MAX), APEM1(NNN, NCH_MAX)
     
     INTEGER, SAVE :: NEQC
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FBES(:,:), GBES(:,:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: XX(:), AJ(:), YYL(:), YYB(:), A(:)
-    DOUBLE PRECISION, SAVE :: V0(NNE, NNRAC), V1(NNE, NNRAC), V2(NNE, NNRAC) 
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: V0(:,:), V1(:,:), V2(:,:) 
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: VV(:,:,:)
     INTEGER, SAVE :: ICONT(NCH_MAX, NNE)
     LOGICAL, SAVE :: FIRST_CALL = .TRUE.
@@ -791,14 +790,10 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       STOP
     ENDIF
 
-    IF (ABS(NX).GT.NNRAC) THEN
-      PRINT *, "Error: NX exceeds NNRAC"
-      STOP
-    ENDIF
-
   ! Initialize grid with r values
     !  WRITE(*,*)'NX =',NX
     IF (FIRST_CALL) THEN
+      ALLOCATE(FBES(NCH_MAX, NX), GBES(NCH_MAX, NX))
       ALLOCATE(XX(NX), AJ(NX), YYB(NX), YYL(NX), A(NX))
       XX(1:NX) = HR * [(I, I=1,NX)]
       AJ   = XX**2
@@ -812,12 +807,14 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
 
   ! Laguerre polynomial and their first two derivatives grid
     IF (FIRST_CALL) THEN
-      NMX = VARIATIONAL_PARAMS%NNL - 1
+      NNL = VARIATIONAL_PARAMS%NNL
+      NMX = NNL - 1
       APF = 2.D0
 
       ALLOCATE(U0(0:NMX, NX), U1(0:NMX, NX), U2(0:NMX, NX))
-
       CALL LAGUERRE_POLYNOMIAL(YYL, APF, U0, U1, U2)
+
+      ALLOCATE(V0(NNL, NX), V1(NNL, NX), V2(NNL, NX))
       DO IX = 1, NX
         XG = YYL(IX)
         FEXP = DEXP(-XG/2.D0)
@@ -870,6 +867,7 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       
       ! Prepare the indeces for the matrix elements
       CALL PREPARE_INDECES()
+      ALLOCATE(FUN(NX+1), FUN1(NX+1))
       FIRST_CALL = .FALSE.
     ENDIF
 
@@ -886,7 +884,7 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
           AXXM1(IB,IAK)=0.D0
           IF(IAB.EQ.IAK)THEN 
             FUN1(1)=0.D0
-            FUN1(2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*GBES(IAK,1:NX)
+            FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)
 
             AXX1=VARIATIONAL_PARAMS%E * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
             AXXM1(IB,IAK)=AXX1
@@ -898,8 +896,7 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
           AKEM1(IB,IAK)=0.D0     
           IF(IAB.EQ.IAK)THEN
             FUN1(1)=0.D0
-            FUN1(2:NX+1) = AJ(1:NX)*GBES(IAK,1:NX)*( V2(IL,1:NX) &
-                    + 2.D0*V1(IL,1:NX)/XX(1:NX) - LIK*V0(IL,1:NX)/XX(1:NX)**2)
+            FUN1(2:) = AJ*GBES(IAK,:)*( V2(IL,:) + 2.D0*V1(IL,:)/XX(:) - LIK*V0(IL,:)/XX(:)**2)
 
             AKE1= -HTM * B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)                                
             AKEM1(IB,IAK)=AKE1
@@ -916,12 +913,13 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
         
         ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
           FUN(1)=0.D0
-          FUN1(1)=0.D0    
-          FUN (2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
-          FUN1(2:NX+1) = AJ(1:NX)*V0(IL,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+          FUN1(1)=0.D0
+          FUN (2:) = AJ*V0(IL,:)*FBES(IAK,:)*VV(:,IAB,IAK)
+          FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)*VV(:,IAB,IAK)
 
           APE=B5(1,NX,0,0,H5,0.D0,0.D0,FUN,1)
           APEM(IB,IAK)=APE
+
           APE1=B5(1,NX,0,0,H5,0.D0,0.D0,FUN1,1)
           APEM1(IB,IAK)=APE1
           ! write(113,*) iab, iak, il, IB, ape, ape1
