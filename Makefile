@@ -7,15 +7,21 @@ DEBUG ?= 0
 GMON ?= 0
 
 ifeq ($(DEBUG),1)
-  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fbacktrace -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero -fdefault-real-8 -fdefault-double-8
+  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
+           -Wall -g -fcheck=all -finit-real=snan -finit-local-zero \
+           -fbacktrace -fdefault-real-8 -fdefault-double-8
+  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero \
+            -fdefault-real-8 -fdefault-double-8
 else
-  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -O3 -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -O3 -fdefault-real-8 -fdefault-double-8
+  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
+           -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
+           -fdefault-real-8 -fdefault-double-8
+  LDFLAGS = -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
+            -fdefault-real-8 -fdefault-double-8
 endif
 
 OMP ?= 0
-ifeq ($(OMP),1)
+ifeq ($(OMP),1)	# Solo se serve davvero OpenMP su NB >> 1e6
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
 endif
@@ -26,6 +32,7 @@ ifeq ($(GMON),1)
 endif
 
 LDFLAGS += -lgsl -lgslcblas -llapack -lblas
+
 
 # Define directory paths
 SRC_DIR := src
