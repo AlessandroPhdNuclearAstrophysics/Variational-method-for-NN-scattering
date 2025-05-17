@@ -21,7 +21,7 @@ else
 endif
 
 OMP ?= 0
-ifeq ($(OMP),1)	# Solo se serve davvero OpenMP su NB >> 1e6
+ifeq ($(OMP),1)	
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
 endif

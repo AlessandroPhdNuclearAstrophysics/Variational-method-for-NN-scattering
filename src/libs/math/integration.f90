@@ -149,14 +149,14 @@ CONTAINS
     ! Parallel inner loop with static schedule and minimal overhead
     ! Choose parallel or serial based on workload
     IF (NB .GT. 1000) THEN
-      !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(idx) REDUCTION(+:S2,S3,S4) SCHEDULE(STATIC)
+      !!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(idx) REDUCTION(+:S2,S3,S4) SCHEDULE(STATIC)
       DO I = 1, NB
         idx = L0 + 4*(I-1)
         S2 = S2 + A(idx+2)
         S3 = S3 + A(idx+1) + A(idx+3)
         S4 = S4 + A(idx)   + A(idx+4)
       END DO
-      !$OMP END PARALLEL DO
+      !!$OMP END PARALLEL DO
     ELSE
       DO I = 1, NB
         idx = L0 + 4*(I-1)
