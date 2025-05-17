@@ -14,8 +14,11 @@ else
   LDFLAGS = -Wall -O3 -fdefault-real-8 -fdefault-double-8
 endif
 
-# FFLAGS += -fopenmp
-# LDFLAGS += -fopenmp
+OMP ?= 0
+ifeq ($(OMP),1)
+	FFLAGS += -fopenmp
+	LDFLAGS += -fopenmp
+endif
 
 ifeq ($(GMON),1)
 	FFLAGS += -pg

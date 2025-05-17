@@ -14,7 +14,6 @@ MODULE SCATTERING_NN_VARIATIONAL
   INTEGER, PARAMETER :: NNE = 80
   INTEGER, PARAMETER :: NCH_MAX = 2
   INTEGER, PARAMETER :: NNN = NNE * 2
-  INTEGER, PARAMETER :: NNR = 100000
   INTEGER :: NCH
   INTEGER :: NDIM ! GIVEN BY CORE_CORE_MATRIX_ELEMENTS
   INTEGER :: NEQ  ! GIVEN BY ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
@@ -626,12 +625,9 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
     IF (FIRST_CALL) THEN
       CALL GAULAG(NX, XPNT,PWEIGHT)
 
-      DO I=1,NX                                                    
-        XX(I)=XPNT(I)/GAMMA
-        WG(I)=PWEIGHT(I)                                   
-        YY(I)=XPNT(I)     ! grid for evaluating Laguerre
-      ENDDO  
-
+      XX = XPNT/GAMMA
+      WG = PWEIGHT
+      YY = XPNT         ! grid for evaluating Laguerre
       !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
       
       NMX = VARIATIONAL_PARAMS%NNL-1                                   
@@ -680,10 +676,10 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
     ! SI CALCOLA ENERGIA CINETICA
           AKEM(IB,IK)=0.D0              
           IF(IAB.EQ.IAK)THEN
+            FUN = V0(IL,:)*( V2(IR,:) + 2.D0*V1(IR,:)/XX(:) &
+                  -LIK*V0(IR,:)/XX(:)**2 )
             SUM=0.D0
             DO I=1,NX
-              FUN(I)=V0(IL,I)*(V2(IR,I)+2.D0*V1(IR,I)/XX(I) &  
-                              -LIK*V0(IR,I)/XX(I)**2 )
               SUM=SUM + XX(I)**2*FUN(I)*WG(I) 
             ENDDO                                                                 
             AKEM(IB,IK)=-HTM*SUM/GAMMA                                       
@@ -696,9 +692,9 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
           ENDIF
 
     ! SI CALCOLA ENERGIA POTENZIALE
-          SUM=0.D0                                         
+          SUM=0.D0                             
+          FUN = V0(IL,:)*V0(IR,:)*V(:,IAB,IAK)            
           DO I=1,NX
-            FUN(I)=V0(IL,I)*V0(IR,I)*V(I,IAB,IAK)     
             SUM=SUM+XX(I)*XX(I)*FUN(I)*WG(I)
           ENDDO
           APEM(IB,IK)=1./GAMMA*SUM                                    
@@ -741,26 +737,27 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
 
   SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS(AM, AM1)
     IMPLICIT NONE
+    INTEGER, PARAMETER :: NNRAC = 100000
     DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX), INTENT(OUT) :: AM(NNN, NCH_MAX), AM1(NNN, NCH_MAX)
 
     DOUBLE PRECISION :: H5, HR ! Step size in r
     INTEGER :: I, IX, NX, NMX ! Number evenly spaced points
-    DOUBLE PRECISION :: YYB(NNR)
-    DOUBLE PRECISION :: U0(0:NNE, NNR), U1(0:NNE, NNR), U2(0:NNE, NNR) 
-    DOUBLE PRECISION :: FBES(NCH_MAX, NNR), GBES(NCH_MAX, NNR)
+    DOUBLE PRECISION :: YYB(NNRAC)
+    DOUBLE PRECISION :: U0(0:NNE, NNRAC), U1(0:NNE, NNRAC), U2(0:NNE, NNRAC) 
+    DOUBLE PRECISION :: FBES(NCH_MAX, NNRAC), GBES(NCH_MAX, NNRAC)
     DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
     INTEGER :: L, S, J
-    DOUBLE PRECISION :: VPW(2, 2)
+    DOUBLE PRECISION :: VPW(NCH_MAX, NCH_MAX)
     INTEGER :: IAB, IAK, LIK, IL, IB
-    DOUBLE PRECISION :: FUN(NNR), FUN1(NNR)
+    DOUBLE PRECISION :: FUN(NNRAC), FUN1(NNRAC)
     DOUBLE PRECISION :: AXXM1(NNN, NCH_MAX), AXX1
     DOUBLE PRECISION :: AKEM(NNN, NCH_MAX), AKE1, AKEM1(NNN, NCH_MAX)
     DOUBLE PRECISION :: APE, APE1, APEM(NNN, NCH_MAX), APEM1(NNN, NCH_MAX)
     
     INTEGER, SAVE :: NEQC
-    DOUBLE PRECISION, SAVE :: XX(NNR), AJ(NNR), YYL(NNR), A(NNR)
-    DOUBLE PRECISION, SAVE :: V0(NNE, NNR), V1(NNE, NNR), V2(NNE, NNR) 
-    DOUBLE PRECISION, SAVE :: VV(NNR, NCH_MAX, NCH_MAX)
+    DOUBLE PRECISION, SAVE :: XX(NNRAC), AJ(NNRAC), YYL(NNRAC), A(NNRAC)
+    DOUBLE PRECISION, SAVE :: V0(NNE, NNRAC), V1(NNE, NNRAC), V2(NNE, NNRAC) 
+    DOUBLE PRECISION, SAVE :: VV(NNRAC, NCH_MAX, NCH_MAX)
     INTEGER, SAVE :: ICONT(NCH_MAX, NNE)
     LOGICAL, SAVE :: FIRST_CALL = .TRUE.
     
@@ -777,8 +774,8 @@ FUNCTION NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFI
       STOP
     ENDIF
 
-    IF (ABS(NX).GT.NNR) THEN
-      PRINT *, "Error: NX exceeds NNR"
+    IF (ABS(NX).GT.NNRAC) THEN
+      PRINT *, "Error: NX exceeds NNRAC"
       STOP
     ENDIF
 
