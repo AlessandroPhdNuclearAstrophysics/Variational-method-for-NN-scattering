@@ -13,7 +13,7 @@ MODULE SCATTERING_NN_VARIATIONAL
 
   INTEGER, PARAMETER :: NNE = 80
   INTEGER, PARAMETER :: NCH_MAX = 2
-  INTEGER, PARAMETER :: NNN = NNE * 2
+  INTEGER, PARAMETER :: NNN = NNE * NCH_MAX
   INTEGER :: NCH
   INTEGER :: NDIM ! GIVEN BY CORE_CORE_MATRIX_ELEMENTS
   INTEGER :: NEQ  ! GIVEN BY ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
@@ -22,9 +22,9 @@ MODULE SCATTERING_NN_VARIATIONAL
   DOUBLE PRECISION, PARAMETER :: MP = 938.272029D0
   DOUBLE PRECISION, PARAMETER :: MN = 939.565630D0
   DOUBLE PRECISION, PARAMETER :: MR = MP * MN / (MP + MN)
-  DOUBLE PRECISION, PARAMETER :: PI = 4*DATAN(1.0D0)
-  COMPLEX*16, PARAMETER ::       IM = (0.0D0, 1.0D0)
   DOUBLE PRECISION, PARAMETER :: ONE = 1.0D0, ZERO = 0.0D0
+  COMPLEX*16, PARAMETER ::       IM = (ZERO, ONE)
+  DOUBLE PRECISION, PARAMETER :: PI = 4*DATAN(ONE)
 
   DOUBLE PRECISION :: K, HTM, M
   INTEGER :: LC(NCH_MAX), T, T1Z, T2Z
@@ -351,8 +351,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       DO IAB=1,NEQ
         DO IK=1,NDIM
-          SOMMA  = 0.D0
-          SOMMA1 = 0.D0
+          SOMMA  = ZERO
+          SOMMA1 = ZERO
           DO IB=1,NDIM
             SOMMA  = SOMMA  + XRCOEFF(IAB,IB)*C(IB,IK) 
             SOMMA1 = SOMMA1 + XICOEFF(IAB,IB)*C(IB,IK) 
@@ -365,7 +365,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       DO IAB=1,NEQ
         DO IB=1,NDIM
-          SOMMA=0.D0
+          SOMMA = ZERO
           DO IAK=1,NEQ
             SOMMA = SOMMA + ANN(IAB,IAK)*XICOEFF(IAK,IB)
           ENDDO
@@ -377,9 +377,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       DO IAB=1,NEQ
       DO IAK=1,NEQ
-        SOMMA  = 0.D0
-        SOMMA1 = 0.D0
-        SOMMA2 = 0.D0
+        SOMMA  = ZERO
+        SOMMA1 = ZERO
+        SOMMA2 = ZERO
         DO IK=1,NDIM
           SOMMA  = SOMMA  + BD5(IAB,IK)*XRCOEFV(IK,IAK)
           SOMMA1 = SOMMA1 + BD5(IAB,IK)*RCIV(IK,IAK)
@@ -393,21 +393,21 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       DO I=1,NEQ
       DO IAB=1,NEQ
-        SOMMA  = 0.D0
-        SOMMA1 = 0.D0
-        SOMMA2 = 0.D0
-        SOMMA3 = 0.D0
-        SOMMA4 = 0.D0
-        SOMMA5 = 0.D0
-        SOMMA6 = 0.D0
+        SOMMA  = ZERO
+        SOMMA1 = ZERO
+        SOMMA2 = ZERO
+        SOMMA3 = ZERO
+        SOMMA4 = ZERO
+        SOMMA5 = ZERO
+        SOMMA6 = ZERO
         DO IAK=1,NEQ
-          SOMMA =SOMMA  + BD2(I,IAK) * ANN(IAK,IAB)
-          SOMMA1=SOMMA1 + RD0(I,IAK) * ANN(IAK,IAB)
-          SOMMA2=SOMMA2 + BD3(I,IAK) * ANN(IAK,IAB) 
-          SOMMA3=SOMMA3 + ARI(I,IAK) * ANN(IAK,IAB) 
-          SOMMA4=SOMMA4 + AIR(I,IAK) * ANN(IAK,IAB) 
-          SOMMA5=SOMMA5 + BD1(I,IAK) * ANN(IAK,IAB)
-          SOMMA6=SOMMA6 + AII(I,IAK) * ANN(IAK,IAB)
+          SOMMA  = SOMMA  + BD2(I,IAK) * ANN(IAK,IAB)
+          SOMMA1 = SOMMA1 + RD0(I,IAK) * ANN(IAK,IAB)
+          SOMMA2 = SOMMA2 + BD3(I,IAK) * ANN(IAK,IAB)
+          SOMMA3 = SOMMA3 + ARI(I,IAK) * ANN(IAK,IAB)
+          SOMMA4 = SOMMA4 + AIR(I,IAK) * ANN(IAK,IAB)
+          SOMMA5 = SOMMA5 + BD1(I,IAK) * ANN(IAK,IAB)
+          SOMMA6 = SOMMA6 + AII(I,IAK) * ANN(IAK,IAB)
         ENDDO
         CD2(I,IAB) = SOMMA
         CD3(I,IAB) = SOMMA1
@@ -421,8 +421,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       
       DO I=1,NEQ
       DO IAB=1,NEQ
-        SOMMA  = 0.D0
-        SOMMA1 = 0.D0
+        SOMMA  = ZERO
+        SOMMA1 = ZERO
         DO IAK=1,NEQ
           SOMMA  = SOMMA  + RD2(I,IAK) * ANN(IAK,IAB)
           SOMMA1 = SOMMA1 + RD3(I,IAK) * ANN(IAK,IAB)
@@ -575,7 +575,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       DOUBLE PRECISION :: SI2E, CI2E, CX, SX
       SM1  = SMAT(1,1)*SMAT(2,2)-SMAT(1,2)*SMAT(1,2)
       SI2E =-SMAT(1,2)*SMAT(1,2)/SM1
-      CI2E = 1.D0 - SI2E
+      CI2E = ONE - SI2E
       SI2E = DSQRT(SI2E)
       CI2E = DSQRT(CI2E)
       
@@ -585,12 +585,12 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       CX  = DREAL(SM1)
       SX  = DIMAG(SM1)
       DELTA1S = DACOS(CX)*180.D0/PI
-      IF(SX.LT.0.D0) DELTA1S = -DELTA1S
+      IF(SX.LT.ZERO) DELTA1S = -DELTA1S
       
       CX = DREAL(SM2)
       SX = DIMAG(SM2)
       DELTA2S = DACOS(CX)*180.D0/PI
-      IF(SX.LT.0.D0) DELTA2S = -DELTA2S
+      IF(SX.LT.ZERO) DELTA2S = -DELTA2S
 
       AMIXGS = (0.5D0*DASIN(SI2E))*180.D0/PI
 
@@ -644,7 +644,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ALLOCATE(V0(NNL,NX), V1(NNL,NX), V2(NNL,NX))
       DO IX=1, NX
         DO I=0, NMX
-          ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))
+          ANL = DSQRT(DGAMMA(I+ONE)*GAMMA**3/DGAMMA(I+3.D0))
 
           V0(I+1,IX) = ANL * U0(I,IX)
           V1(I+1,IX) = ANL * GAMMA * (U1(I,IX) - 0.5D0*U0(I,IX))
@@ -684,14 +684,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           IK=ICONT(IAK,IR)       
 
     ! SI CALCOLA LA NORMA
-          AXX(IB,IK)=0.D0
-          IF(IB.EQ.IK) AXX(IB,IK) = 1.D0
+          AXX(IB,IK) = ZERO
+          IF(IB.EQ.IK) AXX(IB,IK) = ONE
     ! SI CALCOLA ENERGIA CINETICA
-          AKEM(IB,IK)=0.D0              
+          AKEM(IB,IK) = ZERO
           IF(IAB.EQ.IAK)THEN
             FUN = V0(IL,:)*( V2(IR,:) + 2.D0*V1(IR,:)/XX(:) &
                   -LIK*V0(IR,:)/XX(:)**2 )
-            SUM=0.D0
+            SUM = ZERO
             DO I=1,NX
               SUM = SUM + XX(I)**2*FUN(I)*WG(I) 
             ENDDO                                                                 
@@ -705,12 +705,12 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           ENDIF
 
     ! SI CALCOLA ENERGIA POTENZIALE
-          SUM=0.D0                             
+          SUM = ZERO                             
           FUN = V0(IL,:)*V0(IR,:)*V(:,IAB,IAK)            
           DO I=1,NX
             SUM = SUM + XX(I)*XX(I)*FUN(I)*WG(I)
           ENDDO
-          APEM(IB,IK)=1./GAMMA*SUM                                    
+          APEM(IB,IK) = SUM/GAMMA
 
     ! SI CALCOLA HAMILTONIANA    
           ! AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
@@ -799,7 +799,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       AJ   = XX**2
       YYB  = K*XX
       YYL  = GAMMA*XX
-      A    = 1.D0 - DEXP(-VARIATIONAL_PARAMS%EPS*XX)
+      A    = ONE - DEXP(-VARIATIONAL_PARAMS%EPS*XX)
     ELSE
       YYB(1:NX) = K*XX(1:NX)
     ENDIF
@@ -819,7 +819,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         XG = YYL(IX)
         FEXP = DEXP(-XG/2.D0)
         DO I = 0, NMX
-          ANL = DSQRT(DGAMMA(I+1.D0)*GAMMA**3/DGAMMA(I+3.D0))*FEXP
+          ANL = DSQRT(DGAMMA(I+ONE)*GAMMA**3/DGAMMA(I+3.D0))*FEXP
 
           V0(I+1, IX) = ANL * U0(I,IX)
           V1(I+1, IX) = ANL * GAMMA * ( U1(I,IX) -0.5D0*U0(I,IX) )
@@ -882,9 +882,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           IB = ICONT(IAB, IL)
 
         ! Evaluate the normalization core-irregular (axx1)
-          AXXM1(IB,IAK)=0.D0
+          AXXM1(IB,IAK) = ZERO
           IF(IAB.EQ.IAK)THEN 
-            FUN1(1)=0.D0
+            FUN1(1)  = ZERO
             FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)
 
             AXX1=VARIATIONAL_PARAMS%E * B5_SINGLE(NX,H5,FUN1,1)
@@ -893,14 +893,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           ENDIF
 
         ! Evaluate the kinetic energy core-irregular (ake1)
-          AKE1=0.D0
-          AKEM1(IB,IAK)=0.D0     
+          AKE1 = ZERO
+          AKEM1(IB,IAK) = ZERO
           IF(IAB.EQ.IAK)THEN
-            FUN1(1)=0.D0
+            FUN1(1) = ZERO
             FUN1(2:) = AJ*GBES(IAK,:)*( V2(IL,:) + 2.D0*V1(IL,:)/XX(:) - LIK*V0(IL,:)/XX(:)**2)
 
-            AKE1= -HTM * B5_SINGLE(NX,H5,FUN1,1)                                
-            AKEM1(IB,IAK)=AKE1
+            AKE1 = -HTM * B5_SINGLE(NX,H5,FUN1,1)                                
+            AKEM1(IB,IAK) = AKE1
             ! write(112,*) iab, iak, il, IB, ake1
           ENDIF
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
@@ -913,16 +913,16 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         
         
         ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
-          FUN (1)=0.D0
-          FUN1(1)=0.D0
+          FUN (1) = ZERO
+          FUN1(1) = ZERO
           FUN (2:) = AJ*V0(IL,:)*FBES(IAK,:)*VV(:,IAB,IAK)
           FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)*VV(:,IAB,IAK)
 
-          APE=B5_SINGLE(NX,H5,FUN,1)
-          APEM(IB,IAK)=APE
+          APE = B5_SINGLE(NX,H5,FUN,1)
+          APEM(IB,IAK) = APE
 
-          APE1=B5_SINGLE(NX,H5,FUN1,1)
-          APEM1(IB,IAK)=APE1
+          APE1 = B5_SINGLE(NX,H5,FUN1,1)
+          APEM1(IB,IAK) = APE1
           ! write(113,*) iab, iak, il, IB, ape, ape1
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
             !  WRITE(*,*)
@@ -935,8 +935,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
         ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
 
-          AM(IB,IAK) = 1.D0/HTM * APEM(IB,IAK)
-          AM1(IB,IAK)= 1.D0/HTM * (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK))
+          AM(IB,IAK) = APEM(IB,IAK) / HTM
+          AM1(IB,IAK)= (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK)) / HTM
           
           IF(IB.EQ.1.AND.IAK.EQ.1)THEN
             !  WRITE(*,*)
@@ -955,7 +955,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS()
       use gsl_bessel
       IMPLICIT NONE
-      
+      DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.D-8 ! fm^-1
       DOUBLE PRECISION :: AG, GBSS, FBSS
       INTEGER :: LL
 
@@ -965,14 +965,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         DO IX=1, NX                                 
           XG=YYB(IX)
           AG=A(IX)
-          IF(K.LE.1.D-8)THEN                                   !(K->0)
+          IF(K.LE.K_SMALL)THEN                                   !(K->0)
             FBES(I,IX)=XX(IX)**LL
-            GBES(I,IX)=-1./((2*LL+1.)*XX(IX)**(LL+1.D0))*AG**(2*LL+1.D0)
+            GBES(I,IX)=-ONE/((2*LL+ONE)*XX(IX)**(LL+ONE))*AG**(2*LL+ONE)
           ELSE  
             FBSS = SPHERICAL_J(LL, XG)
             GBSS = SPHERICAL_Y(LL, XG)
             FBES(I,IX)=K**(LL+0.5D0)*FBSS/(K**LL)
-            GBES(I,IX)=-(GBSS*K**(LL+1.D0)*AG**(2*LL+1.D0))/(K**(LL+0.5D0))
+            GBES(I,IX)=-(GBSS*K**(LL+ONE)*AG**(2*LL+ONE))/(K**(LL+0.5D0))
             ! write(500+l,*) xg, FBSS, GBSS, fbes(i,IX), gbes(i,IX)
           ENDIF
         ENDDO
@@ -1002,6 +1002,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     USE gsl_bessel
     USE INTEGRATION_MOD
     IMPLICIT NONE
+    DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.D-8 ! fm^-1
     DOUBLE PRECISION, DIMENSION(NCH, NCH), INTENT(OUT) :: AM, AM1, AM2, AM3
     INTEGER, PARAMETER :: NNRAA = 200
     DOUBLE PRECISION :: H, H5, RANGE, R
@@ -1032,7 +1033,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     EPS = VARIATIONAL_PARAMS%EPS
     IF (FIRST_CALL) THEN
       YY(1:NX) = K*XX(1:NX)
-      A(1:NX)  = 1.D0 - DEXP(-EPS*XX(1:NX))
+      A(1:NX)  = ONE - DEXP(-EPS*XX(1:NX))
       B(1:NX)  = EPS * DEXP(-EPS*XX(1:NX))
     ELSE
       YY(1:NX) = K*XX(1:NX)
@@ -1046,14 +1047,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         XG=YY(IX)
         AG=A(IX)
         BG=B(IX)
-        IF(K.LE.1.D-8) THEN
+        IF(K.LE.K_SMALL) THEN
           FBES(I,IX)=XX(IX)**L
-          GBES(I,IX)=-1./((2*L+1.)*XX(IX)**(L+1.D0))*AG**(2*L+1.D0)
-          GBES0(I,IX)=1./((2*L+1.)*XX(IX)**(L+1.D0))*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
-                    +2*(2*L+1.)*BG*(AG/XX(IX))-L*(L+1.)*(AG/XX(IX))**2)
-          GBES1(I,IX)=-2.*AG*((2*L+1.)*BG+AG/XX(IX))*(L+1.)/((2*L+1.)*XX(IX)**(L+2.))
-          GBES2(I,IX)=AG**2*(L+1.)*(L+2.)/((2*L+1.)*XX(IX)**(L+3.))
-          HNOR(I,IX)=AG**(2*L-1.)
+          GBES(I,IX)=-ONE/((2*L+ONE)*XX(IX)**(L+ONE))*AG**(2*L+ONE)
+          GBES0(I,IX)=ONE/((2*L+ONE)*XX(IX)**(L+ONE))*(EPS*BG*(2*L+ONE)*((2*L+ONE)*(BG/EPS)-ONE) &
+                    +2*(2*L+ONE)*BG*(AG/XX(IX))-L*(L+ONE)*(AG/XX(IX))**2)
+          GBES1(I,IX)=-2.*AG*((2*L+ONE)*BG+AG/XX(IX))*(L+ONE)/((2*L+ONE)*XX(IX)**(L+2.))
+          GBES2(I,IX)=AG**2*(L+ONE)*(L+2.)/((2*L+ONE)*XX(IX)**(L+3.))
+          HNOR(I,IX)=AG**(2*L-ONE)
           WRITE(200+L,*) XX(IX), FBES(I,IX), GBES(I,IX), GBES1(I,IX), GBES2(I,IX)
         ELSE
           FBSS = SPHERICAL_J(L, XG)
@@ -1062,12 +1063,12 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           GBSS2= SPHERICAL_YPP(L, XG)
           
           FBES(I,IX)=K**(L+0.5D0)*FBSS/(K**L)
-          GBES(I,IX)=-(GBSS*K**(L+1.D0)*AG**(2*L+1.D0))/(K**(L+0.5D0))
-          GBES0(I,IX)=GBSS*(EPS*BG*(2*L+1.)*((2*L+1.)*(BG/EPS)-1.) &
-                    +2*(2*L+1.)*BG*(AG/XX(IX))-L*(L+1.)*(AG/XX(IX))**2)
-          GBES1(I,IX)=GBSS1*2.*K*AG*((2*L+1.)*BG + AG/XX(IX))                   
+          GBES(I,IX)=-(GBSS*K**(L+ONE)*AG**(2*L+ONE))/(K**(L+0.5D0))
+          GBES0(I,IX)=GBSS*(EPS*BG*(2*L+ONE)*((2*L+ONE)*(BG/EPS)-ONE) &
+                    +2*(2*L+ONE)*BG*(AG/XX(IX))-L*(L+ONE)*(AG/XX(IX))**2)
+          GBES1(I,IX)=GBSS1*2.*K*AG*((2*L+ONE)*BG + AG/XX(IX))
           GBES2(I,IX)=(K**2)*(AG**2)*GBSS2
-          HNOR(I,IX)=(K**(L+1.D0))*(AG**(2*L-1.))/(K**(L+0.5D0))
+          HNOR(I,IX)=(K**(L+ONE))*(AG**(2*L-ONE))/(K**(L+0.5D0))
           ! WRITE(200+L,*) XX(IX), FBES(I,IX), GBES(I,IX), GBES1(I,IX), GBES2(I,IX), HNOR(I,IX)
         ENDIF
       ENDDO
@@ -1093,13 +1094,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     DO IAB=1,NEQ          
     DO IAK=1,NEQ
   ! SI CALCOLA NORMA DEL CASO REGOLARE-IRREGOLARE (AXX), CASO IRREGOLARE-IRREGOLARE (AXX3)  
-      AXX=0.D0
-      AXX3=0.D0
-      AXXM(IAB,IAK)=0.D0
-      AXXM3(IAB,IAK)=0.D0
+      AXX = ZERO
+      AXX3= ZERO
+      AXXM(IAB,IAK)  = ZERO
+      AXXM3(IAB,IAK) = ZERO
       IF(IAB.EQ.IAK)THEN 
-        FUN (1)=0.D0
-        FUN3(1)=0.D0
+        FUN (1) = ZERO
+        FUN3(1) = ZERO
         FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)
         FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)
 
@@ -1114,13 +1115,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDIF
 
   ! SI CALCOLA ENERGIA CINETICA DEL CASO REGOLARE-IRREGOLARE (AKE) E CASO IRREGOLARE-IRREGOLARE (AKE3)
-      AKE=0.D0
-      AKE3=0.D0
-      AKEM(IAB,IAK)=0.D0 
-      AKEM3(IAB,IAK)=0.D0       
+      AKE  = ZERO
+      AKE3 = ZERO
+      AKEM(IAB,IAK)  = ZERO
+      AKEM3(IAB,IAK) = ZERO
       IF(IAB.EQ.IAK)THEN
-        FUN(1)=0.D0
-        FUN3(1)=0.D0
+        FUN(1)  = ZERO
+        FUN3(1) = ZERO
         FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
         FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
 
@@ -1136,14 +1137,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   ! SI CALCOLA ENERGIA POTENZIALE DEL CASO REGOLARE-IRREGOLARE (APE), 
   !      IRREGOLARE-REGOLARE (APE1), REGOLARE-REGOLARE (APE2), IRREGOLARE-IRREGOLARE (APE3)
-      APE=0.D0
-      APE1=0.D0
-      APE2=0.D0
-      APE3=0.D0
-      FUN(1)=0.D0 
-      FUN1(1)=0.D0
-      FUN2(1)=0.D0 
-      FUN3(1)=0.D0
+      APE  = ZERO
+      APE1 = ZERO
+      APE2 = ZERO
+      APE3 = ZERO
+      FUN(1)  = ZERO
+      FUN1(1) = ZERO
+      FUN2(1) = ZERO
+      FUN3(1) = ZERO
       FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK) 
       FUN1(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)  
       FUN2(2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
@@ -1173,12 +1174,12 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   ! SI CALCOLA HAMILTONIANA PER I VARI CASI:REGOLARE-IRREGOLARE(AM), IRREGOLARE-REGOLARE(AM1),
   !         REGOLARE-REGOLARE(AM2),IRREGOLARE-IRREGOLARE(AM3)
-      AM(IAB,IAK)= 1.D0/HTM*(AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) 
-      AM1(IAB,IAK)=1.D0/HTM*APEM1(IAB,IAK)
-      AM2(IAB,IAK)=1.D0/HTM*APEM2(IAB,IAK)
-      AM3(IAB,IAK)=1.D0/HTM*(AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK))
+      AM(IAB,IAK) = (AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) / HTM
+      AM1(IAB,IAK)= APEM1(IAB,IAK) / HTM
+      AM2(IAB,IAK)= APEM2(IAB,IAK) / HTM
+      AM3(IAB,IAK)= (AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK)) / HTM
 
-      VER(IAB,IAK)=(AM1(IAB,IAK)-AM(IAB,IAK)) 
+      VER(IAB,IAK)= (AM1(IAB,IAK)-AM(IAB,IAK)) 
     ENDDO 
     ENDDO 
 
