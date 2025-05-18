@@ -8,6 +8,7 @@ MODULE QUANTUM_NUMBERS
     INTEGER, ALLOCATABLE, PRIVATE :: T(:)
     INTEGER, PRIVATE :: TZ
     INTEGER, PRIVATE :: NCH
+    LOGICAL, PRIVATE :: COUPLED = .FALSE.
   ENDTYPE SCATTERING_CHANNEL 
 
   INTERFACE GET_CHANNEL_NAME
@@ -54,6 +55,7 @@ CONTAINS
           CHANNEL%S(1) = 1
           CHANNEL%L(2) = J+1
           CHANNEL%S(2) = 1
+          CHANNEL%COUPLED = .TRUE.
         ENDIF
       ELSE
         IF (IS_EVEN) THEN
@@ -61,6 +63,7 @@ CONTAINS
           CHANNEL%S(1) = 1
           CHANNEL%L(2) = J + 1
           CHANNEL%S(2) = 1
+          CHANNEL%COUPLED = .TRUE.
         ELSE
           CHANNEL%L(1) = J
           CHANNEL%S(1) = 0
@@ -143,6 +146,7 @@ CONTAINS
         CHANNEL%S(2) = S
         CHANNEL%T(1) = EVALUATE_T(J-1, S, TZ)
         CHANNEL%T(2) = EVALUATE_T(J+1, S, TZ)
+        CHANNEL%COUPLED = .TRUE.
       ELSE
         CHANNEL%NCH = 1
         ALLOCATE(CHANNEL%L(1), CHANNEL%S(1), CHANNEL%T(1))
