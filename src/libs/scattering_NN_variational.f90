@@ -97,18 +97,20 @@ CONTAINS
 
     K = DSQRT(2*E*MR) / HC
 
-    ! PRINT 5
-    ! PRINT 15, "L", "S", "T", "TZ", "J"
-    ! PRINT 5
+    IF (PRINT_I) THEN
+      PRINT 5
+      PRINT 15, "L", "S", "T", "TZ", "J"
+      PRINT 5
+    ENDIF
     LC(1) = L
     NCH = 1
-    ! PRINT 20, LC(1), S, T, TZ, J
-    IF (J-L.EQ.1) THEN 
+    IF (PRINT_I) PRINT 20, LC(1), S, T, TZ, J
+    IF (J-L.EQ.1) THEN
       LC(2) = L + 2
-      ! PRINT 20, LC(2), S, T, TZ, J
+      IF (PRINT_I) PRINT 20, LC(2), S, T, TZ, J
       NCH = 2
     ENDIF
-    ! PRINT 5
+    IF (PRINT_I) PRINT 5
 
 
   5 FORMAT(30("-"))
