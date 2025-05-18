@@ -28,6 +28,7 @@ MODULE SCATTERING_NN_VARIATIONAL
 
   DOUBLE PRECISION :: K, HTM, M
   INTEGER :: LC(NCH_MAX), T, T1Z, T2Z
+  LOGICAL :: PRINT_I
 
   TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
     INTEGER :: J, L, S, TZ, IPOT, ILB, LEMP
@@ -123,14 +124,16 @@ CONTAINS
   ! IPOT  : Potential type
   ! ILB   : Interaction type
   ! LEMP  : Set EM potential, if 0 then only pure Coulomb
-SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, PRINT_COEFFICIENTS)
+SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
+   PRINT_COEFFICIENTS, PRINT_INFORMATIONS)
   IMPLICIT NONE
 ! INPUT PARAMETERS
   DOUBLE PRECISION, INTENT(IN) :: E
   INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
-  LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS
+  LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS
   TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
 
+  LOGICAL :: PRINT_C
 ! VARIABLES AND PARAMETERS FOR DGESV
   DOUBLE PRECISION, DIMENSION(NNN, NNN) :: C, CC, CCC
   DOUBLE PRECISION, DIMENSION(NNN, NCH_MAX) :: CAR, CAI
@@ -153,18 +156,33 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 ! S-MATRIX
   DOUBLE COMPLEX :: SMAT(NCH_MAX, NCH_MAX)
+
+
+  IF (PRESENT(PRINT_COEFFICIENTS)) THEN
+    PRINT_C = PRINT_COEFFICIENTS
+  ELSE
+    PRINT_C = .FALSE.
+  ENDIF
+
+  IF (PRESENT(PRINT_INFORMATIONS)) THEN
+    PRINT_I = PRINT_INFORMATIONS
+  ELSE
+    PRINT_I = .FALSE.
+  ENDIF
   
 ! INITIALIZE THE VARIATIONAL PARAMETERS
   CALL SET_VARIATIONAL_PARAMETERS(E, J, L, S, TZ, IPOT, ILB, LEMP)
 
-  ! CALL PRINT_INFO()
+  IF (PRINT_I) CALL PRINT_INFO()
 
 ! Evaluating the matrix elements
-  CALL PRINT_DIVIDER
+  IF (PRINT_I) CALL PRINT_DIVIDER
   CALL ASYMPTOTIC_CORE_MATRIX_ELEMENTS      (CAR, CAI)
-  CALL PRINT_DIVIDER
+  
+  IF (PRINT_I) CALL PRINT_DIVIDER
   CALL CORE_CORE_MATRIX_ELEMENTS            (C)
-  CALL PRINT_DIVIDER
+  
+  IF (PRINT_I) CALL PRINT_DIVIDER
 
   DO IAK=1, NEQ
 ! Preparing the matrix elements for the diagonalization
@@ -177,32 +195,26 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   ! Evaluating for the "c_{n, alpha}" coefficients
     CALL DGESV(NDIM, 1, CC , NNN, IPIV, CARR, NNN, INFO)
     CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-    !  WRITE(*,*) "INFO: ", INFO
+    IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
     CALL DGESV(NDIM, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
     CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
-    !  WRITE(*,*) "INFO: ", INFO
+    IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
 
     XRCOEFF(IAK,:) = CARR
     XICOEFF(IAK,:) = CAII
   ENDDO
 
 ! Calculating R coefficients
-  !  WRITE(*,*) neq, NDIM
-  ! WRITE(900,'(F20.16)') XICOEFF
-  ! WRITE(901,'(F20.16)') XRCOEFF
-  ! WRITE(902,'(F20.16)') CAR
-  ! WRITE(903,'(F20.16)') CAI
-  ! WRITE(904,'(F50.16)') C
-
+  IF (PRINT_I) WRITE(*,*) neq, NDIM
 
   CALL MATRIX_MULTIPLY(BD1,XICOEFF,CAI)
   CALL MATRIX_MULTIPLY(BD2,XRCOEFF,CAI)
   CALL MATRIX_MULTIPLY(BD3,XICOEFF,CAR)
   CALL MATRIX_MULTIPLY(BD4,XRCOEFF,CAR)
 
-  CALL PRINT_DIVIDER
+  IF (PRINT_I) CALL PRINT_DIVIDER
   CALL ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS(ARI, AIR, ARR, AII)
-  CALL PRINT_DIVIDER
+  IF (PRINT_I) CALL PRINT_DIVIDER
 
   DO IAB=1,NEQ       
   DO IAK=1,NEQ
@@ -215,31 +227,37 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   AMM = AM
   ANN =-AN
-  CALL PRINT_DIVIDER
-  !  WRITE(*,*) "AMM = ", AMM
-  !  WRITE(*,*) "ANN = ", ANN
-  CALL PRINT_DIVIDER
+  IF (PRINT_I) THEN 
+    CALL PRINT_DIVIDER
+    WRITE(*,*) "AMM = ", AMM
+    WRITE(*,*) "ANN = ", ANN
+    CALL PRINT_DIVIDER
+  ENDIF
 
 
 ! Evaluating the "R_{alpha, beta}" matrix elements
   CALL DGESV(NEQ, NEQ, AMM, NCH_MAX, IPIV, ANN, NCH_MAX, INFO)
   CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
-  !  WRITE(*,*) "INFO: ", INFO
+  IF (PRINT_I)  WRITE(*,*) "INFO: ", INFO
 
-  DO IAB=1,NEQ
-  DO IAK=1,NEQ
-    !  WRITE(*,*)"COEFF R",ANN(IAB,IAK)
-  ENDDO 
-  ENDDO 
+  IF (PRINT_I) THEN
+    DO IAB=1,NEQ
+    DO IAK=1,NEQ
+      WRITE(*,*)"COEFF R",ANN(IAB,IAK)
+    ENDDO 
+    ENDDO 
+  ENDIF
   
 ! Evaluating the "R_{alpha, beta}" matrix elements to the second order
   CALL R_SECOND_ORDER()
-  !  WRITE(*,*)
-  DO IAB=1,NEQ
-  DO IAK=1,NEQ
-    !  WRITE(*,*)"COEFF R2 NORMALIZZATO", -RD(IAB,IAK)
-  ENDDO 
-  ENDDO 
+  IF (PRINT_I) THEN
+    WRITE(*,*)
+    DO IAB=1,NEQ
+    DO IAK=1,NEQ
+      WRITE(*,*)"COEFF R2 NORMALIZZATO", -RD(IAB,IAK)
+    ENDDO 
+    ENDDO 
+  ENDIF
 
 ! Writing the coefficients to a file in order torecreate the wave function
   IF (PRESENT(PRINT_COEFFICIENTS)) THEN
@@ -250,11 +268,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 ! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
   CALL CALCULATE_PHASE_SHIFTS_BLATT
-  !  WRITE(*,*) 
-  !  WRITE(*,*)"BLATT-BIEDENHARN"
-  !  WRITE(*,*)"MIXING ANGLE=",AMIXG
-  !  WRITE(*,*)"SFASAMENTO1=",DELTA1G
-  !  WRITE(*,*)"SFASAMENTO2=",DELTA2G
+
+  IF (PRINT_I) THEN
+    WRITE(*,*) 
+    WRITE(*,*)"BLATT-BIEDENHARN"
+    WRITE(*,*)"MIXING ANGLE=",AMIXG
+    WRITE(*,*)"SFASAMENTO1=",DELTA1G
+    WRITE(*,*)"SFASAMENTO2=",DELTA2G
+  ENDIF
 
   PHASE_SHIFT%delta1_BB = DELTA1G
   PHASE_SHIFT%delta2_BB = DELTA2G
@@ -263,25 +284,32 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 ! Calculating the S-matrix
   CALL CALCULATE_S_MATRIX
-  !  WRITE(*,*)
-  !  WRITE(*,*) "S(1,1)=" , SMAT(1,1)
-  !  WRITE(*,*) "S(1,2)=" , SMAT(1,2)
-  !  WRITE(*,*) "S(2,2)=" , SMAT(2,2)
+
+  IF (PRINT_I) THEN
+    WRITE(*,*) 
+    WRITE(*,*)"S-MATRIX"
+    WRITE(*,*) "S(1,1)=" , SMAT(1,1)
+    WRITE(*,*) "S(1,2)=" , SMAT(1,2)
+    WRITE(*,*) "S(2,2)=" , SMAT(2,2)
+  ENDIF
 
 
 ! Calculating the phase shifts and mixing angles in the Stapp convention
   CALL CALCULATE_PHASE_SHIFTS_STAPP
-  !  WRITE(*,*)
-  !  WRITE(*,*)"STAPP"
-  !  WRITE(*,*)"MIXING ANGLE=",AMIXGS
-  !  WRITE(*,*)"SFASAMENTO1=",DELTA1S
-  !  WRITE(*,*)"SFASAMENTO2=",DELTA2S
+
+  IF (PRINT_I) THEN
+    WRITE(*,*) 
+    WRITE(*,*)"STAPP"
+    WRITE(*,*) "MIXING ANGLE=",AMIXGS
+    WRITE(*,*) "SFASAMENTO1=",DELTA1S
+    WRITE(*,*) "SFASAMENTO2=",DELTA2S
+  ENDIF
 
   PHASE_SHIFT%delta1_S = DELTA1S
   PHASE_SHIFT%delta2_S = DELTA2S
   PHASE_SHIFT%epsilon_S = AMIXGS
 
-  !  WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
+  IF (PRINT_I) WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
 
   RETURN 
 
@@ -432,8 +460,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
       ENDDO
 
-
-      !  WRITE(*,*)
+      IF (PRINT_I) WRITE(*,*)
       DO IAB=1,NEQ
       DO IAK=1,NEQ
         ASS(IAB,IAK)=CD0(IAB,IAK)+2*BD4(IAB,IAK)+CD4(IAB,IAK)    &
@@ -442,7 +469,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
                     +CD8(IAB,IAK)
   
         ANNS(IAB,IAK) = ANN(IAB,IAK) + ASS(IAB,IAK)
-        !  WRITE(*,*)"COEFF R2",ANNS(IAB,IAK), ANN(IAB,IAK), ASS(IAB,IAK)
+        IF (PRINT_I) WRITE(*,*)"COEFF R2",ANNS(IAB,IAK), ANN(IAB,IAK), ASS(IAB,IAK)
       ENDDO
       ENDDO
 
@@ -549,10 +576,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       DELTA1G=(DELTA1*180.D0)/PI 
       DELTA2G=(DELTA2*180.D0)/PI
 
-      !  WRITE(*,*)"BLATT-BIEDENHARN"
-      !  WRITE(*,*)"MIXING ANGLE=",AMIXG
-      !  WRITE(*,*)"SFASAMENTO1=",DELTA1G
-      !  WRITE(*,*)"SFASAMENTO2=",DELTA2G
+      IF (PRINT_I) WRITE(*,*)"BLATT-BIEDENHARN"
+      IF (PRINT_I) WRITE(*,*)"MIXING ANGLE=",AMIXG
+      IF (PRINT_I) WRITE(*,*)"SFASAMENTO1=",DELTA1G
+      IF (PRINT_I) WRITE(*,*)"SFASAMENTO2=",DELTA2G
 
     END SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT
 
@@ -698,10 +725,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
             AKEM(IB,IK)=-HTM*SUM/GAMMA                                       
           ENDIF
 
-          IF(IB.EQ.1.AND.IK.EQ.1)THEN
-            !  WRITE(*,*)
-            !  WRITE(*,*)'C-C MATRIX'
-            !  WRITE(*,*)'KINETIC',AKEM(1,1)
+          IF (PRINT_I .AND. IB.EQ.1.AND.IK.EQ.1)THEN
+            WRITE(*,*)
+            WRITE(*,*)'C-C MATRIX'
+            WRITE(*,*)'KINETIC',AKEM(1,1)
           ENDIF
 
     ! SI CALCOLA ENERGIA POTENZIALE
@@ -712,11 +739,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           ENDDO
           APEM(IB,IK) = SUM/GAMMA
 
-    ! SI CALCOLA HAMILTONIANA    
-          ! AM(IB,IK)=1./HTM*(AKEM(IB,IK)+APEM(IB,IK)-AXX(IB,IK))                                  
-          IF(IB.EQ.1.AND.IK.EQ.1)THEN
-            !  WRITE(*,*)'POTENTIAL',APEM(1,1)
-            !  WRITE(*,*)'C-C MATRIX',HTM*AM(IB,IK)
+          IF(PRINT_I .AND. IB.EQ.1.AND.IK.EQ.1)THEN
+            WRITE(*,*)'POTENTIAL',APEM(1,1)
           ENDIF
 
         ENDDO ! IR
@@ -734,7 +758,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ENDIF
 
     AM = (HM - AXX * VAR_P%E )/ HTM
-    !  WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
+    IF (PRINT_I) WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
 
 
   CONTAINS 
@@ -791,7 +815,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ENDIF
 
   ! Initialize grid with r values
-    !  WRITE(*,*)'NX =',NX
+    IF (PRINT_I) WRITE(*,*)'NX =',NX
     IF (FIRST_CALL) THEN
       ALLOCATE(FBES(NCH_MAX, NX), GBES(NCH_MAX, NX))
       ALLOCATE(XX(NX), AJ(NX), YYB(NX), YYL(NX), A(NX))
@@ -803,7 +827,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ELSE
       YYB(1:NX) = K*XX(1:NX)
     ENDIF
-    !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX),NX
+    IF (PRINT_I) WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX),NX
 
   ! Laguerre polynomial and their first two derivatives grid
     IF (FIRST_CALL) THEN
@@ -903,12 +927,12 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
             AKEM1(IB,IAK) = AKE1
             ! write(112,*) iab, iak, il, IB, ake1
           ENDIF
-          IF(IB.EQ.1.AND.IAK.EQ.1)THEN
-            !  WRITE(*,*)
-            !  WRITE(*,*)'C-A MATRIX'
-            !  WRITE(*,*)'IRREGULAR A'
-            !  WRITE(*,*)'NORM ',AXXM1(1,1)
-            !  WRITE(*,*)'KINETIC',AKEM1(1,1)
+          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
+            WRITE(*,*)'C-A MATRIX'
+            WRITE(*,*)'IRREGULAR A'
+            WRITE(*,*)'NORM ',AXXM1(1,1)
+            WRITE(*,*)'KINETIC',AKEM1(1,1)
           ENDIF
         
         
@@ -924,25 +948,25 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           APE1 = B5_SINGLE(NX,H5,FUN1,1)
           APEM1(IB,IAK) = APE1
           ! write(113,*) iab, iak, il, IB, ape, ape1
-          IF(IB.EQ.1.AND.IAK.EQ.1)THEN
-            !  WRITE(*,*)
-            !  WRITE(*,*)'C-A MATRIX'
-            !  WRITE(*,*)'IRREGULAR A'
-            !  WRITE(*,*)'POTENTIAL ',APEM1(1,1)
-            !  WRITE(*,*)'REGULAR A'
-            !  WRITE(*,*)'POTENTIAL ',APEM(1,1)
+          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
+            WRITE(*,*)'C-A MATRIX'
+            WRITE(*,*)'IRREGULAR A'
+            WRITE(*,*)'POTENTIAL ',APEM1(1,1)
+            WRITE(*,*)'REGULAR A'
+            WRITE(*,*)'POTENTIAL ',APEM(1,1)
           ENDIF
 
         ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
 
           AM(IB,IAK) = APEM(IB,IAK) / HTM
           AM1(IB,IAK)= (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK)) / HTM
-          
-          IF(IB.EQ.1.AND.IAK.EQ.1)THEN
-            !  WRITE(*,*)
-            !  WRITE(*,*)'C-A MATRIX'     ,IB,IAK
-            !  WRITE(*,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
-            !  WRITE(*,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
+
+          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+            WRITE(*,*)
+            WRITE(*,*)'C-A MATRIX'     ,IB,IAK
+            WRITE(*,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
+            WRITE(*,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
           ENDIF
         ENDDO
       ENDDO
@@ -1028,7 +1052,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     AF = VAR_P%AF
     IF (FIRST_CALL) CALL EXPONENTIALLY_GROWING_GRID(H, AF, RANGE, XX, AJ, NNRAA, NX)
     VAR_P%RANGE = RANGE
-    !  WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
+    IF (PRINT_I) WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
 
     EPS = VAR_P%EPS
     IF (FIRST_CALL) THEN
@@ -1042,7 +1066,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici  
     DO I=1, NEQ
       L=LC(I)
-      !  WRITE(*,*) "Preparing Bessels for L = ", L, " with k = ", K
+      IF (PRINT_I) WRITE(*,*) "Preparing Bessels for L = ", L, " with k = ", K
       DO IX=1, NX                       
         XG=YY(IX)
         AG=A(IX)
@@ -1109,9 +1133,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         AXX3= VAR_P%E * B5_SINGLE(NX,H5,FUN3,1)
         AXXM3(IAB,IAK)=AXX3
       ENDIF    
-      IF (IAB==1 .AND. IAK==1) THEN
-        !  WRITE(*,*) 'NORM RI(1,1)', AXX
-        !  WRITE(*,*) 'NORM II(1,1)', AXX3
+      IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'NORM RI(1,1)', AXX
+        WRITE(*,*) 'NORM II(1,1)', AXX3
       ENDIF
 
   ! SI CALCOLA ENERGIA CINETICA DEL CASO REGOLARE-IRREGOLARE (AKE) E CASO IRREGOLARE-IRREGOLARE (AKE3)
@@ -1130,9 +1154,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         AKE3= HTM * B5_SINGLE(NX,H5,FUN3,1)
         AKEM3(IAB,IAK)=AKE3
       ENDIF 
-      IF (IAB==1 .AND. IAK==1) THEN
-        !  WRITE(*,*) 'KINETIC RI(1,1)', AKE
-        !  WRITE(*,*) 'KINETIC II(1,1)', AKE3
+      IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'KINETIC RI(1,1)', AKE
+        WRITE(*,*) 'KINETIC II(1,1)', AKE3
       ENDIF
 
   ! SI CALCOLA ENERGIA POTENZIALE DEL CASO REGOLARE-IRREGOLARE (APE), 
@@ -1149,12 +1173,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       FUN1(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)  
       FUN2(2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
       FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
-      ! DO I=1,NX
-      !   FUN (I+1) = AJ(I)*FBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK) 
-      !   FUN1(I+1) = AJ(I)*GBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)  
-      !   FUN2(I+1) = AJ(I)*FBES(IAB,I)*FBES(IAK,I)*VV(I,IAB,IAK)
-      !   FUN3(I+1) = AJ(I)*GBES(IAB,I)*GBES(IAK,I)*VV(I,IAB,IAK)
-      ! ENDDO
+      
       APE=  B5_SINGLE(NX,H5,FUN,1)
       APEM(IAB,IAK)=APE
       APE1= B5_SINGLE(NX,H5,FUN1,1)
@@ -1163,11 +1182,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       APEM2(IAB,IAK)=APE2
       APE3= B5_SINGLE(NX,H5,FUN3,1)
       APEM3(IAB,IAK)=APE3
-      IF (IAB==1 .AND. IAK==1) THEN
-        !  WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
-        !  WRITE(*,*) 'POTENTIAL RI(1,1)', APE
-        !  WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
-        !  WRITE(*,*) 'POTENTIAL II(1,1)', APE3
+      IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
+        WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
+        WRITE(*,*) 'POTENTIAL RI(1,1)', APE
+        WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
+        WRITE(*,*) 'POTENTIAL II(1,1)', APE3
       ENDIF
 
 
@@ -1183,19 +1202,19 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ENDDO 
     ENDDO 
 
-    !  WRITE(*,*)
-    !  WRITE(*,*)'A-A MATRIX'      
+    IF (PRINT_I) WRITE(*,*)
+    IF (PRINT_I) WRITE(*,*)'A-A MATRIX'      
     DO IAB=1,NEQ
     DO IAK=1,NEQ
-      !  WRITE(*,'(2I6,4D17.7)') IAB,IAK,AM2(IAB,IAK),AM(IAB,IAK),AM1(IAB,IAK),AM3(IAB,IAK)
-      !  WRITE(*,*)"1=",VER(IAB,IAK)
+      IF (PRINT_I) WRITE(*,'(2I6,4D17.7)') IAB,IAK,AM2(IAB,IAK),AM(IAB,IAK),AM1(IAB,IAK),AM3(IAB,IAK)
+      IF (PRINT_I) WRITE(*,*)"1=",VER(IAB,IAK)
     END DO
     END DO
   END SUBROUTINE ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
   SUBROUTINE PRINT_DIVIDER()
     IMPLICIT NONE
-    !  WRITE(*,*) '====================================================================================='
+      WRITE(*,*) '====================================================================================='
   END SUBROUTINE PRINT_DIVIDER
 
 END MODULE SCATTERING_NN_VARIATIONAL
