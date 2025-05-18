@@ -1,9 +1,12 @@
 PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   USE SCATTERING_NN_VARIATIONAL
+  USE QUANTUM_NUMBERS
   IMPLICIT NONE
 
   INTEGER :: NE = 200
   DOUBLE PRECISION :: EMAX = 1.D0
+  CHARACTER(LEN=16) :: CHANNEL_NAME
+  TYPE(SCATTERING_CHANNEL) :: CHANNEL
 
   ! Variable declarations
   INTEGER :: J, L, S, TZ, I
@@ -26,10 +29,14 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   L = 0
   S = 1
   TZ = 0
-  E = 1.0D0
   IPOT = 18
   ILB = 1
   LEMP = 0
+
+  CHANNEL = init_scattering_channel(J, .TRUE., TZ)
+  CHANNEL_NAME = get_channel_name(CHANNEL)
+  PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
+  STOP
 
   ! If there are arguments, treat the first as the namelist input file
   IF (has_arguments) THEN
