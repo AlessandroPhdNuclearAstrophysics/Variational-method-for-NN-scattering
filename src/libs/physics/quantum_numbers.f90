@@ -116,15 +116,41 @@ CONTAINS
     IS_LSJ = ABS(L-S) <= J .AND. J <= (L+S)
   END FUNCTION IS_LSJ_PHYSICAL
 
-  SUBROUTINE SET_CHANNEL(CHANNEL, J, LMIN, S, TZ)
+  SUBROUTINE SET_CHANNEL(CHANNEL, J, L, S, TZ)
     TYPE(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
-    INTEGER, INTENT(IN) :: J, LMIN, S, TZ
+    INTEGER, INTENT(IN) :: J, L, S, TZ
     LOGICAL :: IS_EVEN
 
-    IS_EVEN = MOD(J, 2) == 0
+    IF (IS_LSJ_PHYSICAL(L, S, J)) THEN
+      PRINT *, "Error: Invalid values for L, S, and J."
+      STOP
+    ENDIF
+    IS_EVEN = MOD(L, 2) == 0
 
-    ! Set the values of the scattering channel
-    CHANNEL = init_scattering_channel(J, IS_EVEN, TZ)
+    IF (J == 0) THEN
+      CHANNEL%NCH = 1
+      ALLOCATE(CHANNEL%L(1), CHANNEL%S(1), CHANNEL%T(1))
+      CHANNEL%L(1) = L
+      CHANNEL%S(1) = S
+      CHANNEL%T(1) = EVALUATE_T(L, S, TZ)
+    ELSE
+      IF ((L.EQ.(J-1) .OR. L.EQ.(J+1))) THEN
+        CHANNEL%NCH = 2
+        ALLOCATE(CHANNEL%L(2), CHANNEL%S(2), CHANNEL%T(2))
+        CHANNEL%L(1) = J-1
+        CHANNEL%S(1) = S
+        CHANNEL%L(2) = J+1
+        CHANNEL%S(2) = S
+        CHANNEL%T(1) = EVALUATE_T(J-1, S, TZ)
+        CHANNEL%T(2) = EVALUATE_T(J+1, S, TZ)
+      ELSE
+        CHANNEL%NCH = 1
+        ALLOCATE(CHANNEL%L(1), CHANNEL%S(1), CHANNEL%T(1))
+        CHANNEL%L(1) = J
+        CHANNEL%S(1) = S
+        CHANNEL%T(1) = EVALUATE_T(J, S, TZ)
+      ENDIF
+    ENDIF
   END SUBROUTINE SET_CHANNEL  
 
   FUNCTION GET_CHANNEL_NAME_LSJ(L, S, J) RESULT(NAME)
