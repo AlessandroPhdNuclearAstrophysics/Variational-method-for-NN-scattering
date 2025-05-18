@@ -238,6 +238,7 @@ CONTAINS
     IF(N.GT.NNR)  STOP 'GAULAG.F: N > NNR TOO LARGE'
 
     ALF=0.D0
+    Z = 0.D0
     DO I=1,N
   ! APPROXIMATE THE ITH ROOT
       IF(I.EQ.1)THEN
@@ -286,7 +287,7 @@ CONTAINS
 
     INTEGER :: NP, I
 
-    N = 1 + DLOG(1.D0 + RANGE*(AF-1.D0)/H)/DLOG(AF)
+    N = INT(1 + DLOG(1.D0 + RANGE*(AF-1.D0)/H)/DLOG(AF))
     
     IF (N > NMAX) THEN
       WRITE(*,*) 'NNR < N ', NMAX, N

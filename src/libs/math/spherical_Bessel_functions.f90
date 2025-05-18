@@ -91,7 +91,7 @@ contains
     real(8), intent(in) :: x
     real(8) :: d2y
     real(8) :: yl, ylp1
-    real(8) :: x2, l1
+    real(8) :: x2
 
     x2 = x * x
     yl = spherical_y(l, x)
