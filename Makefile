@@ -39,6 +39,7 @@ SRC_DIR := src
 BUILD_DIR := build
 LOG_DIR := $(BUILD_DIR)/logs
 DEP_DIR := $(BUILD_DIR)/dep
+OUT_DIR := output
 
 # Find all .f90 files (recursively in src/)
 ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90")
@@ -90,7 +91,11 @@ run:
 clean:
 	rm -rvf $(BUILD_DIR)
 
+# Delete output files
+delete_out:
+	@rm -rvf $(shell find $(OUT_DIR) -type f)
+
 # Include all dependency files if they exist
 -include $(DEPFILES)
 
-.PHONY: all clean run
+.PHONY: all clean run delete_out
