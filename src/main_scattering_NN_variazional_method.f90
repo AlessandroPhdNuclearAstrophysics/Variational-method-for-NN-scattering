@@ -36,7 +36,6 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   CHANNEL = init_scattering_channel(J, .TRUE., TZ)
   CHANNEL_NAME = get_channel_name(CHANNEL)
   PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
-  STOP
 
   ! If there are arguments, treat the first as the namelist input file
   IF (has_arguments) THEN
@@ -59,11 +58,28 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
 
-  DO I = 1, NE
-    E =  ENERGIES(I)
-    CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
-    WRITE(20, *) E, PHASE_SHIFTS%delta1_BB, PHASE_SHIFTS%delta2_BB, PHASE_SHIFTS%epsilon_BB
-    WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+  OPEN(20, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(21, FILE='output/AV18/kcotd_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+  
+  DO L = 0, 2
+    DO S = 0, 1
+      DO J = ABS(L-S), L+S
+        CHANNEL = init_scattering_channel(J, .TRUE., TZ)
+        CHANNEL_NAME = get_channel_name(CHANNEL)
+        IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
+        PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
+        OPEN(20, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+        OPEN(21, FILE='output/AV18/delta_np_Stapp_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+        DO I = 1, NE
+          E =  ENERGIES(I)
+          CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
+          WRITE(20, *) E, PHASE_SHIFTS%delta1_BB, PHASE_SHIFTS%delta2_BB, PHASE_SHIFTS%epsilon_BB
+          WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+        ENDDO
+        CLOSE(20)
+        CLOSE(21)
+      ENDDO
+    ENDDO
   ENDDO
 
 END PROGRAM SCATTERING_NN_VARIATIONAL_METHOD

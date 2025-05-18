@@ -690,9 +690,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         R = XX(I)
         CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, VPW, VAR_P%LEMP)
         V(I,1,1) = VPW(1,1)
-        V(I,1,2) = VPW(1,2)
-        V(I,2,1) = VPW(2,1)
-        V(I,2,2) = VPW(2,2)
+        IF (NCH.EQ.2) THEN
+          V(I,1,2) = VPW(1,2)
+          V(I,2,1) = VPW(2,1)
+          V(I,2,2) = VPW(2,2)
+        ENDIF
       ENDDO
 
       CALL PREPARE_INDECES
@@ -878,14 +880,16 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     J = VAR_P%J
 
     IF (FIRST_CALL) THEN
-      ALLOCATE(VV(NX, NCH_MAX, NCH_MAX))
+      ALLOCATE(VV(NX, NCH, NCH))
       DO I = 1, NX
         RR = XX(I)
         CALL AV18PW90(1, LC(1), S, J, T, T1Z, T2Z, RR, VPW, VAR_P%LEMP)
         VV(I, 1, 1) = VPW(1, 1)
-        VV(I, 1, 2) = VPW(1, 2)
-        VV(I, 2, 1) = VPW(2, 1)
-        VV(I, 2, 2) = VPW(2, 2)
+        IF (NCH > 1) THEN
+          VV(I, 1, 2) = VPW(1, 2)
+          VV(I, 2, 1) = VPW(2, 1)
+          VV(I, 2, 2) = VPW(2, 2)
+        ENDIF
         ! WRITE(23, *) XX(I), VV(I, 1, 1), VV(I, 1, 2), VV(I, 2, 1), VV(I, 2, 2)  
       ENDDO
       
