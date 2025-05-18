@@ -3,7 +3,8 @@
 make
 
 # Default values for the parameters
-E=1.D0
+EMAX=1.D0
+NE=200
 J=1
 L=0
 S=1
@@ -11,13 +12,17 @@ TZ=0
 IPOT=18
 ILB=1
 LEMP=1
-VCOUL=false
+PRINT_COEFF=".FALSE."
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -e|--E)
-      E="$2"
+    -emax|--Emax)
+      EMAX="$2"
+      shift 2
+      ;;
+    -ne|--NE)
+      NE="$2"
       shift 2
       ;;
     -j|--J)
@@ -48,9 +53,9 @@ while [[ $# -gt 0 ]]; do
       LEMP="$2"
       shift 2
       ;;
-    -vcoul|--VCOUL)
-      VCOUL="$2"
-      shift 2
+    -print|--PRINT)
+      PRINT_COEFF=".TRUE."
+      shift
       ;;
     *)
       echo "Unknown option: $1"
@@ -63,7 +68,8 @@ done
 NAMELIST_FILE=$(mktemp)
 cat > "$NAMELIST_FILE" << EOF
 &IN
-  E = $E,
+  EMAX = $EMAX,
+  NE = $NE,
   J = $J,
   L = $L,
   S = $S,
@@ -71,7 +77,7 @@ cat > "$NAMELIST_FILE" << EOF
   IPOT = $IPOT,
   ILB = $ILB,
   LEMP = $LEMP,
-  VCOUL = $VCOUL
+  PRINT_COEFFICIENTS = $PRINT_COEFF,
 /
 EOF
 
