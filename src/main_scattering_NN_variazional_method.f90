@@ -33,10 +33,6 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ILB = 1
   LEMP = 0
 
-  CHANNEL = init_scattering_channel(J, .TRUE., TZ)
-  CHANNEL_NAME = get_channel_name(CHANNEL)
-  PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
-
   ! If there are arguments, treat the first as the namelist input file
   IF (has_arguments) THEN
     CALL GET_COMMAND_ARGUMENT(1, input_file)
@@ -57,16 +53,14 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ALLOCATE(ENERGIES(NE))
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
-
-  OPEN(20, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
-  OPEN(21, FILE='output/AV18/kcotd_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
   
   DO L = 0, 2
     DO S = 0, 1
       DO J = ABS(L-S), L+S
-        CHANNEL = init_scattering_channel(J, .TRUE., TZ)
-        CHANNEL_NAME = get_channel_name(CHANNEL)
+        CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
         IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
+        IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
+        CHANNEL_NAME = get_channel_name(CHANNEL)
         PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
         OPEN(20, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
         OPEN(21, FILE='output/AV18/delta_np_Stapp_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
