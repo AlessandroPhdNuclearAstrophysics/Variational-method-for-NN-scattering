@@ -87,6 +87,15 @@ $(DEP_DIR):
 run:
 	./bin/runner.sh
 
+# Check the graphs
+check_graphs:
+	@echo "Checking graphs..."
+	xmgrace $(OUT_DIR)/AV18/delta_np_1S0.dat ../07b-Potential_revised/scattering/output/av18_Laura/np/0p.dat; \
+	xmgrace $(OUT_DIR)/AV18/delta_np_3P0.dat ../07b-Potential_revised/scattering/output/av18_Laura/np/0m.dat; \
+	xmgrace -nxy $(OUT_DIR)/AV18/delta_np_3S1-3D1.dat -nxy ../07b-Potential_revised/scattering/output/av18_Laura/np/1p.dat; \
+	xmgrace $(OUT_DIR)/AV18/delta_np_1P1.dat ../07b-Potential_revised/scattering/output/av18_Laura/np/1m.dat; \
+	xmgrace $(OUT_DIR)/AV18/delta_np_3P1.dat -block ../07b-Potential_revised/scattering/output/av18_Laura/np/1m.dat -bxy 1:3;
+
 # Clean rule to delete all build artifacts
 clean:
 	rm -rvf $(BUILD_DIR)
@@ -98,4 +107,4 @@ delete_out:
 # Include all dependency files if they exist
 -include $(DEPFILES)
 
-.PHONY: all clean run delete_out
+.PHONY: all clean run delete_out check_graphs
