@@ -828,15 +828,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     INTEGER :: I, IX, NX, NMX ! Number evenly spaced points
     DOUBLE PRECISION, ALLOCATABLE :: U0(:,:), U1(:,:), U2(:,:)
     DOUBLE PRECISION :: APF, GAMMA, ANL, XG, FEXP, RR
-    INTEGER :: L, S, J
+    INTEGER :: L, S, J, IE
     DOUBLE PRECISION :: VPW(2,2)
-    INTEGER :: IAB, IAK, LIK, IL, IB, NNL
+    INTEGER :: IAB, IAK, LIK, IL, IB, NNL, LL
     DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: AXXM1(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: AKEM1(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: APEM(:,:), APEM1(:,:)
 
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FBES(:,:), GBES(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: XX(:), AJ(:), YYL(:), YYB(:), A(:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: V0(:,:), V1(:,:), V2(:,:)
@@ -858,7 +857,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     IF (PRINT_I) WRITE(*,*)'NX =',NX
     IF (RESET) THEN
       CALL REALLOCATE_2D_4(AXXM1, AKEM1, APEM, APEM1, NNN, NCH)
-      CALL REALLOCATE_2D_2(FBES, GBES, NCH, NX)
       CALL REALLOCATE_1D_5(XX, AJ, YYB, YYL, A, NX)
       XX(1:NX) = HR * [(I, I=1,NX)]
       AJ   = XX**2
@@ -896,22 +894,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ENDIF
 
     NEQ = NCH
-
-  ! Prepare the Bessel functions
-    CALL SPHERICAL_BESSEL_FUNCTIONS()
-    ! do m=1, NX
-    !   do i=0, nmx
-    !     Write(1000,*) yyl(M), v0(i+1,m), v1(i+1,m), v2(i+1,m), aj(m)
-    !   enddo
-    ! enddo
-
-
-    ! DO I = 1, NCH
-    !   DO M = 1, NX
-    !     WRITE(20+I, *) YYB(M), FBES(I,M), GBES(I,M)
-    !   ENDDO
-    ! ENDDO
-
   ! Prepare the potential
     L = LC(1)
     S = VAR_P%S
@@ -938,9 +920,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 
     ! Evaluate the matrix elements
+    IE = FIND_ENERGY_INDEX(VAR_P%E)
     !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(IAB,IAK,IL,IB,LIK,FUN,FUN1) SCHEDULE(static)
     DO IAB = 1, NEQ
       DO IAK = 1, NEQ
+        LL = LC(IAK)
         LIK = LC(IAB)*(LC(IAB)+1)
 
         DO IL = 1, VAR_P%NNL
@@ -950,7 +934,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           AXXM1(IB,IAK) = ZERO
           IF(IAB.EQ.IAK)THEN
             FUN1(1)  = ZERO
-            FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)
+            FUN1(2:) = AJ*V0(IL,:)*GBES_AC(IE,LL,:)
 
             AXX1=VAR_P%E * B5_SINGLE(NX,H5,FUN1,1)
             AXXM1(IB,IAK)=AXX1
@@ -962,7 +946,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
           AKEM1(IB,IAK) = ZERO
           IF(IAB.EQ.IAK)THEN
             FUN1(1) = ZERO
-            FUN1(2:) = AJ*GBES(IAK,:)*( V2(IL,:) + 2.D0*V1(IL,:)/XX(:) - LIK*V0(IL,:)/XX(:)**2)
+            FUN1(2:) = AJ*GBES_AC(IE,LL,:)*( V2(IL,:) + 2.D0*V1(IL,:)/XX(:) - LIK*V0(IL,:)/XX(:)**2)
 
             AKE1 = -HTM * B5_SINGLE(NX,H5,FUN1,1)
             AKEM1(IB,IAK) = AKE1
@@ -980,8 +964,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
           FUN (1) = ZERO
           FUN1(1) = ZERO
-          FUN (2:) = AJ*V0(IL,:)*FBES(IAK,:)*VV(:,IAB,IAK)
-          FUN1(2:) = AJ*V0(IL,:)*GBES(IAK,:)*VV(:,IAB,IAK)
+          FUN (2:) = AJ*V0(IL,:)*FBES_AC(IE,LL,:)*VV(:,IAB,IAK)
+          FUN1(2:) = AJ*V0(IL,:)*GBES_AC(IE,LL,:)*VV(:,IAB,IAK)
 
           APE = B5_SINGLE(NX,H5,FUN,1)
           APEM(IB,IAK) = APE
@@ -1017,34 +1001,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     RETURN
 
   CONTAINS
-    SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS()
-      use gsl_bessel
-      IMPLICIT NONE
-      DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.D-8 ! fm^-1
-      DOUBLE PRECISION :: AG, GBSS, FBSS
-      INTEGER :: LL
-
-      DO I=1,NCH
-        LL=LC(I)
-        !$OMP PARALLEL DO PRIVATE(IX, XG, AG, FBSS, GBSS) SHARED(FBES, GBES, XX, A, YYB, LC, K, LL, I)
-        DO IX=1, NX
-          XG=YYB(IX)
-          AG=A(IX)
-          IF(K.LE.K_SMALL)THEN                                   !(K->0)
-            FBES(I,IX)=XX(IX)**LL
-            GBES(I,IX)=-ONE/((2*LL+ONE)*XX(IX)**(LL+ONE))*AG**(2*LL+ONE)
-          ELSE
-            FBSS = SPHERICAL_J(LL, XG)
-            GBSS = SPHERICAL_Y(LL, XG)
-            FBES(I,IX)=K**(LL+0.5D0)*FBSS/(K**LL)
-            GBES(I,IX)=-(GBSS*K**(LL+ONE)*AG**(2*LL+ONE))/(K**(LL+0.5D0))
-            ! write(500+l,*) xg, FBSS, GBSS, fbes(i,IX), gbes(i,IX)
-          ENDIF
-        ENDDO
-        !$OMP END PARALLEL DO
-      ENDDO
-    END SUBROUTINE SPHERICAL_BESSEL_FUNCTIONS
-
     SUBROUTINE PREPARE_INDECES()
       IMPLICIT NONE
       INTEGER II, JJ
@@ -1073,9 +1029,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
     DOUBLE PRECISION :: H, H5, RANGE, R
     DOUBLE PRECISION :: AF, EPS
-    INTEGER :: I, IX, L, IAB, IAK, IE
-    DOUBLE PRECISION :: XG, AG, BG
-    DOUBLE PRECISION :: GBSS, GBSS1, GBSS2, FBSS
+    INTEGER :: I, L, IAB, IAK, IE, LL, LR
     INTEGER :: S, J
     DOUBLE PRECISION :: VPW(NCH_MAX,NCH_MAX)
     DOUBLE PRECISION :: AXX, AXX3, AKE, AKE3, APE, APE1, APE2, APE3
@@ -1084,7 +1038,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     INTEGER, SAVE :: NX
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: XX(:), AJ(:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: A(:), B(:), YY(:)
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FBES(:,:), GBES(:,:), GBES0(:,:), GBES1(:,:), GBES2(:,:), HNOR(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: VV(:,:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:), FUN2(:), FUN3(:)
 
@@ -1095,7 +1048,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     IF (RESET) THEN
       CALL EXPONENTIALLY_GROWING_GRID(H, AF, RANGE, XX, AJ, NX)
       CALL REALLOCATE_1D_4(FUN, FUN1, FUN2, FUN3, NX+1)
-      CALL REALLOCATE_2D_6(FBES, GBES, GBES0, GBES1, GBES2, HNOR, NCH, NX)
     ENDIF
 
     IF (PRINT_I) WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX(1),XX(NX)
@@ -1110,53 +1062,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       YY(1:NX) = K*XX(1:NX)
     ENDIF
 
-  !definisco funzioni bessel regolarizzate e con giuste dimensioni (K**(l+0.5d0) ed andamenti asintotici
-    ! DO I=1, NEQ
-    !   L=LC(I)
-    !   IF (PRINT_I) WRITE(*,*) "Preparing Bessels for L = ", L, " with k = ", K
-    !   DO IX=1, NX
-    !     XG=YY(IX)
-    !     AG=A(IX)
-    !     BG=B(IX)
-    !     IF(K.LE.K_SMALL) THEN
-    !       FBES(I,IX)=XX(IX)**L
-    !       GBES(I,IX)=-ONE/((2*L+ONE)*XX(IX)**(L+ONE))*AG**(2*L+ONE)
-    !       GBES0(I,IX)=ONE/((2*L+ONE)*XX(IX)**(L+ONE))*(EPS*BG*(2*L+ONE)*((2*L+ONE)*(BG/EPS)-ONE) &
-    !                 +2*(2*L+ONE)*BG*(AG/XX(IX))-L*(L+ONE)*(AG/XX(IX))**2)
-    !       GBES1(I,IX)=-2.*AG*((2*L+ONE)*BG+AG/XX(IX))*(L+ONE)/((2*L+ONE)*XX(IX)**(L+2.))
-    !       GBES2(I,IX)=AG**2*(L+ONE)*(L+2.)/((2*L+ONE)*XX(IX)**(L+3.))
-    !       HNOR(I,IX)=AG**(2*L-ONE)
-    !       WRITE(200+L,*) XX(IX), FBES(I,IX), GBES(I,IX), GBES1(I,IX), GBES2(I,IX)
-    !     ELSE
-    !       FBSS = SPHERICAL_J(L, XG)
-    !       GBSS = SPHERICAL_Y(L, XG)
-    !       GBSS1= SPHERICAL_YP(L, XG)
-    !       GBSS2= SPHERICAL_YPP(L, XG)
-
-    !       FBES(I,IX)=K**(L+0.5D0)*FBSS/(K**L)
-    !       GBES(I,IX)=-(GBSS*K**(L+ONE)*AG**(2*L+ONE))/(K**(L+0.5D0))
-    !       GBES0(I,IX)=GBSS*(EPS*BG*(2*L+ONE)*((2*L+ONE)*(BG/EPS)-ONE) &
-    !                 +2*(2*L+ONE)*BG*(AG/XX(IX))-L*(L+ONE)*(AG/XX(IX))**2)
-    !       GBES1(I,IX)=GBSS1*2.*K*AG*((2*L+ONE)*BG + AG/XX(IX))
-    !       GBES2(I,IX)=(K**2)*(AG**2)*GBSS2
-    !       HNOR(I,IX)=(K**(L+ONE))*(AG**(2*L-ONE))/(K**(L+0.5D0))
-    !       ! WRITE(200+L,*) XX(IX), FBES(I,IX), GBES(I,IX), GBES1(I,IX), GBES2(I,IX), HNOR(I,IX)
-    !     ENDIF
-    !   ENDDO
-    ! ENDDO
-
-    IE    = FIND_ENERGY_INDEX(VAR_P%E)
-    DO I=1, NEQ
-      L=LC(I)
-      FBES (I,:) = FBES_AA (IE,L,:)
-      GBES (I,:) = GBES_AA (IE,L,:)
-      GBES0(I,:) = GBES0_AA(IE,L,:)
-      GBES1(I,:) = GBES1_AA(IE,L,:)
-      GBES2(I,:) = GBES2_AA(IE,L,:)
-      HNOR (I,:) = HNOR_AA (IE,L,:)
-    ENDDO
-
-  ! si tabula il potenziale per i vari canali
+    
+    ! si tabula il potenziale per i vari canali
     L = LC(1)
     S = VAR_P%S
     J = VAR_P%J
@@ -1173,10 +1080,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         ENDIF
       ENDDO
     ENDIF
-
-  !SI CALCOLANO ELEMENTI MATRICE
+    
+    !SI CALCOLANO ELEMENTI MATRICE
+    IE = FIND_ENERGY_INDEX(VAR_P%E)
     DO IAB=1,NEQ
     DO IAK=1,NEQ
+      LL = LC(IAB)
+      LR = LC(IAK)
   ! SI CALCOLA NORMA DEL CASO REGOLARE-IRREGOLARE (AXX), CASO IRREGOLARE-IRREGOLARE (AXX3)
       AXX = ZERO
       AXX3= ZERO
@@ -1185,8 +1095,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       IF(IAB.EQ.IAK)THEN
         FUN (1) = ZERO
         FUN3(1) = ZERO
-        FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)
-        FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)
+        FUN (2:) = AJ*FBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
+        FUN3(2:) = AJ*GBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
 
         AXX=  VAR_P%E * B5_SINGLE(NX,H5,FUN,1)
         AXXM(IAB,IAK)=AXX
@@ -1206,8 +1116,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       IF(IAB.EQ.IAK)THEN
         FUN(1)  = ZERO
         FUN3(1) = ZERO
-        FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
-        FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*HNOR(IAK,1:NX)*(GBES2(IAK,1:NX)+GBES1(IAK,1:NX)+GBES0(IAK,1:NX))
+        FUN (2:) = AJ*FBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
+        FUN3(2:) = AJ*GBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
 
         AKE=  HTM * B5_SINGLE(NX,H5,FUN,1)
         AKEM(IAB,IAK)=AKE
@@ -1225,14 +1135,14 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       APE1 = ZERO
       APE2 = ZERO
       APE3 = ZERO
-      FUN(1)  = ZERO
+      FUN (1) = ZERO
       FUN1(1) = ZERO
       FUN2(1) = ZERO
       FUN3(1) = ZERO
-      FUN (2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
-      FUN1(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
-      FUN2(2:NX+1) = AJ(1:NX)*FBES(IAB,1:NX)*FBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
-      FUN3(2:NX+1) = AJ(1:NX)*GBES(IAB,1:NX)*GBES(IAK,1:NX)*VV(1:NX,IAB,IAK)
+      FUN (2:) = AJ*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*VV(:,IAB,IAK)
+      FUN1(2:) = AJ*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*VV(:,IAB,IAK)
+      FUN2(2:) = AJ*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*VV(:,IAB,IAK)
+      FUN3(2:) = AJ*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*VV(:,IAB,IAK)
 
       APE=  B5_SINGLE(NX,H5,FUN,1)
       APEM(IAB,IAK)=APE
@@ -1307,10 +1217,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
     DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.D-8 ! fm^-1
     DOUBLE PRECISION :: RANGE
-    INTEGER :: NE, NX, IE, IX, L
+    INTEGER :: NE, NX, IE, IX, L, I
     DOUBLE PRECISION, ALLOCATABLE :: XX(:), AJ(:), A(:), B(:)
     DOUBLE PRECISION :: K, FBSS, GBSS, GBSS1, GBSS2
-    DOUBLE PRECISION :: AG, BG, XG, EPS
+    DOUBLE PRECISION :: AG, BG, XG, EPS, HR
     DOUBLE PRECISION, ALLOCATABLE :: KK(:)
 
     CALL SET_M_T1Z_T2Z_HTM(TZ)
@@ -1362,6 +1272,36 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
             HNOR_AA (IE,L,IX) = (K**(L+ONE))*(AG**(2*L-ONE))/(K**(L+0.5D0))
           ENDIF
         ENDDO
+      ENDDO
+    ENDDO
+
+    HR = VAR_P%HR1
+    NX = INT(VAR_P%RANGE/VAR_P%HR1) + 10
+    VAR_P%NX_AC = NX
+
+    CALL REALLOCATE_1D_2(XX, A, NX)
+    XX = HR * [(I, I=1,NX)]
+    A  = ONE - DEXP(-EPS*XX)
+
+    ALLOCATE(FBES_AC(NE, 0:LMAX, NX), GBES_AC(NE, 0:LMAX, NX))
+    DO IE = 1, NE
+      K = KK(IE)
+      DO L = 0, LMAX
+        !$OMP PARALLEL DO PRIVATE(IX, XG, AG, FBSS, GBSS) SHARED(FBES_AC, GBES_AC, XX, A, K, L, IE)
+        DO IX = 1, NX
+          XG = XX(IX)*K
+          AG = A (IX)
+          IF(K.LE.K_SMALL)THEN                                   !(K->0)
+            FBES_AC(IE,L,IX) = XX(IX)**L
+            GBES_AC(IE,L,IX) =-ONE/((2*L+ONE)*XX(IX)**(L+ONE))*AG**(2*L+ONE)
+          ELSE
+            FBSS = SPHERICAL_J(L, XG)
+            GBSS = SPHERICAL_Y(L, XG)
+            FBES_AC(IE,L,IX) = K**(L+0.5D0)*FBSS/(K**L)
+            GBES_AC(IE,L,IX) =-(GBSS*K**(L+ONE)*AG**(2*L+ONE))/(K**(L+0.5D0))
+          ENDIF
+        ENDDO
+        !$OMP END PARALLEL DO
       ENDDO
     ENDDO
 

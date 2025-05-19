@@ -54,8 +54,8 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
 
-  CALL PREPARE_FG(ENERGIES, 2, TZ)
-  
+  CALL PREPARE_FG(ENERGIES, 3, TZ)
+
   DO L = 0, 2
     DO S = 0, 1
       DO J = ABS(L-S), MIN(L+S, 2)
@@ -71,7 +71,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
           WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
         ENDDO
         CLOSE(21)
-        stop
+        STOP
       ENDDO
     ENDDO
   ENDDO
