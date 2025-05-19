@@ -11,7 +11,7 @@ S=1
 TZ=0
 IPOT=18
 ILB=1
-LEMP=1
+LEMP=0
 PRINT_COEFF=".FALSE."
 
 # Parse command-line arguments
