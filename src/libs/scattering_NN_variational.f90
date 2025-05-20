@@ -17,7 +17,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   INTEGER, PARAMETER :: NCH_MAX = 2
   INTEGER :: NCH
   INTEGER :: NEQ  ! GIVEN BY ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
-  INTEGER :: NNN
+  INTEGER :: NNN, NNN_MAX
 
   DOUBLE PRECISION, PARAMETER :: HC = 197.327053D0
   DOUBLE PRECISION, PARAMETER :: MP = 938.272029D0
@@ -68,6 +68,10 @@ MODULE SCATTERING_NN_VARIATIONAL
   ! Matrix elements for all energies and channels
   ! H_MINUS_E_CC = < n alpha | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_CC(:,:,:,:)    ! H_MINUS_E_CC(CH_INDEX, E, NALPHA, NALPHA')
+  ! H_MINUS_E_AC_R = < F_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_R(:,:,:,:)  ! H_MINUS_E_AC_R(CH_INDEX, E, NALPHA, NALPHA')
+  ! H_MINUS_E_AC_I = < G_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_I(:,:,:,:)  ! H_MINUS_E_AC_I(CH_INDEX, E, NALPHA, NALPHA')
 
 
   TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
@@ -243,7 +247,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   IF (FIRST_CALL) THEN
     CALL SET_VARIATIONAL_PARAMETERS(E, J, L, S, TZ, IPOT, ILB, LEMP)
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
-    NNN = VAR_P%NNL * NCH
+    NNN     = VAR_P%NNL * NCH
+    NNN_MAX = VAR_P%NNL * NCH_MAX
+    NEQ = NCH
     CALL REALLOCATE_2D_3(C, CC, CCC, NNN, NNN)
     CALL REALLOCATE_2D_2(CAR, CAI, NNN, NCH)
     CALL REALLOCATE_1D_1(CARR, NNN)
@@ -265,23 +271,20 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     STOP "Grid not ready or Bessels not ready"
   ENDIF
   
+  IF (PRINT_I) CALL PRINT_INFO()
   IF (PREPARE) THEN
     CALL PREPARE_CORE_CORE_MATRIX_ELEMENTS
+    IF (PRINT_I) CALL PRINT_DIVIDER
     PREPARE = .FALSE.
+    CALL PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
   ENDIF
 
+  IF (PRINT_I) CALL PRINT_DIVIDER
+  
   IE = FIND_ENERGY_INDEX(E)
-
-  IF (PRINT_I) CALL PRINT_INFO()
-
-! Evaluating the matrix elements
-  IF (PRINT_I) CALL PRINT_DIVIDER
-  CALL ASYMPTOTIC_CORE_MATRIX_ELEMENTS      (CAR, CAI, FIRST_CALL)
-
-  IF (PRINT_I) CALL PRINT_DIVIDER
-  C = H_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
-  ! IF (IE.EQ.100) WRITE(2000+CH_INDEX,*) 
-
+  C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
+  CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
+  CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
   IF (PRINT_I) CALL PRINT_DIVIDER
 
   DO IAK=1, NEQ
@@ -305,7 +308,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   ENDDO
 
 ! Calculating R coefficients
-  IF (PRINT_I) WRITE(*,*) neq, NNN
+  IF (PRINT_I) WRITE(*,*) NEQ, NNN
 
   ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
   CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
@@ -736,22 +739,20 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     DOUBLE PRECISION, ALLOCATABLE :: HCC(:,:,:), ENCC(:,:,:)
     DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND(:)
     
-    WRITE(*,*)'PREPARING CORE-CORE MATRIX ELEMENTS'
-
     GAMMA = VAR_P%GAMMA
     NNL = VAR_P%NNL
 
     NX = VAR_P%NX_CC
     CALL REALLOCATE_1D_1(INTEGRAND, NX)
-    CALL REALLOCATE_2D_1(KIN_MATRIX, NNL*NCH_MAX, NNL*NCH_MAX)
-    CALL REALLOCATE_3D_1(POT_MATRIX, NCHANNELS, NNL*NCH_MAX, NNL*NCH_MAX)
-    CALL REALLOCATE_3D_1(HCC, NCHANNELS, NNL*NCH_MAX, NNL*NCH_MAX)
-    CALL REALLOCATE_3D_1(ENCC, NE, NNL*NCH_MAX, NNL*NCH_MAX)
-    CALL REALLOCATE_4D_1(H_MINUS_E_CC, NCHANNELS, NE, NNL*NCH_MAX, NNL*NCH_MAX)
+    CALL REALLOCATE_2D_1(KIN_MATRIX, NNN_MAX, NNN_MAX)
+    CALL REALLOCATE_3D_1(POT_MATRIX, NCHANNELS, NNN_MAX, NNN_MAX)
+    CALL REALLOCATE_3D_1(HCC, NCHANNELS, NNN_MAX, NNN_MAX)
+    CALL REALLOCATE_3D_1(ENCC, NE, NNN_MAX, NNN_MAX)
+    CALL REALLOCATE_4D_1(H_MINUS_E_CC, NCHANNELS, NE, NNN_MAX, NNN_MAX)
 
     ENCC = ZERO
     DO IE =1, NE
-      DO I = 1, NNL*2
+      DO I = 1, NNN_MAX
         ENCC(IE,I,I) = ENERGIES_(IE)
       ENDDO
     ENDDO
@@ -807,18 +808,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       DO IE = 1, NE
         H_MINUS_E_CC(ICH, IE, 1:NNN, 1:NNN) = (HCC(ICH,1:NNN,1:NNN) - ENCC(IE,1:NNN,1:NNN))/ HTM
       ENDDO
-      ! IF (ICH==2) THEN 
-      !   WRITE(101,'(3F20.10)') (( HCC(ICH,IAK,IAB), KIN_MATRIX(IAK,IAB), POT_MATRIX(ICH,IAK,IAB), IAB=1, NNN), IAK=1, NNN)
-      !   STOP
-      ! ENDIF
     ENDDO ! ICH
-    
-    ! IF (PRINT_I) WRITE(*,*)'POTENTIAL', POT_MATRIX(CH_INDEX,1,1)
-    
-    ! DO ICH=1, NCHANNELS 
-    !   WRITE(1000+CH_INDEX,*) H_MINUS_E_CC(ICH,:,:,:)
-    ! ENDDO
-
     
     ! IF (PRINT_I) WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
     DEALLOCATE(INTEGRAND)
@@ -840,33 +830,29 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     END SUBROUTINE PREPARE_INDICES
   END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
 
-  SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS(AM, AM1, RESET, CLEAN)
+  SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
     USE INTEGRATION_MOD
     IMPLICIT NONE
-    DOUBLE PRECISION, INTENT(OUT) :: AM(:,:), AM1(:,:)
-    LOGICAL, INTENT(IN) :: RESET
-    LOGICAL, OPTIONAL, INTENT(IN) :: CLEAN
-
+    
     DOUBLE PRECISION :: H5, HR ! Step size in r
-    INTEGER :: NX
-    INTEGER :: L, S, J, IE
+    INTEGER :: NX, NEQ, NNN
+    INTEGER :: IE, ICH, LR
     INTEGER :: IAB, IAK, LIK, IL, IB, LL
     DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: AXXM1(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: AKEM1(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: APEM(:,:), APEM1(:,:)
-
+    
+    DOUBLE PRECISION, ALLOCATABLE :: AM(:,:), AM1(:,:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:)
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: YYB(:)
     INTEGER, SAVE :: COMMON_INDEX(NCH_MAX, NNE)
 
-    IF (PRESENT(CLEAN)) THEN
-      IF (CLEAN) THEN
-        IF(ALLOCATED(AXXM1)) DEALLOCATE(AXXM1, AKEM1, APEM, APEM1, YYB, FUN, FUN1)
-        RETURN
-      ENDIF
-    ENDIF
+    CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
+    CALL REALLOCATE_4D_1(H_MINUS_E_AC_I, NCHANNELS, NE, NNN_MAX, NCH_MAX)
+    CALL REALLOCATE_2D_1(AM, NNN_MAX, NCH_MAX)
+    CALL REALLOCATE_2D_1(AM1, NNN_MAX, NCH_MAX)
 
     HR = VAR_P%HR1
     H5 = HR/22.5D0
@@ -879,104 +865,109 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   ! Initialize grid with r values
     IF (PRINT_I) WRITE(*,*)'NX =',NX
-    IF (RESET) THEN
-      CALL REALLOCATE_2D_4(AXXM1, AKEM1, APEM, APEM1, NNN, NCH)
-      CALL REALLOCATE_1D_1(YYB, NX)
-    ENDIF
+    CALL REALLOCATE_2D_4(AXXM1, AKEM1, APEM, APEM1, NNN_MAX, NCH_MAX)
+    CALL REALLOCATE_1D_1(YYB, NX)
     YYB  = K*XX_AC
     IF (PRINT_I) WRITE(*,*)'PRIMO E ULTIMO PUNTO =',XX_AC(1),XX_AC(NX),NX
 
-    NEQ = NCH
-  ! Prepare the potential
-    L = LC(1)
-    S = VAR_P%S
-    J = VAR_P%J
-
-    IF (RESET) THEN
       ! Prepare the indeces for the matrix elements
-      CALL PREPARE_INDICES()
-      CALL REALLOCATE_1D_2(FUN, FUN1, NX+1)
-    ENDIF
-
-
+    CALL REALLOCATE_1D_2(FUN, FUN1, NX+1)
+    
+    
     ! Evaluate the matrix elements
-    IE = FIND_ENERGY_INDEX(VAR_P%E)
-    !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(IAB,IAK,IL,IB,LIK,FUN,FUN1) SCHEDULE(static)
-    DO IAB = 1, NEQ
-      DO IAK = 1, NEQ
-        LL = LC(IAK)
-        LIK = LC(IAB)*(LC(IAB)+1)
+    H_MINUS_E_AC_R = ZERO
+    H_MINUS_E_AC_I = ZERO
+    DO IE = 1, NE
+      DO ICH = 1, NCHANNELS
+        NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
+        NNN = NEQ * VAR_P%NNL
+        CALL PREPARE_INDICES()
+        !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(IAB,IAK,IL,IB,LL,LR,LIK,FUN,FUN1) SCHEDULE(static)
+        DO IAB = 1, NEQ
+          DO IAK = 1, NEQ
+            LL = GET_CHANNEL_L(CHANNELS_(ICH), IAK)
+            LR = GET_CHANNEL_L(CHANNELS_(ICH), IAB)
+            LIK = LR*(LR+1)
 
-        DO IL = 1, VAR_P%NNL
-          IB = COMMON_INDEX(IAB, IL)
+            DO IL = 1, VAR_P%NNL
+              IB = COMMON_INDEX(IAB, IL)
 
-        ! Evaluate the normalization core-irregular (axx1)
-          AXXM1(IB,IAK) = ZERO
-          IF(IAB.EQ.IAK)THEN
-            FUN1(1)  = ZERO
-            FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)
+            ! Evaluate the normalization core-irregular (axx1)
+              AXXM1(IB,IAK) = ZERO
+              IF(IAB.EQ.IAK)THEN
+                FUN1(1)  = ZERO
+                FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)
 
-            AXX1=VAR_P%E * B5_SINGLE(NX,H5,FUN1,1)
-            AXXM1(IB,IAK)=AXX1
-            ! write(111,*) iab, iak, il, IB, axx1
-          ENDIF
+                AXX1= ENERGIES_(IE) * B5_SINGLE(NX,H5,FUN1,1)
+                AXXM1(IB,IAK)=AXX1
+                ! write(111,*) iab, iak, il, IB, axx1
+              ENDIF
 
-        ! Evaluate the kinetic energy core-irregular (ake1)
-          AKE1 = ZERO
-          AKEM1(IB,IAK) = ZERO
-          IF(IAB.EQ.IAK)THEN
-            FUN1(1) = ZERO
-            FUN1(2:) = AJ_AC*GBES_AC(IE,LL,:)*( V2_AC(IL,:) + 2.D0*V1_AC(IL,:)/XX_AC - LIK*V0_AC(IL,:)/XX_AC**2)
+            ! Evaluate the kinetic energy core-irregular (ake1)
+              AKE1 = ZERO
+              AKEM1(IB,IAK) = ZERO
+              IF(IAB.EQ.IAK)THEN
+                FUN1(1) = ZERO
+                FUN1(2:) = AJ_AC*GBES_AC(IE,LL,:)*( V2_AC(IL,:) + 2.D0*V1_AC(IL,:)/XX_AC &
+                                                            - LIK*V0_AC(IL,:)/XX_AC**2)
 
-            AKE1 = -HTM * B5_SINGLE(NX,H5,FUN1,1)
-            AKEM1(IB,IAK) = AKE1
-            ! write(112,*) iab, iak, il, IB, ake1
-          ENDIF
-          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-            WRITE(*,*)
-            WRITE(*,*)'C-A MATRIX'
-            WRITE(*,*)'IRREGULAR A'
-            WRITE(*,*)'NORM ',AXXM1(1,1)
-            WRITE(*,*)'KINETIC',AKEM1(1,1)
-          ENDIF
+                AKE1 = -HTM * B5_SINGLE(NX,H5,FUN1,1)
+                AKEM1(IB,IAK) = AKE1
+                ! write(112,*) iab, iak, il, IB, ake1
+              ENDIF
+              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+                WRITE(*,*)
+                WRITE(*,*)'C-A MATRIX'
+                WRITE(*,*)'IRREGULAR A'
+                WRITE(*,*)'NORM ',AXXM1(1,1)
+                WRITE(*,*)'KINETIC',AKEM1(1,1)
+              ENDIF
 
 
-        ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
-          FUN (1) = ZERO
-          FUN1(1) = ZERO
-          FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(CH_INDEX,:,IAB,IAK)
-          FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(CH_INDEX,:,IAB,IAK)
+            ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
+              FUN (1) = ZERO
+              FUN1(1) = ZERO
+              FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+              FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
 
-          APE = B5_SINGLE(NX,H5,FUN,1)
-          APEM(IB,IAK) = APE
+              APE  = B5_SINGLE(NX,H5,FUN,1)
+              APEM(IB,IAK) = APE
 
-          APE1 = B5_SINGLE(NX,H5,FUN1,1)
-          APEM1(IB,IAK) = APE1
-          ! write(113,*) iab, iak, il, IB, ape, ape1
-          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-            WRITE(*,*)
-            WRITE(*,*)'C-A MATRIX'
-            WRITE(*,*)'IRREGULAR A'
-            WRITE(*,*)'POTENTIAL ',APEM1(1,1)
-            WRITE(*,*)'REGULAR A'
-            WRITE(*,*)'POTENTIAL ',APEM(1,1)
-          ENDIF
+              APE1 = B5_SINGLE(NX,H5,FUN1,1)
+              APEM1(IB,IAK) = APE1
+              ! write(113,*) iab, iak, il, IB, ape, ape1
+              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+                WRITE(*,*)
+                WRITE(*,*)'C-A MATRIX'
+                WRITE(*,*)'IRREGULAR A'
+                WRITE(*,*)'POTENTIAL ',APEM1(1,1)
+                WRITE(*,*)'REGULAR A'
+                WRITE(*,*)'POTENTIAL ',APEM(1,1)
+              ENDIF
 
-        ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
+            ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
 
-          AM(IB,IAK) = APEM(IB,IAK) / HTM
-          AM1(IB,IAK)= (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK)) / HTM
+              AM(IB,IAK) = APEM(IB,IAK) / HTM
+              AM1(IB,IAK)= (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK)) / HTM
 
-          IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-            WRITE(*,*)
-            WRITE(*,*)'C-A MATRIX'     ,IB,IAK
-            WRITE(*,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
-            WRITE(*,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
-          ENDIF
+              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
+                WRITE(*,*)
+                WRITE(*,*)'C-A MATRIX'     ,IB,IAK
+                WRITE(*,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
+                WRITE(*,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
+              ENDIF
+            ENDDO
+          ENDDO
         ENDDO
+        !$OMP END PARALLEL DO
+        H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM (1:NNN, 1:NEQ)
+        H_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AM1(1:NNN, 1:NEQ)
       ENDDO
     ENDDO
-    !$OMP END PARALLEL DO
+
+    DEALLOCATE(AM, AM1)
+    DEALLOCATE(AXXM1, AKEM1, APEM, APEM1)
+    DEALLOCATE(YYB, FUN, FUN1)
 
     RETURN
 
@@ -994,7 +985,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
     END SUBROUTINE PREPARE_INDICES
 
-  END SUBROUTINE ASYMPTOTIC_CORE_MATRIX_ELEMENTS
+  END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
 
