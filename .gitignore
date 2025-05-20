@@ -5,3 +5,4 @@ fort.*
 *.out
 *.txt
 output/*
+*.new
