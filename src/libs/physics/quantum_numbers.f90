@@ -1,3 +1,13 @@
+!> \file quantum_numbers.f90
+!! \brief Quantum number utilities and SCATTERING_CHANNEL type for nuclear/particle physics.
+!!
+!! This module defines the SCATTERING_CHANNEL type and provides helper routines
+!! for initializing, setting, and querying quantum numbers (L, S, J, T, TZ) for
+!! scattering channels. It also includes utilities for naming channels and checking
+!! physical validity and coupling.
+!!
+!! \author Alessandro
+!! \date 2025
 MODULE QUANTUM_NUMBERS
   USE REALLOCATE_UTILS
   IMPLICIT NONE
@@ -31,7 +41,11 @@ MODULE QUANTUM_NUMBERS
     IS_PHYSICAL_CHANNEL
 
 CONTAINS
-  ! Constructor for SCATTERING_CHANNEL
+  !> \brief Constructor for SCATTERING_CHANNEL.
+  !! \param[in] J Total angular momentum
+  !! \param[in] IS_EVEN Logical for parity
+  !! \param[in] TZ Isospin projection
+  !! \return Initialized SCATTERING_CHANNEL object
   FUNCTION init_scattering_channel(J, IS_EVEN, TZ) RESULT(channel)
     INTEGER, INTENT(IN) :: J, TZ
     LOGICAL, INTENT(IN) :: IS_EVEN
@@ -94,6 +108,11 @@ CONTAINS
     CHANNEL%TZ = TZ
   END FUNCTION init_scattering_channel
 
+  !> \brief Evaluate isospin T for given L, S, and TZ.
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Spin
+  !! \param[in] TZ Isospin projection
+  !! \return Isospin T
   FUNCTION EVALUATE_T(L, S, TZ) RESULT(T)
     INTEGER, INTENT(IN) :: L, S, TZ
     INTEGER :: T
@@ -106,6 +125,9 @@ CONTAINS
     ENDIF
   END FUNCTION EVALUATE_T
 
+  !> \brief Check if a channel is physical.
+  !! \param[in] CHANNEL The SCATTERING_CHANNEL object
+  !! \return .TRUE. if physical, .FALSE. otherwise
   FUNCTION IS_PHYSICAL_CHANNEL(CHANNEL) RESULT(IS_PHYSICAL)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     LOGICAL :: IS_PHYSICAL
@@ -127,12 +149,23 @@ CONTAINS
     ENDDO
   END FUNCTION IS_PHYSICAL_CHANNEL
 
+  !> \brief Check if LSJ quantum numbers are physical.
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Spin
+  !! \param[in] J Total angular momentum
+  !! \return .TRUE. if physical, .FALSE. otherwise
   FUNCTION IS_LSJ_PHYSICAL(L, S, J) RESULT(IS_LSJ)
     INTEGER, INTENT(IN) :: L, S, J
     LOGICAL :: IS_LSJ
     IS_LSJ = ABS(L-S) <= J .AND. J <= (L+S)
   END FUNCTION IS_LSJ_PHYSICAL
 
+  !> \brief Set the quantum numbers of a SCATTERING_CHANNEL.
+  !! \param[inout] CHANNEL The channel to set
+  !! \param[in] J Total angular momentum
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Spin
+  !! \param[in] TZ Isospin projection
   SUBROUTINE SET_CHANNEL(CHANNEL, J, L, S, TZ)
     TYPE(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
     INTEGER, INTENT(IN) :: J, L, S, TZ
@@ -177,6 +210,11 @@ CONTAINS
     ENDIF
   END SUBROUTINE SET_CHANNEL  
 
+  !> \brief Get the spectroscopic name for a channel from L, S, J.
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Spin
+  !! \param[in] J Total angular momentum
+  !! \return Name as CHARACTER(LEN=3)
   FUNCTION GET_CHANNEL_NAME_LSJ(L, S, J) RESULT(NAME)
     INTEGER, INTENT(IN) :: L, S, J
     CHARACTER(LEN=3) :: NAME
@@ -203,6 +241,9 @@ CONTAINS
     WRITE(NAME(3:3), '(I1)') J
   END FUNCTION GET_CHANNEL_NAME_LSJ
 
+  !> \brief Get the spectroscopic name for a SCATTERING_CHANNEL object.
+  !! \param[in] CHANNEL The channel object
+  !! \return Name as CHARACTER(LEN=16)
   FUNCTION GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL) RESULT(NAME)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     CHARACTER(LEN=16) :: NAME
@@ -215,12 +256,19 @@ CONTAINS
     ENDDO
   END FUNCTION GET_CHANNEL_NAME_FROM_OBJECT
 
+  !> \brief Get the number of channels (NCH).
+  !! \param[in] CHANNEL The channel object
+  !! \return Number of channels
   FUNCTION GET_CHANNEL_NCH(CHANNEL) RESULT (NCH)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: NCH
     NCH = CHANNEL%NCH
   END FUNCTION GET_CHANNEL_NCH
 
+  !> \brief Get the L quantum number for a given channel index.
+  !! \param[in] CHANNEL The channel object
+  !! \param[in] I Channel index
+  !! \return L quantum number
   FUNCTION GET_CHANNEL_L(CHANNEL, I) RESULT(L)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
@@ -233,6 +281,10 @@ CONTAINS
     L = CHANNEL%L(I)
   END FUNCTION GET_CHANNEL_L
 
+  !> \brief Get the S quantum number for a given channel index.
+  !! \param[in] CHANNEL The channel object
+  !! \param[in] I Channel index
+  !! \return S quantum number
   FUNCTION GET_CHANNEL_S(CHANNEL, I) RESULT(S)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
@@ -245,6 +297,10 @@ CONTAINS
     S = CHANNEL%S(I)
   END FUNCTION GET_CHANNEL_S
 
+  !> \brief Get the T quantum number for a given channel index.
+  !! \param[in] CHANNEL The channel object
+  !! \param[in] I Channel index
+  !! \return T quantum number
   FUNCTION GET_CHANNEL_T(CHANNEL, I) RESULT(T)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
@@ -257,24 +313,37 @@ CONTAINS
     T = CHANNEL%T(I)
   END FUNCTION GET_CHANNEL_T
 
+  !> \brief Get the J quantum number for a channel.
+  !! \param[in] CHANNEL The channel object
+  !! \return J quantum number
   FUNCTION GET_CHANNEL_J(CHANNEL) RESULT(J)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: J
     J = CHANNEL%J
   END FUNCTION GET_CHANNEL_J
 
+  !> \brief Get the TZ quantum number for a channel.
+  !! \param[in] CHANNEL The channel object
+  !! \return TZ quantum number
   FUNCTION GET_CHANNEL_TZ(CHANNEL) RESULT(TZ)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: TZ
     TZ = CHANNEL%TZ
   END FUNCTION GET_CHANNEL_TZ
 
+  !> \brief Check if the channel is coupled.
+  !! \param[in] CHANNEL The channel object
+  !! \return .TRUE. if coupled, .FALSE. otherwise
   FUNCTION IS_CHANNEL_COUPLED(CHANNEL) RESULT(COUPLED)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     LOGICAL :: COUPLED
     COUPLED = CHANNEL%COUPLED
   END FUNCTION IS_CHANNEL_COUPLED
   
+  !> \brief Check if two channels are the same.
+  !! \param[in] CHANNEL1 First channel
+  !! \param[in] CHANNEL2 Second channel
+  !! \return .TRUE. if the channels are the same, .FALSE. otherwise
   FUNCTION IS_SAME_CHANNEL(CHANNEL1, CHANNEL2) RESULT(SAME)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL1, CHANNEL2
     LOGICAL :: SAME

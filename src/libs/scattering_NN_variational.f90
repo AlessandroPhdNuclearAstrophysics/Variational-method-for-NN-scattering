@@ -1,24 +1,57 @@
+!> \file scattering_NN_variational.f90
+!! \brief Module for evaluating nucleon-nucleon (NN) scattering wave functions and phase shifts
+!!        using the variational and Kohn principles.
+!!
+!! This module provides routines to compute the scattering wave function and phase shifts
+!! for a given set of energies and channels (partial waves) in nucleon-nucleon scattering.
+!! The calculations are based on the variational principle and the Kohn variational method.
+!! The module supports coupled and uncoupled channels, and allows for flexible configuration
+!! of the variational basis and grid parameters.
+!!
+!! \author Alessandro
+!! \date 2025
 MODULE SCATTERING_NN_VARIATIONAL
   USE REALLOCATE_UTILS
   USE QUANTUM_NUMBERS
   IMPLICIT NONE
   PRIVATE
 
+  !> \brief Structure to store the results of phase shift calculations.
+  !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
   TYPE, PUBLIC :: PHASE_SHIFT_RESULT
-    DOUBLE PRECISION :: delta1_BB
-    DOUBLE PRECISION :: delta2_BB
-    DOUBLE PRECISION :: epsilon_BB
-    DOUBLE PRECISION :: delta1_S
-    DOUBLE PRECISION :: delta2_S
-    DOUBLE PRECISION :: epsilon_S
+    DOUBLE PRECISION :: delta1_BB   !< Phase shift 1 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta2_BB   !< Phase shift 2 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: epsilon_BB  !< Mixing angle (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta1_S    !< Phase shift 1 (Stapp convention) [deg]
+    DOUBLE PRECISION :: delta2_S    !< Phase shift 2 (Stapp convention) [deg]
+    DOUBLE PRECISION :: epsilon_S   !< Mixing angle (Stapp convention) [deg]
   END TYPE PHASE_SHIFT_RESULT
 
+  !> \brief Structure containing all variational parameters for the scattering calculation.
+  !! This includes quantum numbers, grid parameters, and basis size.
   TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
-    INTEGER :: J, L, S, T, TZ, T1Z, T2Z, IPOT, ILB=1, LEMP=0
-    DOUBLE PRECISION :: E, K
-    DOUBLE PRECISION :: HR1 = 0.01D0, H = 0.02D0, RANGE = 40.0D0, GAMMA = 4.D0, EPS = 0.25D0, AF = 1.02D0
-    INTEGER :: NX_AA, NX_AC, NX_CC = 100
-    INTEGER :: NNL = 32
+    INTEGER :: J      !< Total angular momentum
+    INTEGER :: L      !< Orbital angular momentum
+    INTEGER :: S      !< Spin
+    INTEGER :: T      !< Isospin
+    INTEGER :: TZ     !< Isospin projection
+    INTEGER :: T1Z    !< Isospin projection of particle 1
+    INTEGER :: T2Z    !< Isospin projection of particle 2
+    INTEGER :: IPOT   !< Potential type index
+    INTEGER :: ILB = 1    !< Interaction type (default 1)
+    INTEGER :: LEMP = 0   !< Electromagnetic potential flag (default 0)
+    DOUBLE PRECISION :: E     !< Scattering energy [MeV]
+    DOUBLE PRECISION :: K     !< Scattering momentum [fm^-1]
+    DOUBLE PRECISION :: HR1 = 0.01D0   !< Step size for core grid [fm]
+    DOUBLE PRECISION :: H   = 0.02D0   !< Step size for asymptotic grid [fm]
+    DOUBLE PRECISION :: RANGE = 40.0D0 !< Maximum radial range [fm]
+    DOUBLE PRECISION :: GAMMA = 4.D0   !< Scaling parameter for Laguerre basis
+    DOUBLE PRECISION :: EPS = 0.25D0   !< Exponential grid parameter
+    DOUBLE PRECISION :: AF = 1.02D0    !< Exponential grid parameter
+    INTEGER :: NX_AA         !< Number of points in asymptotic-asymptotic grid
+    INTEGER :: NX_AC         !< Number of points in asymptotic-core grid
+    INTEGER :: NX_CC = 100   !< Number of points in core-core grid (default 100)
+    INTEGER :: NNL = 32      !< Number of Laguerre basis functions (default 32)
   END TYPE VARIATIONAL_PARAMETERS
 
   INTEGER, PARAMETER :: NNE = 80
@@ -92,11 +125,38 @@ MODULE SCATTERING_NN_VARIATIONAL
 
   TYPE(VARIATIONAL_PARAMETERS), PRIVATE :: VAR_P
 
+  !> \brief Set the number of Laguerre basis functions for the variational calculation.
+  !! \param[in] NNL Number of Laguerre basis functions
   PUBLIC :: SET_NNL
+
+  !> \brief Set the exponential grid parameter AF.
+  !! \param[in] AF Exponential grid parameter
   PUBLIC :: SET_AF
+
+  !> \brief Set the scattering channels to be analyzed.
+  !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   PUBLIC :: SET_CHANNELS
+
+  !> \brief Set the energies at which to compute phase shifts and wave functions.
+  !! \param[in] ENERGIES Array of energies [MeV]
   PUBLIC :: SET_ENERGIES
+
+  !> \brief Main routine to perform NN scattering calculation using the variational method.
+  !! \param[in]  E      Scattering energy [MeV]
+  !! \param[in]  J      Total angular momentum
+  !! \param[in]  L      Orbital angular momentum
+  !! \param[in]  S      Spin
+  !! \param[in]  TZ     Isospin projection
+  !! \param[in]  IPOT   Potential type index
+  !! \param[in]  ILB    Interaction type
+  !! \param[in]  LEMP   Electromagnetic potential flag
+  !! \param[out] PHASE_SHIFT  Structure with phase shifts and mixing angles
+  !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
+  !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
   PUBLIC :: NN_SCATTERING_VARIATIONAL
+
+  !> \brief Set all variational parameters at once.
+  !! \param[in] J, L, S, T, TZ, IPOT, ILB, LEMP, HR1, H, RANGE, GAMMA, EPS, AF, NX_AA, NX_AC, NX_CC, NNL
   PUBLIC :: SET_VARIATIONAL_PARAMETERS
   
   PRIVATE:: PRINT_DIVIDER
@@ -160,6 +220,8 @@ CONTAINS
 
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS
 
+  !> \brief Set the energies at which to compute phase shifts and wave functions.
+  !! \param[in] ENERGIES Array of energies [MeV]
   SUBROUTINE SET_ENERGIES(ENERGIES)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: ENERGIES(:)
@@ -171,6 +233,8 @@ CONTAINS
     IF (CHANNELS_SET .AND. .NOT.BESSELS_SET .AND. HTM_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
   END SUBROUTINE SET_ENERGIES
 
+  !> \brief Set the scattering channels to be analyzed.
+  !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE SET_CHANNELS(CHANNELS)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
@@ -192,18 +256,24 @@ CONTAINS
     IF (ENERGIES_SET .AND. .NOT.BESSELS_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
   END SUBROUTINE SET_CHANNELS
 
+  !> \brief Set the number of Laguerre basis functions for the variational calculation.
+  !! \param[in] NNL Number of Laguerre basis functions
   SUBROUTINE SET_NNL(NNL)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NNL
     VAR_P%NNL = NNL
   END SUBROUTINE SET_NNL
 
+  !> \brief Set the exponential grid parameter AF.
+  !! \param[in] AF Exponential grid parameter
   SUBROUTINE SET_AF(AF)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: AF
     VAR_P%AF = AF
   END SUBROUTINE SET_AF
 
+  !> \brief Set all variational parameters for a single calculation (internal use).
+  !! \param[in] E, J, L, S, TZ, IPOT, ILB, LEMP
   SUBROUTINE SET_VARIATIONAL_PARAMETERS_(E, J, L, S, TZ, IPOT, ILB, LEMP)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: E
@@ -255,17 +325,21 @@ CONTAINS
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS_
 
 
-  ! This subroutine calculates the NN scattering using a variational method
-  ! INPUT PARAMETERS:
-  ! E     : Energy in MeV
-  ! J     : Total angular momentum
-  ! L     : Orbital angular momentum
-  ! S     : Spin
-  ! TZ    : Isospin projection
-  ! IPOT  : Potential type
-  ! ILB   : Interaction type
-  ! LEMP  : Set EM potential, if 0 then only pure Coulomb
-SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
+  !> \brief Main routine to perform NN scattering calculation using the variational method.
+  !! Computes phase shifts and mixing angles for given quantum numbers and energy.
+  !! 
+  !! \param[in]  E      Scattering energy [MeV]
+  !! \param[in]  J      Total angular momentum
+  !! \param[in]  L      Orbital angular momentum
+  !! \param[in]  S      Spin
+  !! \param[in]  TZ     Isospin projection
+  !! \param[in]  IPOT   Potential type index
+  !! \param[in]  ILB    Interaction type
+  !! \param[in]  LEMP   Electromagnetic potential flag
+  !! \param[out] PHASE_SHIFT  Structure with phase shifts and mixing angles
+  !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
+  !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
+  SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
    PRINT_COEFFICIENTS, PRINT_INFORMATIONS)
   IMPLICIT NONE
 ! INPUT PARAMETERS
@@ -495,6 +569,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   RETURN
 
   CONTAINS
+    !> \brief Handle LAPACK DGESV INFO error.
     SUBROUTINE HANDLE_INFO_ERROR()
       IMPLICIT NONE
       IF (INFO.NE.0) THEN
@@ -503,6 +578,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDIF
     END SUBROUTINE HANDLE_INFO_ERROR
 
+    !> \brief Print information about the current calculation.
     SUBROUTINE PRINT_INFO()
       IMPLICIT NONE
       PRINT *, "E:    ",                  VAR_P%E, " MeV"
@@ -519,6 +595,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       10 FORMAT(" ",A, I2)
     END SUBROUTINE PRINT_INFO
 
+    !> \brief Compute the second order R-matrix.
     SUBROUTINE R_SECOND_ORDER()
       IMPLICIT NONE
       INTEGER :: I, IK, IB
@@ -657,9 +734,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
     END SUBROUTINE R_SECOND_ORDER
 
+    !> \brief Write coefficients to file to recreate the wave function.
+    !! \param[in] FILE (optional) Output file name
     SUBROUTINE WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION(FILE)
       IMPLICIT NONE
-      INTEGER :: JP, NNL, I
+      INTEGER :: NNL, I
       INTEGER :: LLA(NCH_MAX), LSA(NCH_MAX), LTA(NCH_MAX), LJA(NCH_MAX)
       DOUBLE PRECISION :: EPS, GAMMA
       CHARACTER(LEN=*), OPTIONAL :: FILE
@@ -705,6 +784,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       CLOSE(19)
     END SUBROUTINE WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION
 
+    !> \brief Calculate phase shifts and mixing angle in the Blatt-Biedenharn convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT()
       IMPLICIT NONE
       AMIXR=0.5D0*ATAN(2.*RMAT2(1,2)/(RMAT2(1,1)-RMAT2(2,2)))
@@ -727,6 +807,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
     END SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT
 
+    !> \brief Calculate the S-matrix from the R-matrix.
     SUBROUTINE CALCULATE_S_MATRIX()
       IMPLICIT NONE
       DOUBLE PRECISION :: COS1, SIN1
@@ -740,6 +821,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       SMAT(1,2) = COS1*SIN1*(SM1 - SM2)
     END SUBROUTINE CALCULATE_S_MATRIX
 
+    !> \brief Calculate phase shifts and mixing angle in the Stapp convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP()
       IMPLICIT NONE
       DOUBLE COMPLEX :: SM1, SM2
@@ -770,6 +852,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
 
 
+  !> \brief Prepare core-core matrix elements for the variational calculation.
   SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
     USE INTEGRATION_MOD
@@ -861,6 +944,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     DEALLOCATE(HCC, ENCC)
 
   CONTAINS
+    !> \brief Prepare indices for matrix elements.
     SUBROUTINE PREPARE_INDICES()
       IMPLICIT NONE
       INTEGER II, JJ
@@ -875,6 +959,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     END SUBROUTINE PREPARE_INDICES
   END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
 
+  !> \brief Prepare asymptotic-core matrix elements for the variational calculation.
   SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
     USE INTEGRATION_MOD
@@ -1014,6 +1099,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     RETURN
 
   CONTAINS
+    !> \brief Prepare indices for matrix elements.
     SUBROUTINE PREPARE_INDICES()
       IMPLICIT NONE
       INTEGER II, JJ, I
@@ -1032,6 +1118,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 
 
+  !> \brief Prepare asymptotic-asymptotic matrix elements for the variational calculation.
   SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
     USE gsl_bessel
     USE INTEGRATION_MOD
@@ -1178,11 +1265,15 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   END SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
+  !> \brief Print a divider line to the output.
   SUBROUTINE PRINT_DIVIDER()
     IMPLICIT NONE
       WRITE(*,*) '====================================================================================='
   END SUBROUTINE PRINT_DIVIDER
 
+  !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
+  !! \param[in] J, L, S, TZ, IPOT, ILB, LEMP
+  !! \return .TRUE. if first call, .FALSE. otherwise
   FUNCTION IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP) RESULT(FIRST_CALL)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
@@ -1203,6 +1294,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     ENDIF
   END FUNCTION IS_FIRST_CALL
 
+  !> \brief Prepare the radial grids for the calculation.
   SUBROUTINE PREPARE_GRID()
     USE INTEGRATION_MOD
     IMPLICIT NONE
@@ -1244,6 +1336,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
   END SUBROUTINE PREPARE_GRID
 
+  !> \brief Prepare Bessel functions for the asymptotic region.
   SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
     USE gsl_bessel
     USE INTEGRATION_MOD
@@ -1338,6 +1431,9 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
+  !> \brief Find the index of a given energy in the ENERGIES array.
+  !! \param[in] E Energy value
+  !! \return Index in ENERGIES_ array
   FUNCTION FIND_ENERGY_INDEX(E) RESULT(IE)
     IMPLICIT NONE
     INTEGER :: IE
@@ -1356,6 +1452,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
+  !> \brief Set mass and isospin projections for the calculation.
+  !! \param[in] TZ Isospin projection
   SUBROUTINE SET_M_T1Z_T2Z_HTM(TZ)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: TZ
@@ -1381,6 +1479,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     HTM_SET = .TRUE.
   END SUBROUTINE SET_M_T1Z_T2Z_HTM
 
+  !> \brief Prepare the potential matrices for all channels.
+  !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE PREPARE_POTENTIAL(CHANNELS)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
@@ -1465,6 +1565,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     POTENTIAL_SET = .TRUE.
 
   CONTAINS
+    !> \brief Evaluate T1Z and T2Z from TZ.
     SUBROUTINE EVAL_T1Z_T2Z()
       IMPLICIT NONE
       SELECT CASE (TZ)
@@ -1484,6 +1585,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     END SUBROUTINE EVAL_T1Z_T2Z
   END SUBROUTINE PREPARE_POTENTIAL
 
+  !> \brief Prepare Laguerre basis functions and their derivatives.
   SUBROUTINE PREPARE_LAGUERRE()
     USE LAGUERRE_POLYNOMIAL_MOD
     IMPLICIT NONE
@@ -1536,6 +1638,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   END SUBROUTINE PREPARE_LAGUERRE
 
 
+  !> \brief Find the index of the current channel in the CHANNELS array.
+  !! \return Index in CHANNELS_ array
   FUNCTION FIND_CHANNEL_INDEX() RESULT(INDX)
     USE QUANTUM_NUMBERS
     IMPLICIT NONE
