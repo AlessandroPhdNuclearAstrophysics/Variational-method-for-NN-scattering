@@ -1,34 +1,57 @@
+!> \file main_scattering_NN_variazional_method.f90
+!! \brief Main program for computing NN scattering phase shifts using the variational method.
+!!
+!! This program sets up the quantum numbers, energies, and channels for nucleon-nucleon
+!! scattering, then computes phase shifts and mixing angles for all physical channels
+!! using the variational approach. Results are written to output files for each channel.
+!!
+!! \author Alessandro
+!! \date 2025
 PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   USE SCATTERING_NN_VARIATIONAL
   USE QUANTUM_NUMBERS
   IMPLICIT NONE
 
+  !> \brief Maximum total angular momentum J to consider.
   INTEGER, PARAMETER :: JMAX = 2
+  !> \brief Maximum orbital angular momentum L to consider.
   INTEGER, PARAMETER :: LMAX = JMAX + 1
 
+  !> \brief Number of energy points and number of channels.
   INTEGER :: NE = 200, NCH = 0
+  !> \brief Maximum energy [MeV].
   DOUBLE PRECISION :: EMAX = 1.D0
+  !> \brief Name of the scattering channel (for output).
   CHARACTER(LEN=16) :: CHANNEL_NAME
+  !> \brief Temporary channel object.
   TYPE(SCATTERING_CHANNEL) :: CHANNEL
+  !> \brief Array of all physical channels.
   TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: CHANNELS(:)
 
-  ! Variable declarations
+  !> \brief Quantum numbers and loop variables.
   INTEGER :: J, L, S, TZ, I
+  !> \brief Array of energy values.
   DOUBLE PRECISION, ALLOCATABLE :: ENERGIES(:)
+  !> \brief Current energy and energy step.
   DOUBLE PRECISION :: E, HE
+  !> \brief Potential, interaction, and EM flag.
   INTEGER :: IPOT, ILB, LEMP
+  !> \brief Print coefficients flag.
   LOGICAL :: PRINT_COEFFICIENTS = .FALSE.
+  !> \brief Structure to hold phase shift results.
   TYPE(PHASE_SHIFT_RESULT) :: PHASE_SHIFTS
+  !> \brief Namelist for input parameters.
   NAMELIST /IN/ EMAX, NE, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFICIENTS
 
-  ! Local variables
+  !> \brief Input file name for namelist (if provided).
   CHARACTER(LEN=256) :: input_file
+  !> \brief Flag: are there command-line arguments?
   LOGICAL :: has_arguments
 
-  ! Check if there are command-line arguments
+  !> \brief Check if there are command-line arguments.
   has_arguments = COMMAND_ARGUMENT_COUNT() > 0
 
-  ! Initialize default values
+  !> \brief Initialize default values for quantum numbers and options.
   J = 1
   L = 0
   S = 1
@@ -37,7 +60,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ILB = 1
   LEMP = 0
 
-  ! If there are arguments, treat the first as the namelist input file
+  !> \brief Read namelist from file if provided, otherwise prompt user.
   IF (has_arguments) THEN
     CALL GET_COMMAND_ARGUMENT(1, input_file)
     OPEN(UNIT=10, FILE=TRIM(input_file), STATUS='OLD', ACTION='READ')
@@ -50,18 +73,21 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
     ! READ(*, NML=IN)
   END IF
 
-  ! Print the final values of the namelist
+  !> \brief Print the final values of the namelist for confirmation.
   PRINT *, "Final values of the namelist:"
   WRITE(*, NML=IN)
 
+  !> \brief Allocate and fill the energy grid.
   ALLOCATE(ENERGIES(NE))
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
 
+  !> \brief Prepare the list of all physical channels.
   CALL PREPARE_CHANNELS
   CALL SET_ENERGIES(ENERGIES)
   CALL SET_CHANNELS(CHANNELS)
 
+  !> \brief Loop over all possible L, S, J combinations and compute phase shifts for each channel.
   DO L = 0, 2
     DO S = 0, 1
       DO J = ABS(L-S), MIN(L+S, 2)
@@ -73,7 +99,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
         OPEN(21, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
         DO I = 1, NE
           E =  ENERGIES(I)
-          CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.TRUE.)
+          CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
           WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
         ENDDO
         CLOSE(21)
@@ -82,6 +108,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ENDDO
 
 CONTAINS
+  !> \brief Prepare the array of all physical scattering channels for the given quantum numbers.
   SUBROUTINE PREPARE_CHANNELS()
     IMPLICIT NONE
 

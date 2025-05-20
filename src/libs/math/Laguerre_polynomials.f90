@@ -1,5 +1,24 @@
+!> \file Laguerre_polynomials.f90
+!! \brief Laguerre polynomial evaluation utilities for variational calculations.
+!!
+!! This module provides routines to compute Laguerre polynomials and their first and
+!! second derivatives for use in basis expansions and quadrature.
+!!
+!! \author Alessandro
+!! \date 2025
 MODULE LAGUERRE_POLYNOMIAL_MOD
 CONTAINS
+
+  !> \brief Compute Laguerre polynomials and their derivatives.
+  !!
+  !! This subroutine evaluates the generalized Laguerre polynomials L_n^{(α)}(x)
+  !! and their first and second derivatives for a set of points.
+  !!
+  !! \param[in]  XX   Array of points at which to evaluate the polynomials
+  !! \param[in]  APF  The α parameter of the generalized Laguerre polynomial
+  !! \param[out] U    Array (0:NMAX, NX) of polynomial values
+  !! \param[out] U1   Array (0:NMAX, NX) of first derivatives
+  !! \param[out] U2   Array (0:NMAX, NX) of second derivatives
   SUBROUTINE LAGUERRE_POLYNOMIAL(XX, APF, U, U1, U2)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: XX(:), APF
@@ -33,4 +52,5 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE LAGUERRE_POLYNOMIAL
+
 END MODULE LAGUERRE_POLYNOMIAL_MOD

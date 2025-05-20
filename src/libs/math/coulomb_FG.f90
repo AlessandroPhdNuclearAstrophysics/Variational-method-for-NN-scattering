@@ -1,3 +1,12 @@
+!> \file coulomb_FG.f90
+!! \brief Fortran interface to GSL Coulomb wave functions F and G.
+!!
+!! This module provides a Fortran interface to the GNU Scientific Library (GSL)
+!! routines for computing regular (F) and irregular (G) Coulomb wave functions,
+!! as well as their derivatives, using the C API via iso_c_binding.
+!!
+!! \author Alessandro
+!! \date 2025
 module gsl_coulomb
   use, intrinsic :: iso_c_binding
   implicit none
@@ -6,28 +15,43 @@ module gsl_coulomb
   ! Exposed types and procedures
   public :: coulomb_wave_FG, gsl_sf_result
 
-  ! GSL result type (matches C struct)
+  !> \brief Fortran type matching GSL's gsl_sf_result struct.
+  !! Holds a value and an absolute error estimate.
   type, bind(C), public :: gsl_sf_result
-    real(c_double) :: val  ! Function value
-    real(c_double) :: err  ! Absolute error estimate
+    real(c_double) :: val  !< Function value
+    real(c_double) :: err  !< Absolute error estimate
   end type gsl_sf_result
 
-  ! Interface to GSL's coulomb_wave_FG_e
+  !> \brief Interface to GSL's coulomb_wave_FG_e C function.
   interface
     function gsl_sf_coulomb_wave_FG_e(eta, x, L, k, F, FP, G, GP, F_exp, G_exp) &
         bind(C, name='gsl_sf_coulomb_wave_FG_e')
       import :: c_int, c_double, gsl_sf_result
-      integer(c_int) :: gsl_sf_coulomb_wave_FG_e  ! Return status (0 = success)
-      real(c_double), value :: eta, x, L          ! Input parameters
-      integer(c_int), value :: k                  ! Boundary condition flag
-      type(gsl_sf_result) :: F, FP, G, GP        ! Output structures
-      real(c_double) :: F_exp, G_exp              ! Scaling exponents
+      integer(c_int) :: gsl_sf_coulomb_wave_FG_e  !< Return status (0 = success)
+      real(c_double), value :: eta, x, L          !< Input parameters
+      integer(c_int), value :: k                  !< Boundary condition flag
+      type(gsl_sf_result) :: F, FP, G, GP         !< Output structures
+      real(c_double) :: F_exp, G_exp              !< Scaling exponents
     end function
   end interface
 
 contains
 
-  ! Wrapper subroutine that returns complete result structures
+  !> \brief Compute regular and irregular Coulomb wave functions and their derivatives.
+  !!
+  !! This is a Fortran wrapper for GSL's gsl_sf_coulomb_wave_FG_e.
+  !! Computes F_L(η,ρ), F'_L(η,ρ), G_L(η,ρ), G'_L(η,ρ) and their scaling exponents.
+  !!
+  !! \param[in]  eta    Sommerfeld parameter (η)
+  !! \param[in]  x      Radial coordinate (ρ = kr)
+  !! \param[in]  L      Angular momentum quantum number
+  !! \param[out] F      Regular Coulomb function F_L(η,ρ) and error
+  !! \param[out] FP     Derivative F'_L(η,ρ) and error
+  !! \param[out] G      Irregular Coulomb function G_L(η,ρ) and error
+  !! \param[out] GP     Derivative G'_L(η,ρ) and error
+  !! \param[out] F_exp  Exponent for F underflow/overflow
+  !! \param[out] G_exp  Exponent for G underflow/overflow
+  !! \param[out] status (optional) GSL status code (0=success)
   subroutine coulomb_wave_FG(eta, x, L, F, FP, G, GP, F_exp, G_exp, status)
     real(c_double), intent(in) :: eta            ! [in] Sommerfeld parameter (η)
     real(c_double), intent(in) :: x              ! [in] Radial coordinate (ρ = kr)

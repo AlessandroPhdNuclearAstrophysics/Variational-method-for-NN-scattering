@@ -6,3 +6,4 @@ fort.*
 *.txt
 output/*
 *.new
+doc/*

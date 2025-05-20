@@ -125,38 +125,11 @@ MODULE SCATTERING_NN_VARIATIONAL
 
   TYPE(VARIATIONAL_PARAMETERS), PRIVATE :: VAR_P
 
-  !> \brief Set the number of Laguerre basis functions for the variational calculation.
-  !! \param[in] NNL Number of Laguerre basis functions
   PUBLIC :: SET_NNL
-
-  !> \brief Set the exponential grid parameter AF.
-  !! \param[in] AF Exponential grid parameter
   PUBLIC :: SET_AF
-
-  !> \brief Set the scattering channels to be analyzed.
-  !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   PUBLIC :: SET_CHANNELS
-
-  !> \brief Set the energies at which to compute phase shifts and wave functions.
-  !! \param[in] ENERGIES Array of energies [MeV]
   PUBLIC :: SET_ENERGIES
-
-  !> \brief Main routine to perform NN scattering calculation using the variational method.
-  !! \param[in]  E      Scattering energy [MeV]
-  !! \param[in]  J      Total angular momentum
-  !! \param[in]  L      Orbital angular momentum
-  !! \param[in]  S      Spin
-  !! \param[in]  TZ     Isospin projection
-  !! \param[in]  IPOT   Potential type index
-  !! \param[in]  ILB    Interaction type
-  !! \param[in]  LEMP   Electromagnetic potential flag
-  !! \param[out] PHASE_SHIFT  Structure with phase shifts and mixing angles
-  !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
-  !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
   PUBLIC :: NN_SCATTERING_VARIATIONAL
-
-  !> \brief Set all variational parameters at once.
-  !! \param[in] J, L, S, T, TZ, IPOT, ILB, LEMP, HR1, H, RANGE, GAMMA, EPS, AF, NX_AA, NX_AC, NX_CC, NNL
   PUBLIC :: SET_VARIATIONAL_PARAMETERS
   
   PRIVATE:: PRINT_DIVIDER
@@ -171,7 +144,25 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
-! Public setter for VARIATIONAL_PARAMETERS
+!> \brief Set all variational parameters at once.
+  !! \param[in] J    Total angular momentum
+  !! \param[in] L    Orbital angular momentum
+  !! \param[in] S    Spin
+  !! \param[in] T    Isospin
+  !! \param[in] TZ   Isospin projection
+  !! \param[in] IPOT Potential type index
+  !! \param[in] ILB  Interaction type (optional)
+  !! \param[in] LEMP Electromagnetic potential flag (optional)
+  !! \param[in] HR1  Step size for core grid [fm] (optional)
+  !! \param[in] H    Step size for asymptotic grid [fm] (optional)
+  !! \param[in] RANGE Maximum radial range [fm] (optional)
+  !! \param[in] GAMMA Scaling parameter for Laguerre basis (optional)
+  !! \param[in] EPS  Exponential grid parameter (optional)
+  !! \param[in] AF   Exponential grid parameter (optional)
+  !! \param[in] NX_AA Number of points in asymptotic-asymptotic grid (optional)
+  !! \param[in] NX_AC Number of points in asymptotic-core grid (optional)
+  !! \param[in] NX_CC Number of points in core-core grid (optional)
+  !! \param[in] NNL   Number of Laguerre basis functions (optional)
   SUBROUTINE SET_VARIATIONAL_PARAMETERS(J, L, S, T, TZ, IPOT, ILB, LEMP, HR1, H, &
                                             RANGE, GAMMA, EPS, AF, NX_AA, NX_AC, NX_CC, NNL)
     IMPLICIT NONE

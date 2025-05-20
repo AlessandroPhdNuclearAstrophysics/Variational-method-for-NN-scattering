@@ -104,7 +104,33 @@ clean:
 delete_out:
 	@rm -rvf $(shell find $(OUT_DIR) -type f)
 
+# Doxygen documentation target (Doxyfile generated dynamically)
+doc:
+	@echo "Generating Doxyfile..."
+	@echo "PROJECT_NAME           = Variational scattering" > Doxyfile
+	@echo "OUTPUT_DIRECTORY       = doc" >> Doxyfile
+	@echo "GENERATE_HTML          = YES" >> Doxyfile
+	@echo "GENERATE_LATEX         = NO" >> Doxyfile
+	@echo "RECURSIVE              = YES" >> Doxyfile
+	@echo "INPUT                  = src" >> Doxyfile
+	@echo "FILE_PATTERNS          = *.f90" >> Doxyfile
+	@echo "EXTRACT_ALL            = YES" >> Doxyfile
+	@echo "OPTIMIZE_FOR_FORTRAN   = YES" >> Doxyfile
+	@echo "QUIET                  = YES" >> Doxyfile
+	@echo "JAVADOC_AUTOBRIEF      = YES" >> Doxyfile
+	@echo "MULTILINE_CPP_IS_BRIEF = YES" >> Doxyfile
+	@echo "CALL_GRAPH             = YES" >> Doxyfile
+	@echo "CALLER_GRAPH           = YES" >> Doxyfile
+	@echo "HAVE_DOT               = YES" >> Doxyfile
+	@echo "DOT_IMAGE_FORMAT       = svg" >> Doxyfile
+	@echo "INTERACTIVE_SVG        = YES" >> Doxyfile
+	@doxygen Doxyfile
+	@rm -vf Doxyfile
+	@echo "Doxygen documentation generated in doc/"
+	@echo "Open doc/html/index.html in a web browser to view the documentation."
+	@echo "Doxygen documentation generation complete."
+
 # Include all dependency files if they exist
 -include $(DEPFILES)
 
-.PHONY: all clean run delete_out check_graphs
+.PHONY: all clean run delete_out check_graphs doc
