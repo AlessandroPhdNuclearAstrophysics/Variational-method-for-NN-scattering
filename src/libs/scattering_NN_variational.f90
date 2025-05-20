@@ -13,10 +13,17 @@ MODULE SCATTERING_NN_VARIATIONAL
     DOUBLE PRECISION :: epsilon_S
   END TYPE PHASE_SHIFT_RESULT
 
+  TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
+    INTEGER :: J, L, S, TZ, IPOT, ILB, LEMP
+    DOUBLE PRECISION :: E
+    DOUBLE PRECISION :: HR1 = 0.01D0, H = 0.02D0, RANGE = 40.0D0, GAMMA = 4.D0, EPS = 0.25D0, AF = 1.02D0
+    INTEGER :: NX_AA, NX_AC, NX_CC = 100
+    INTEGER :: NNL = 32
+  END TYPE VARIATIONAL_PARAMETERS
+
   INTEGER, PARAMETER :: NNE = 80
   INTEGER, PARAMETER :: NCH_MAX = 2
   INTEGER :: NCH
-  INTEGER :: NEQ  ! GIVEN BY PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
   INTEGER :: NNN, NNN_MAX
 
   DOUBLE PRECISION, PARAMETER :: HC = 197.327053D0
@@ -46,7 +53,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   DOUBLE PRECISION, ALLOCATABLE :: A_CC(:), A_AC(:), A_AA(:), B_AA(:), AJ_AA(:), AJ_AC(:), YYL_AC(:)
   LOGICAL :: GRID_SET = .FALSE.
 
-  ! Potential for all the channels
+  ! Potential for all the channels (first index) V_XX(CHANNEL, IR, ALPHA, ALPHA')
   DOUBLE PRECISION, ALLOCATABLE :: V_CC(:,:,:,:), V_AC(:,:,:,:), V_AA(:,:,:,:)
   LOGICAL :: POTENTIAL_SET = .FALSE.
 
@@ -55,39 +62,33 @@ MODULE SCATTERING_NN_VARIATIONAL
   INTEGER :: NE = -1
   LOGICAL :: ENERGIES_SET = .FALSE.
 
-  DOUBLE PRECISION, ALLOCATABLE :: FBES_AA(:,:,:), FBES_AC(:,:,:)
-  DOUBLE PRECISION, ALLOCATABLE :: GBES_AA(:,:,:), GBES_AC(:,:,:)
+  ! Bessel functions F_L (E, L, IX)
+  DOUBLE PRECISION, ALLOCATABLE :: FBES_AA (:,:,:), FBES_AC (:,:,:)
+  DOUBLE PRECISION, ALLOCATABLE :: GBES_AA (:,:,:), GBES_AC (:,:,:)
   DOUBLE PRECISION, ALLOCATABLE :: GBES0_AA(:,:,:), GBES1_AA(:,:,:), GBES2_AA(:,:,:), HNOR_AA(:,:,:)
   LOGICAL :: BESSELS_SET = .FALSE.
 
+  ! Laguerre functions modified and their derivatives
   DOUBLE PRECISION, ALLOCATABLE :: V0_CC(:,:), V1_CC(:,:), V2_CC(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: V0_AC(:,:), V1_AC(:,:), V2_AC(:,:)
   LOGICAL :: LAGUERRE_SET = .FALSE.
 
 
   ! Matrix elements for all energies and channels
-  ! H_MINUS_E_CC = < n alpha | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
-  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_CC(:,:,:,:)    ! H_MINUS_E_CC(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AC_R = < F_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
-  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_R(:,:,:,:)  ! H_MINUS_E_AC_R(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AC_I = < G_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
-  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_I(:,:,:,:)  ! H_MINUS_E_AC_I(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AA_RR = < F_ALPHA | H - E | F_ALPHA' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_CC    = < n alpha | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AC_R  = < F_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AC_I  = < G_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AA_RR = < F_ALPHA | H - E | F_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AA_RI = < F_ALPHA | H - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AA_IR = < G_ALPHA | H - E | F_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! H_MINUS_E_AA_II = < G_ALPHA | H - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_CC   (:,:,:,:)  ! H_MINUS_E_CC   (CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_R (:,:,:,:)  ! H_MINUS_E_AC_R (CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AC_I (:,:,:,:)  ! H_MINUS_E_AC_I (CH_INDEX, E, NALPHA, NALPHA')
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_RR(:,:,:,:)  ! H_MINUS_E_AA_RR(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AA_RI = < F_ALPHA | H - E | G_ALPHA' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_RI(:,:,:,:)  ! H_MINUS_E_AA_RI(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AA_IR = < G_ALPHA | H - E | F_ALPHA' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_IR(:,:,:,:)  ! H_MINUS_E_AA_IR(CH_INDEX, E, NALPHA, NALPHA')
-  ! H_MINUS_E_AA_II = < G_ALPHA | H - E | G_ALPHA' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_II(:,:,:,:)  ! H_MINUS_E_AA_II(CH_INDEX, E, NALPHA, NALPHA')
-
-  TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
-    INTEGER :: J, L, S, TZ, IPOT, ILB, LEMP
-    DOUBLE PRECISION :: E
-    DOUBLE PRECISION :: HR1 = 0.01D0, H = 0.02D0, RANGE = 40.0D0, GAMMA = 4.D0, EPS = 0.25D0, AF = 1.02D0
-    INTEGER :: NX_AA, NX_AC, NX_CC = 100
-    INTEGER :: NNL = 32
-  END TYPE VARIATIONAL_PARAMETERS
 
   TYPE(VARIATIONAL_PARAMETERS), PRIVATE :: VAR_P
 
@@ -256,7 +257,6 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
     NNN     = VAR_P%NNL * NCH
     NNN_MAX = VAR_P%NNL * NCH_MAX
-    NEQ = NCH
     CALL REALLOCATE_2D_3(C, CC, CCC, NNN, NNN)
     CALL REALLOCATE_2D_2(CAR, CAI, NNN, NCH)
     CALL REALLOCATE_1D_1(CARR, NNN)
@@ -293,7 +293,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
   IF (PRINT_I) CALL PRINT_DIVIDER
 
-  DO IAK=1, NEQ
+  DO IAK=1, NCH
 ! Preparing the matrix elements for the diagonalization
     CARR =-CAR(:,IAK)
     CAII =-CAI(:,IAK)
@@ -314,7 +314,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   ENDDO
 
 ! Calculating R coefficients
-  IF (PRINT_I) WRITE(*,*) NEQ, NNN
+  IF (PRINT_I) WRITE(*,*) NCH, NNN
 
   ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
   CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
@@ -334,8 +334,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   AIR = H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)
   AII = H_MINUS_E_AA_II(CH_INDEX, IE, :, :)
 
-  DO IAB=1,NEQ
-  DO IAK=1,NEQ
+  DO IAB = 1, NCH
+  DO IAK = 1, NCH
     AM(IAB,IAK)=BD1(IAK,IAB)+BD1(IAB,IAK)+AII(IAB,IAK)+AII(IAK,IAB)
     AN(IAB,IAK)=BD2(IAK,IAB)+BD3(IAB,IAK)+2.D0*AIR(IAB,IAK)
   ENDDO
@@ -354,13 +354,13 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
 
 ! Evaluating the "R_{alpha, beta}" matrix elements
-  CALL DGESV(NEQ, NEQ, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
+  CALL DGESV(NCH, NCH, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
   CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
   IF (PRINT_I)  WRITE(*,*) "INFO: ", INFO
 
   IF (PRINT_I) THEN
-    DO IAB=1,NEQ
-    DO IAK=1,NEQ
+    DO IAB = 1, NCH
+    DO IAK = 1, NCH
       WRITE(*,*)"COEFF R",RMAT(IAB,IAK)
     ENDDO
     ENDDO
@@ -370,8 +370,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
   CALL R_SECOND_ORDER()
   IF (PRINT_I) THEN
     WRITE(*,*)
-    DO IAB=1,NEQ
-    DO IAK=1,NEQ
+    DO IAB = 1, NCH
+    DO IAK = 1, NCH
       WRITE(*,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
     ENDDO
     ENDDO
@@ -481,7 +481,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         FIRST_CALL = .FALSE.
       ENDIF
 
-      DO IAK=1,NEQ
+      DO IAK=1,NCH
         DO IK=1,NNN
           XRCOEFV(IK,IAK) = XRCOEFF(IAK,IK)
           XICOEFV(IK,IAK) = XICOEFF(IAK,IK)
@@ -489,7 +489,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
 
 
-      DO IAB=1,NEQ
+      DO IAB=1,NCH
         DO IK=1,NNN
           SOMMA  = ZERO
           SOMMA1 = ZERO
@@ -503,10 +503,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
 
 
-      DO IAB=1,NEQ
+      DO IAB=1,NCH
         DO IB=1,NNN
           SOMMA = ZERO
-          DO IAK=1,NEQ
+          DO IAK=1,NCH
             SOMMA = SOMMA + RMAT(IAB,IAK)*XICOEFF(IAK,IB)
           ENDDO
           RCI (IAB,IB) = SOMMA
@@ -515,8 +515,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
 
 
-      DO IAB=1,NEQ
-      DO IAK=1,NEQ
+      DO IAB=1,NCH
+      DO IAK=1,NCH
         SOMMA  = ZERO
         SOMMA1 = ZERO
         SOMMA2 = ZERO
@@ -531,8 +531,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
       ENDDO
 
-      DO I=1,NEQ
-      DO IAB=1,NEQ
+      DO I=1,NCH
+      DO IAB=1,NCH
         SOMMA  = ZERO
         SOMMA1 = ZERO
         SOMMA2 = ZERO
@@ -540,7 +540,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
         SOMMA4 = ZERO
         SOMMA5 = ZERO
         SOMMA6 = ZERO
-        DO IAK=1,NEQ
+        DO IAK=1,NCH
           SOMMA  = SOMMA  + BD2(I,IAK) * RMAT(IAK,IAB)
           SOMMA1 = SOMMA1 + RD0(I,IAK) * RMAT(IAK,IAB)
           SOMMA2 = SOMMA2 + BD3(I,IAK) * RMAT(IAK,IAB)
@@ -559,11 +559,11 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
       ENDDO
 
-      DO I=1,NEQ
-      DO IAB=1,NEQ
+      DO I=1,NCH
+      DO IAB=1,NCH
         SOMMA  = ZERO
         SOMMA1 = ZERO
-        DO IAK=1,NEQ
+        DO IAK=1,NCH
           SOMMA  = SOMMA  + RD2(I,IAK) * RMAT(IAK,IAB)
           SOMMA1 = SOMMA1 + RD3(I,IAK) * RMAT(IAK,IAB)
         ENDDO
@@ -573,8 +573,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
       ENDDO
 
       IF (PRINT_I) WRITE(*,*)
-      DO IAB=1,NEQ
-      DO IAK=1,NEQ
+      DO IAB=1,NCH
+      DO IAK=1,NCH
         ASS(IAB,IAK)=CD0(IAB,IAK)+2*BD4(IAB,IAK)+CD4(IAB,IAK)    &
                     +ARR(IAB,IAK)+CD5(IAB,IAK)+CD2(IAB,IAK)    &
                     +CD7(IAB,IAK)+CD6(IAB,IAK)    &
@@ -587,8 +587,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       !SYMMETRIZATION
       RMAT2 = ZERO
-      DO IAB=1,NEQ
-      DO IAK=1,NEQ
+      DO IAB=1,NCH
+      DO IAK=1,NCH
         RMAT2(IAB,IAK) =-0.5D0*( RMAT2_ASYM(IAB,IAK) + RMAT2_ASYM(IAK,IAB) )
       ENDDO
       ENDDO
@@ -632,6 +632,17 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
          LTA(1)=1
          LJA(1)=1
       ENDIF
+      IF(J.EQ.1.AND.JP.EQ.0)THEN ! 3S1-3D1
+         LLA(1)=0
+         LSA(1)=1
+         LTA(1)=0
+         LJA(1)=1
+
+         LLA(2)=2
+         LSA(2)=1
+         LTA(2)=0
+         LJA(2)=1
+      ENDIF
       IF(J.EQ.2.AND.JP.EQ.1)THEN ! 1D2
          LLA(1)=2
          LSA(1)=0
@@ -650,10 +661,10 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
          LJA(2)=2
       ENDIF
 
-      WRITE(19,*)NEQ,GAMMA,NNL
+      WRITE(19,*)NCH,GAMMA,NNL
       WRITE(19,*)EPS
 
-      DO IAK=1,NEQ
+      DO IAK=1,NCH
         WRITE(19,*)LLA(IAK),LSA(IAK),LTA(IAK),LJA(IAK)
 
         DO I=1,NNN
@@ -666,8 +677,8 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
 
       ENDDO
 
-      DO IAK=1,NEQ
-      DO IAB=1,NEQ
+      DO IAK=1,NCH
+      DO IAB=1,NCH
         WRITE(19,*)-RMAT2(IAK,IAB)
       ENDDO
       ENDDO
@@ -1011,8 +1022,7 @@ SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIF
     DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.D-8 ! fm^-1
     
     DOUBLE PRECISION :: H, H5
-    INTEGER :: L, IAB, IAK, IE, LL, LR, ICH, NEQ
-    INTEGER :: S, J
+    INTEGER :: IAB, IAK, IE, LL, LR, ICH, NEQ
     DOUBLE PRECISION :: AXX, AXX3, AKE, AKE3, APE, APE1, APE2, APE3
     DOUBLE PRECISION, ALLOCATABLE :: AM(:,:), AM1(:,:), AM2(:,:), AM3(:,:)
     DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: AXXM, AXXM3, AKEM, AKEM3, APEM, APEM1, APEM2, APEM3, CHECK
