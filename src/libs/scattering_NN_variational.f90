@@ -1,7 +1,8 @@
 !> \file scattering_NN_variational.f90
+!! \defgroup scattering_nn_variational_mod Scattering NN Variational Module
 !! \brief Module for evaluating nucleon-nucleon (NN) scattering wave functions and phase shifts
 !!        using the variational and Kohn principles.
-!!
+!! \ingroup scattering_nn_variational_mod
 !! This module provides routines to compute the scattering wave function and phase shifts
 !! for a given set of energies and channels (partial waves) in nucleon-nucleon scattering.
 !! The calculations are based on the variational principle and the Kohn variational method.
@@ -16,6 +17,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   IMPLICIT NONE
   PRIVATE
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Structure to store the results of phase shift calculations.
   !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
   TYPE, PUBLIC :: PHASE_SHIFT_RESULT
@@ -27,6 +29,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     DOUBLE PRECISION :: epsilon_S   !< Mixing angle (Stapp convention) [deg]
   END TYPE PHASE_SHIFT_RESULT
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Structure containing all variational parameters for the scattering calculation.
   !! This includes quantum numbers, grid parameters, and basis size.
   TYPE, PUBLIC :: VARIATIONAL_PARAMETERS
@@ -144,6 +147,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
+!> \ingroup scattering_nn_variational_mod
 !> \brief Set all variational parameters at once.
   !! \param[in] J    Total angular momentum
   !! \param[in] L    Orbital angular momentum
@@ -211,6 +215,7 @@ CONTAINS
 
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set the energies at which to compute phase shifts and wave functions.
   !! \param[in] ENERGIES Array of energies [MeV]
   SUBROUTINE SET_ENERGIES(ENERGIES)
@@ -224,6 +229,7 @@ CONTAINS
     IF (CHANNELS_SET .AND. .NOT.BESSELS_SET .AND. HTM_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
   END SUBROUTINE SET_ENERGIES
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set the scattering channels to be analyzed.
   !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE SET_CHANNELS(CHANNELS)
@@ -247,6 +253,7 @@ CONTAINS
     IF (ENERGIES_SET .AND. .NOT.BESSELS_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
   END SUBROUTINE SET_CHANNELS
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set the number of Laguerre basis functions for the variational calculation.
   !! \param[in] NNL Number of Laguerre basis functions
   SUBROUTINE SET_NNL(NNL)
@@ -255,6 +262,7 @@ CONTAINS
     VAR_P%NNL = NNL
   END SUBROUTINE SET_NNL
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set the exponential grid parameter AF.
   !! \param[in] AF Exponential grid parameter
   SUBROUTINE SET_AF(AF)
@@ -263,6 +271,7 @@ CONTAINS
     VAR_P%AF = AF
   END SUBROUTINE SET_AF
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set all variational parameters for a single calculation (internal use).
   !! \param[in] E, J, L, S, TZ, IPOT, ILB, LEMP
   SUBROUTINE SET_VARIATIONAL_PARAMETERS_(E, J, L, S, TZ, IPOT, ILB, LEMP)
@@ -316,6 +325,7 @@ CONTAINS
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS_
 
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Main routine to perform NN scattering calculation using the variational method.
   !! Computes phase shifts and mixing angles for given quantum numbers and energy.
   !! 
@@ -843,6 +853,7 @@ CONTAINS
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
 
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare core-core matrix elements for the variational calculation.
   SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
@@ -851,7 +862,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: NNL, NNN, NEQ
     DOUBLE PRECISION :: SUM
-    INTEGER :: I, NX, IE, ICH
+    INTEGER :: I, NX, IE, ICH, II, JJ
     DOUBLE PRECISION :: GAMMA
     INTEGER :: COMMON_INDEX(NCH_MAX, NNE), LIK, IAB, IAK, IL, IR, IB, IK, LR
     DOUBLE PRECISION, ALLOCATABLE :: KIN_MATRIX(:,:), POT_MATRIX(:,:,:)
@@ -878,7 +889,15 @@ CONTAINS
     
     DO ICH = 1, NCHANNELS
       NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
-      CALL PREPARE_INDICES
+      
+      II = 0
+      DO I=1, NEQ
+        DO JJ=1, VAR_P%NNL
+          II = II + 1
+          COMMON_INDEX(I, JJ) = II
+        ENDDO
+      ENDDO
+
       NNN = NEQ*NNL
       DO IAB=1, NEQ
       DO IAK=1, NEQ
@@ -933,23 +952,9 @@ CONTAINS
     DEALLOCATE(INTEGRAND)
     DEALLOCATE(KIN_MATRIX, POT_MATRIX)
     DEALLOCATE(HCC, ENCC)
-
-  CONTAINS
-    !> \brief Prepare indices for matrix elements.
-    SUBROUTINE PREPARE_INDICES()
-      IMPLICIT NONE
-      INTEGER II, JJ
-
-      II = 0
-      DO I=1, NEQ
-        DO JJ=1, VAR_P%NNL
-          II = II + 1
-          COMMON_INDEX(I, JJ) = II
-        ENDDO
-      ENDDO
-    END SUBROUTINE PREPARE_INDICES
   END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-core matrix elements for the variational calculation.
   SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
@@ -958,7 +963,7 @@ CONTAINS
     
     DOUBLE PRECISION :: H5, HR ! Step size in r
     INTEGER :: NX, NEQ, NNN
-    INTEGER :: IE, ICH, LR
+    INTEGER :: IE, ICH, LR, II, JJ, I
     INTEGER :: IAB, IAK, LIK, IL, IB, LL
     DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: AXXM1(:,:)
@@ -999,7 +1004,15 @@ CONTAINS
       DO ICH = 1, NCHANNELS
         NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
         NNN = NEQ * VAR_P%NNL
-        CALL PREPARE_INDICES()
+        
+        II = 0
+        DO I=1, NEQ
+          DO JJ=1, VAR_P%NNL
+            II = II + 1
+            COMMON_INDEX(I, JJ) = II
+          ENDDO
+        ENDDO
+
         !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(IAB,IAK,IL,IB,LL,LR,LIK,FUN,FUN1) SCHEDULE(static)
         DO IAB = 1, NEQ
           DO IAK = 1, NEQ
@@ -1089,26 +1102,12 @@ CONTAINS
 
     RETURN
 
-  CONTAINS
-    !> \brief Prepare indices for matrix elements.
-    SUBROUTINE PREPARE_INDICES()
-      IMPLICIT NONE
-      INTEGER II, JJ, I
-
-      II = 0
-      DO I=1, NEQ
-        DO JJ=1, VAR_P%NNL
-          II = II + 1
-          COMMON_INDEX(I, JJ) = II
-        ENDDO
-      ENDDO
-    END SUBROUTINE PREPARE_INDICES
-
   END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
 
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-asymptotic matrix elements for the variational calculation.
   SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
     USE gsl_bessel
@@ -1256,12 +1255,14 @@ CONTAINS
 
   END SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Print a divider line to the output.
   SUBROUTINE PRINT_DIVIDER()
     IMPLICIT NONE
       WRITE(*,*) '====================================================================================='
   END SUBROUTINE PRINT_DIVIDER
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
   !! \param[in] J, L, S, TZ, IPOT, ILB, LEMP
   !! \return .TRUE. if first call, .FALSE. otherwise
@@ -1285,6 +1286,7 @@ CONTAINS
     ENDIF
   END FUNCTION IS_FIRST_CALL
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the radial grids for the calculation.
   SUBROUTINE PREPARE_GRID()
     USE INTEGRATION_MOD
@@ -1327,6 +1329,7 @@ CONTAINS
 
   END SUBROUTINE PREPARE_GRID
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare Bessel functions for the asymptotic region.
   SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
     USE gsl_bessel
@@ -1422,6 +1425,7 @@ CONTAINS
     WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Find the index of a given energy in the ENERGIES array.
   !! \param[in] E Energy value
   !! \return Index in ENERGIES_ array
@@ -1443,6 +1447,7 @@ CONTAINS
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Set mass and isospin projections for the calculation.
   !! \param[in] TZ Isospin projection
   SUBROUTINE SET_M_T1Z_T2Z_HTM(TZ)
@@ -1470,9 +1475,11 @@ CONTAINS
     HTM_SET = .TRUE.
   END SUBROUTINE SET_M_T1Z_T2Z_HTM
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the potential matrices for all channels.
   !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE PREPARE_POTENTIAL(CHANNELS)
+    USE AV18
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     INTEGER :: NC, NEQ_C, ICH, IR, L, S, J, T, TZ, T1Z, T2Z
@@ -1497,7 +1504,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_CC
         R = XX_CC(IR)
-        CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
         IF (COUPLED) THEN
           V_CC(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1506,7 +1513,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
           V_CC(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_CC(ICH,IR,:,:) = ZERO
@@ -1516,7 +1523,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_AC
         R = XX_AC(IR)
-        CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
         IF (COUPLED) THEN
           V_AC(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1525,7 +1532,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
           V_AC(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_AC(ICH,IR,:,:) = ZERO
@@ -1535,7 +1542,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_AA
         R = XX_AA(IR)
-        CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
         IF (COUPLED) THEN
           V_AA(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1544,7 +1551,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW90(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
           V_AA(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_AA(ICH,IR,:,:) = ZERO
@@ -1576,6 +1583,7 @@ CONTAINS
     END SUBROUTINE EVAL_T1Z_T2Z
   END SUBROUTINE PREPARE_POTENTIAL
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare Laguerre basis functions and their derivatives.
   SUBROUTINE PREPARE_LAGUERRE()
     USE LAGUERRE_POLYNOMIAL_MOD
@@ -1629,6 +1637,7 @@ CONTAINS
   END SUBROUTINE PREPARE_LAGUERRE
 
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Find the index of the current channel in the CHANNELS array.
   !! \return Index in CHANNELS_ array
   FUNCTION FIND_CHANNEL_INDEX() RESULT(INDX)

@@ -20,7 +20,7 @@ else
             -fdefault-real-8 -fdefault-double-8
 endif
 
-OMP ?= 0
+OMP ?= 1
 ifeq ($(OMP),1)	
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
@@ -119,18 +119,25 @@ doc:
 	@echo "QUIET                  = YES" >> Doxyfile
 	@echo "JAVADOC_AUTOBRIEF      = YES" >> Doxyfile
 	@echo "MULTILINE_CPP_IS_BRIEF = YES" >> Doxyfile
-	@echo "CALL_GRAPH             = YES" >> Doxyfile
-	@echo "CALLER_GRAPH           = YES" >> Doxyfile
-	@echo "HAVE_DOT               = YES" >> Doxyfile
 	@echo "DOT_IMAGE_FORMAT       = svg" >> Doxyfile
 	@echo "INTERACTIVE_SVG        = YES" >> Doxyfile
+	@echo "HAVE_DOT           		= YES" >> Doxyfile
+	@echo "CALL_GRAPH         		= YES" >> Doxyfile
+	@echo "CALLER_GRAPH       		= YES" >> Doxyfile
+	@echo "DOT_GRAPH_MAX_NODES		= 100" >> Doxyfile
+	@echo "DOT_CLEANUP        		= YES" >> Doxyfile
+	@echo "DOT_GROUP_GRAPHS   		= YES" >> Doxyfile
 	@doxygen Doxyfile
 	@rm -vf Doxyfile
 	@echo "Doxygen documentation generated in doc/"
 	@echo "Open doc/html/index.html in a web browser to view the documentation."
 	@echo "Doxygen documentation generation complete."
 
+
+delete_doc:
+	@rm -rvf doc
+
 # Include all dependency files if they exist
 -include $(DEPFILES)
 
-.PHONY: all clean run delete_out check_graphs doc
+.PHONY: all clean run delete_out check_graphs doc delete_doc
