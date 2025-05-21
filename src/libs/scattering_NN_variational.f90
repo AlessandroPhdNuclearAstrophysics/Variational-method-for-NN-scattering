@@ -40,7 +40,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     INTEGER :: TZ     !< Isospin projection
     INTEGER :: T1Z    !< Isospin projection of particle 1
     INTEGER :: T2Z    !< Isospin projection of particle 2
-    INTEGER :: IPOT = 18  !< Potential type index (default 18)
+    INTEGER :: IPOT = 0  !< Potential type index
     INTEGER :: ILB = 1    !< Interaction type (default 1)
     INTEGER :: LEMP = 0   !< Electromagnetic potential flag (default 0)
     DOUBLE PRECISION :: E     !< Scattering energy [MeV]
@@ -167,12 +167,12 @@ CONTAINS
   !! \param[in] NX_AC Number of points in asymptotic-core grid (optional)
   !! \param[in] NX_CC Number of points in core-core grid (optional)
   !! \param[in] NNL   Number of Laguerre basis functions (optional)
-  SUBROUTINE SET_VARIATIONAL_PARAMETERS(J, L, S, T, TZ, IPOT, ILB, LEMP, HR1, H, &
+  SUBROUTINE SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, T, ILB, LEMP, HR1, H, &
                                             RANGE, GAMMA, EPS, AF, NX_AA, NX_AC, NX_CC, NNL)
     IMPLICIT NONE
-    DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT
     INTEGER, OPTIONAL, INTENT(IN) :: T, NX_AA, NX_CC, NX_AC, NNL, ILB, LEMP
+    DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
 
     VAR_P%J     = J
     VAR_P%L     = L
@@ -180,7 +180,7 @@ CONTAINS
     IF (PRESENT(T)) THEN
       VAR_P%T = T
     ELSE
-      VAR_P%T = MOD(MOD((L+S),2),2)
+      VAR_P%T = MOD(MOD((L+S),2)+1,2)
     ENDIF
     VAR_P%TZ    = TZ
     IF (ABS(TZ)>T) THEN
@@ -386,6 +386,19 @@ CONTAINS
   DOUBLE COMPLEX :: SMAT(NCH_MAX, NCH_MAX)
 
   FIRST_CALL = FIRST_CALL .OR. IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP)
+  IF (.NOT.POTENTIAL_SET) THEN
+    IF (.NOT.CHANNELS_SET) THEN
+      PRINT *, "Error: Potential not set and channels not set!"
+      STOP
+    ENDIF
+    IF (ENERGIES_SET) THEN
+      CALL PREPARE_POTENTIAL(CHANNELS_)
+      POTENTIAL_SET = .TRUE.
+    ELSE
+      PRINT *, "Error: Potential not set and energies not set!"
+      STOP
+    ENDIF
+  ENDIF
 
 
   IF (PRESENT(PRINT_COEFFICIENTS)) THEN
@@ -1498,6 +1511,11 @@ CONTAINS
     LOGICAL :: COUPLED
     DOUBLE PRECISION :: R, V2(2,2)
     
+    IF (VAR_P%IPOT.EQ.0) THEN
+      PRINT *, "Error: IPOT not set"
+      RETURN
+    ENDIF
+
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     NC = SIZE(CHANNELS)

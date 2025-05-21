@@ -61,6 +61,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ILB = 1
   LEMP = 0
 
+  
   !> \brief Read namelist from file if provided, otherwise prompt user.
   IF (has_arguments) THEN
     CALL GET_COMMAND_ARGUMENT(1, input_file)
@@ -73,21 +74,21 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
     PRINT *, "Modify the above values if needed and press Enter to continue."
     ! READ(*, NML=IN)
   END IF
-
+  
   !> \brief Print the final values of the namelist for confirmation.
   PRINT *, "Final values of the namelist:"
   WRITE(*, NML=IN)
-
+  
   !> \brief Allocate and fill the energy grid.
   ALLOCATE(ENERGIES(NE))
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
-
+  
   !> \brief Prepare the list of all physical channels.
   CALL PREPARE_CHANNELS
   CALL SET_ENERGIES(ENERGIES)
   CALL SET_CHANNELS(CHANNELS)
-
+  
   !> \brief Loop over all possible L, S, J combinations and compute phase shifts for each channel.
   DO L = 0, 2
     DO S = 0, 1
@@ -96,8 +97,9 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
         IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
         IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
         CHANNEL_NAME = get_channel_name(CHANNEL)
+        CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB, LEMP)
         PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
-        OPEN(21, FILE='output/AV18/delta_np_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+        OPEN(21, FILE='output/AV18/delta_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
         DO I = 1, NE
           E =  ENERGIES(I)
           CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
