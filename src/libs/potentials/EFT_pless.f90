@@ -225,13 +225,13 @@ CONTAINS
     SUBROUTINE CREATE_IDENTITY_MATRIX(DIM)
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: DIM
-      INTEGER :: I, J
-      DO I = 1, DIM
-        DO J = 1, DIM
-          IF (I.EQ.J) THEN
-            I2(I,J) = 1
+      INTEGER :: II, JJ
+      DO II = 1, DIM
+        DO JJ = 1, DIM
+          IF (II.EQ.JJ) THEN
+            I2(II,JJ) = 1
           ELSE
-            I2(I,J) = 0
+            I2(II,JJ) = 0
           ENDIF
         END DO
       END DO
