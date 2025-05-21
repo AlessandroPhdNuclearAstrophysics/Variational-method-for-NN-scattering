@@ -40,7 +40,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     INTEGER :: TZ     !< Isospin projection
     INTEGER :: T1Z    !< Isospin projection of particle 1
     INTEGER :: T2Z    !< Isospin projection of particle 2
-    INTEGER :: IPOT   !< Potential type index
+    INTEGER :: IPOT = 18  !< Potential type index (default 18)
     INTEGER :: ILB = 1    !< Interaction type (default 1)
     INTEGER :: LEMP = 0   !< Electromagnetic potential flag (default 0)
     DOUBLE PRECISION :: E     !< Scattering energy [MeV]
@@ -1491,7 +1491,7 @@ CONTAINS
   !> \brief Prepare the potential matrices for all channels.
   !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE PREPARE_POTENTIAL(CHANNELS)
-    USE AV18
+    USE POTENTIALS
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     INTEGER :: NC, NEQ_C, ICH, IR, L, S, J, T, TZ, T1Z, T2Z
@@ -1516,7 +1516,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_CC
         R = XX_CC(IR)
-        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
         IF (COUPLED) THEN
           V_CC(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1525,7 +1525,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
           V_CC(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_CC(ICH,IR,:,:) = ZERO
@@ -1535,7 +1535,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_AC
         R = XX_AC(IR)
-        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
         IF (COUPLED) THEN
           V_AC(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1544,7 +1544,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
           V_AC(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_AC(ICH,IR,:,:) = ZERO
@@ -1554,7 +1554,7 @@ CONTAINS
 
       DO IR = 1, VAR_P%NX_AA
         R = XX_AA(IR)
-        CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
         IF (COUPLED) THEN
           V_AA(ICH,IR,:,:) = V2
         ELSEIF (NEQ_C == 2) THEN
@@ -1563,7 +1563,7 @@ CONTAINS
           L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
           S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
           T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          CALL AV18PW(1, L, S, J, T, T1Z, T2Z, R, V2, VAR_P%LEMP)
+          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
           V_AA(ICH,IR,2,2) = V2(1,1)
         ELSE
           V_AA(ICH,IR,:,:) = ZERO
