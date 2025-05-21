@@ -1,12 +1,12 @@
 !> \file av14.f90
-!> \brief Modulo per il potenziale nucleare Argonne v14 (AV14).
-!> 
-!> Questo modulo fornisce la funzione di potenziale nucleare AV14
-!> per il calcolo delle interazioni nucleone-nucleone in diversi canali
-!> di onde parziali, includendo effetti isospinici e termini elettromagnetici.
-!> 
-!> \author [Autore]
-!> \date [Data]
+!! \brief Modulo per il potenziale nucleare Argonne v14 (AV14).
+!! 
+!! Questo modulo fornisce la funzione di potenziale nucleare AV14
+!! per il calcolo delle interazioni nucleone-nucleone in diversi canali
+!! di onde parziali, includendo effetti isospinici e termini elettromagnetici.
+!! 
+!! \author Alessandro Grassi
+!! \date 2025
 MODULE AV14
   USE AV18
   IMPLICIT NONE
@@ -52,25 +52,15 @@ CONTAINS
   !> di accoppiamento di spin e momento angolare.
   SUBROUTINE AV14PW(LEMP, L, S, J, T1Z, T2Z, R, VPW)
     IMPLICIT NONE
-    !> Tipo di interazione elettromagnetica
     INTEGER, INTENT(IN) :: LEMP
-    !> Proiezione isospin nucleone 1
     INTEGER, INTENT(IN) :: T1Z
-    !> Proiezione isospin nucleone 2
     INTEGER, INTENT(IN) :: T2Z
-    !> Momento di spin totale
     INTEGER, INTENT(IN) :: S
-    !> Momento angolare orbitale
     INTEGER, INTENT(IN) :: L
-    !> Momento angolare totale
     INTEGER, INTENT(IN) :: J
-    !> Distanza interparticellare (fm)
     DOUBLE PRECISION, INTENT(IN) :: R
-    !> Matrice 2x2 del potenziale
     DOUBLE PRECISION, INTENT(OUT) :: VPW(2, 2)
-    !> Tipo di interazione (1=pp, 2=pn, 3=nn)
     INTEGER :: INN
-    !> Variabili temporanee per i valori del potenziale
     DOUBLE PRECISION :: VX1, VX2, VX3, VX4, VX5
     DOUBLE PRECISION :: VPP1, VPP2, VPP3, VPP4, VPP5
     DOUBLE PRECISION :: VPN1, VPN2, VPN3, VPN4, VPN5
@@ -89,7 +79,6 @@ CONTAINS
 
     VPW = 0.D0
 
-    !> Determina il tipo di interazione in base all'isospin totale.
     SELECT CASE (T1Z + T2Z)
       CASE (-2)
         INN = 1 ! pp
@@ -102,12 +91,10 @@ CONTAINS
         STOP
     END SELECT
 
-    !> Calcola i termini del potenziale per tutti i canali.
     CALL POTL(VPP1, VPP2, VPP3, VPP4, VPP5, &
               VPN1, VPN2, VPN3, VPN4, VPN5, &
               VNN1, VNN2, VNN3, VNN4, VNN5)
 
-    !> Assegna i valori del potenziale in base al tipo di interazione.
     SELECT CASE (INN)
       CASE (1)
         VX1 = VPP1; VX2 = VPP2; VX3 = VPP3; VX4 = VPP4; VX5 = VPP5
@@ -117,7 +104,6 @@ CONTAINS
         VX1 = VNN1; VX2 = VNN2; VX3 = VNN3; VX4 = VNN4; VX5 = VNN5
     END SELECT
 
-    !> Assegna la matrice del potenziale in base ai numeri quantici.
     IF (J == L .AND. S == 0) THEN
       VPW(1, 1) = VX1
     ELSE IF (J == L .AND. S == 1) THEN
