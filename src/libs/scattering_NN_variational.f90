@@ -291,6 +291,18 @@ CONTAINS
     VAR_P%E = E
 
     VAR_P%NX_AC = INT(VAR_P%RANGE/VAR_P%HR1) + 10
+    
+    SELECT CASE (TZ)
+    CASE (1)
+      VAR_P%T1Z = 1
+      VAR_P%T2Z = 1
+    CASE (0)
+      VAR_P%T1Z =-1
+      VAR_P%T2Z = 1
+    CASE (-1)
+      VAR_P%T1Z =-1
+      VAR_P%T2Z =-1
+    END SELECT
 
     CALL SET_M_T1Z_T2Z_HTM(TZ)
 
