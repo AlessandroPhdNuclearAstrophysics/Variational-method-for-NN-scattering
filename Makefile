@@ -36,34 +36,45 @@ LDFLAGS += -lgsl -lgslcblas -llapack -lblas
 
 # Define directory paths
 SRC_DIR := src
-TEST_DIR := $(SRC_DIR)/tests
 BUILD_DIR := build
+TEST_DIR := $(SRC_DIR)/tests
 LOG_DIR := $(BUILD_DIR)/logs
 DEP_DIR := $(BUILD_DIR)/dep
 OUT_DIR := output
 
 # Find all .f90 files (recursively in src/)
-ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90" ! -path "$(TEST_DIR)/*")
+ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90")
 
-# Select main program sources (e.g., src/main1.f90, src/main2.f90, ...)
-MAIN_SOURCES := $(filter $(SRC_DIR)/main%.f90, $(ALL_SOURCES))
+# Select main program sources: main_*.f90 in src/ and all .f90 in $(TEST_DIR)
+MAIN_SOURCES := $(filter $(SRC_DIR)/main_%.f90, $(ALL_SOURCES))
+TEST_SOURCES := $(shell find $(TEST_DIR) -name "*.f90")
+ALL_MAIN_SOURCES := $(MAIN_SOURCES) $(TEST_SOURCES)
 
 # Create lists of corresponding object files and dependency files
 OBJECTS := $(patsubst $(SRC_DIR)/%.f90,$(BUILD_DIR)/%.o,$(ALL_SOURCES))
 DEPFILES := $(patsubst $(SRC_DIR)/%.f90,$(DEP_DIR)/%.d,$(ALL_SOURCES))
+TEST_OBJECTS := $(patsubst $(SRC_DIR)/%.f90,$(BUILD_DIR)/%.o,$(TEST_SOURCES))
+TEST_DEPFILES := $(patsubst $(SRC_DIR)/%.f90,$(DEP_DIR)/%.d,$(TEST_SOURCES))
+
+# Executables for main_*.f90 and test programs
 EXECUTABLES := $(patsubst $(SRC_DIR)/%.f90,$(BUILD_DIR)/%.x,$(MAIN_SOURCES))
+TEST_EXECUTABLES := $(patsubst $(SRC_DIR)/%.f90,$(BUILD_DIR)/%.x,$(TEST_SOURCES))
+ALL_EXECUTABLES := $(EXECUTABLES) $(TEST_EXECUTABLES)
+
+# List of all main and test object files
+MAIN_OBJECTS := $(patsubst $(SRC_DIR)/%.f90,$(BUILD_DIR)/%.o,$(MAIN_SOURCES))
+ALL_MAIN_OBJECTS := $(MAIN_OBJECTS) $(TEST_OBJECTS)
+
+# List of all object files except main and test objects
+NON_MAIN_OBJECTS := $(filter-out $(ALL_MAIN_OBJECTS),$(OBJECTS))
 
 # Default rule
-all: $(LOG_DIR) $(DEP_DIR) $(EXECUTABLES)
+all: $(LOG_DIR) $(DEP_DIR) $(ALL_EXECUTABLES)
 
-# Rule to build executables: one for each main program
-$(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(filter-out $<, $(OBJECTS))
+# Rule to build executables: link only its own object and NON_MAIN_OBJECTS
+$(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
 	@echo "Linking $@"
-	# $^ = all dependencies (main.o and module .o files)
 	$(FC) $^ $(LDFLAGS) -o $@ > $(LOG_DIR)/$(notdir $@).link.log 2>&1 || (cat $(LOG_DIR)/$(notdir $@).link.log && false)
-# $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(BUILD_DIR)/libs/math/coulomb_FG.o $(BUILD_DIR)/libs/math/algebra.o $(BUILD_DIR)/libs/utils.o
-# 	@echo "Linking $@"
-# 	$(FC) $^ $(LDFLAGS) -o $@ > $(LOG_DIR)/$(notdir $@).link.log 2>&1 || (cat $(LOG_DIR)/$(notdir $@).link.log && false)
 
 # Rule to compile each .f90 file into a .o object
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.f90
@@ -142,7 +153,14 @@ doc:
 delete_doc:
 	@rm -rvf doc
 
-# Include all dependency files if they exist
--include $(DEPFILES)
+# Test target: build and run all test executables in $(TEST_DIR)
+test: $(TEST_EXECUTABLES)
+	@for t in $(TEST_EXECUTABLES); do \
+		echo "Running $$t"; \
+		$$t || exit 1; \
+	done
 
-.PHONY: all clean run delete_out check_graphs doc delete_doc
+# Include all dependency files if they exist
+-include $(DEPFILES) $(TEST_DEPFILES)
+
+.PHONY: all clean run delete_out check_graphs doc delete_doc test

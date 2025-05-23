@@ -9,7 +9,7 @@ PROGRAM test_eft_pless
   TYPE(LECS_EFT_PLESS) :: lecs
 
   ! Example values (adjust as needed for your data)
-  ilb = 1
+  ilb = 15
   l = 0
   s = 1
   j = 1
@@ -20,8 +20,7 @@ PROGRAM test_eft_pless
 
   ! Test: get LECS
   lecs = GET_LECS(ilb)
-  PRINT *, "LECS%ILB: ", lecs%ILB
-  PRINT *, "LECS%RC: ", lecs%RC
+  call PRINT_LECS(lecs)
 
   ! Test: call EFT_PLESS_PW
   CALL EFT_PLESS_PW(ilb, l, s, j, t1z, t2z, r, vpw, lemp)
