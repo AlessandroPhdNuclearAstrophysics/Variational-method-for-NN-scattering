@@ -1,0 +1,389 @@
+!   CLO( 1)  => c01
+!   CLO( 2)  => c10
+!   CNLO(1)  => c2c00
+!   CNLO(2)  => c2c10
+!   CNLO(3)  => c2c01
+!   CNLO(4)  => c2c11
+!   CNLO(5)  => c2t0
+!   CNLO(6)  => c2t1
+!   CNLO(7)  => c2b
+!   CIT( 0)  => c0ct
+
+MODULE EFT_PLESS_TO_FIT
+  IMPLICIT NONE
+  PRIVATE
+
+  PRIVATE :: FI_R, EVALUATE_T
+
+  TYPE :: RADIAL_FUNCTIONS
+    DOUBLE PRECISION, ALLOCATABLE :: RR(:), F1(:), F2(:), F3(:), F4(:), F5(:), F6(:), F7(:)
+  END TYPE RADIAL_FUNCTIONS
+
+  TYPE, PUBLIC :: LEC
+    INTEGER :: ORDER = -1
+    DOUBLE PRECISION :: RCUTOFF
+    DOUBLE PRECISION :: CLO(2)
+    DOUBLE PRECISION :: CNLO(7)
+    DOUBLE PRECISION :: DN3LO(11)
+    DOUBLE PRECISION :: CIT(0:4)
+  END TYPE LEC
+
+  TYPE, PUBLIC :: POTENTIAL_QUANTUM_NUMBERS
+    INTEGER :: L, S, J, T, TZ
+  END TYPE POTENTIAL_QUANTUM_NUMBERS
+
+  INTERFACE SET_LECS
+    MODULE PROCEDURE SET_LECS_1, SET_LECS_2
+  END INTERFACE SET_LECS
+
+  INTERFACE SET_QUANTUM_NUMBERS
+    MODULE PROCEDURE SET_QUANTUM_NUMBERS_1, SET_QUANTUM_NUMBERS_2
+  END INTERFACE SET_QUANTUM_NUMBERS
+
+  DOUBLE PRECISION, PARAMETER :: HTC = 197.32697D0
+  DOUBLE PRECISION, PARAMETER :: PI= 4.D0*DATAN(1.D0)
+  TYPE(LEC) :: LECS
+  TYPE(POTENTIAL_QUANTUM_NUMBERS) :: POT_QN
+  TYPE(RADIAL_FUNCTIONS) :: RF
+
+  PUBLIC :: EFT_PLESS_PW_TO_FIT, PREPARE_POTENTIAL, SET_LECS, SET_QUANTUM_NUMBERS
+  PUBLIC :: PRINT_LECS, PRINT_QUANTUM_NUMBERS, RESET_POTENTIAL
+
+  LOGICAL :: IS_CUTOFF_SET = .FALSE.
+
+CONTAINS
+  SUBROUTINE PREPARE_POTENTIAL(RR, N)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: N
+    DOUBLE PRECISION, INTENT(IN) :: RR(0:N)
+
+    ! Check if the cutoff radius is set
+    IF (.NOT. IS_CUTOFF_SET) THEN
+      WRITE(*,*) "ERROR: RCUTOFF not set in LEC structure."
+      WRITE(*,*) "Please set it using SET_LECS( RCUTOFF = RCUTOFF )."
+      STOP
+    ENDIF
+    IF (.NOT.ALLOCATED(RF%RR)) THEN
+      ALLOCATE(RF%RR(0:N))
+    ELSE
+      IF (SIZE(RF%RR) /= SIZE(RR)) THEN
+        DEALLOCATE(RF%RR)
+        ALLOCATE(RF%RR(0:N))
+      ENDIF
+    ENDIF
+    IF (.NOT.ALLOCATED(RF%F1)) THEN
+      ALLOCATE(RF%F1(0:N), RF%F2(0:N), RF%F3(0:N), RF%F4(0:N), RF%F5(0:N), RF%F6(0:N), RF%F7(0:N))
+    ELSE
+      IF (SIZE(RF%F1) /= SIZE(RR)) THEN
+        DEALLOCATE(RF%F1, RF%F2, RF%F3, RF%F4, RF%F5, RF%F6, RF%F7)
+        ALLOCATE(RF%F1(0:N), RF%F2(0:N), RF%F3(0:N), RF%F4(0:N), RF%F5(0:N), RF%F6(0:N), RF%F7(0:N))
+      ENDIF
+    ENDIF
+
+    CALL EVALUATE_RF(RR)
+
+  END SUBROUTINE PREPARE_POTENTIAL
+
+  SUBROUTINE EVALUATE_RF(RR)
+    IMPLICIT NONE
+    DOUBLE PRECISION, INTENT(IN) :: RR(:)
+
+    IF (.NOT. IS_CUTOFF_SET) THEN
+      WRITE(*,*) "ERROR: RCUTOFF not set in LEC structure."
+      WRITE(*,*) "Please set it using SET_LECS( RCUTOFF = RCUTOFF )."
+      STOP
+    ENDIF
+
+    RF%RR = RR
+    RF%F3 = 2.D0/LECS%RCUTOFF**2
+    RF%F2 =-RF%F3**2 * RR**2
+    RF%F1 = 3*RF%F3 + RF%F2
+    RF%F4 = RF%F2**2 + 10*RF%F1*RF%F3 - 15*RF%F3**2
+    RF%F5 = RF%F2 * ( RF%F1 +4*RF%F3 )
+    RF%F6 = RF%F3 * ( 5*RF%F1 - 2*RF%F2 )/3.D0
+    RF%F7 =-RF%F3**2
+
+  END SUBROUTINE EVALUATE_RF
+
+  SUBROUTINE SET_LECS_1(ORDER, CLO, CNLO, DN3LO, CIT, RCUTOFF)
+    IMPLICIT NONE
+    INTEGER, OPTIONAL, INTENT(IN) :: ORDER
+    DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: CLO(2), CNLO(7), DN3LO(11), CIT(0:4), RCUTOFF
+    
+    IF (PRESENT(ORDER))LECS%ORDER = ORDER
+    IF (PRESENT(CLO))  LECS%CLO = CLO
+    IF (PRESENT(CNLO)) LECS%CNLO = CNLO
+    IF (PRESENT(DN3LO)) LECS%DN3LO = DN3LO
+    IF (PRESENT(CIT))  LECS%CIT = CIT
+    IF (PRESENT(RCUTOFF)) THEN
+      LECS%RCUTOFF = RCUTOFF
+      IS_CUTOFF_SET = .TRUE.
+    ENDIF
+
+  END SUBROUTINE SET_LECS_1
+
+  SUBROUTINE SET_LECS_2(LECS_)
+    IMPLICIT NONE
+    TYPE(LEC), INTENT(IN) :: LECS_
+    LECS = LECS_
+    IF (LECS%RCUTOFF > 0.D0) THEN
+      LECS%RCUTOFF = LECS_%RCUTOFF
+      IS_CUTOFF_SET = .TRUE.
+    ENDIF
+  END SUBROUTINE SET_LECS_2
+
+  SUBROUTINE SET_QUANTUM_NUMBERS_1(L, S, J, TZ)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: L, S, J, TZ
+    POT_QN%L = L
+    POT_QN%S = S
+    POT_QN%J = J
+    POT_QN%TZ = TZ
+    POT_QN%T = EVALUATE_T(L, S)
+    WRITE(*,*) "SET : ", POT_QN
+  END SUBROUTINE SET_QUANTUM_NUMBERS_1
+
+  SUBROUTINE SET_QUANTUM_NUMBERS_2(POT_QUANTUM_NUM)
+    IMPLICIT NONE
+    TYPE(POTENTIAL_QUANTUM_NUMBERS), INTENT(IN) :: POT_QUANTUM_NUM
+    POT_QN = POT_QUANTUM_NUM
+    POT_QN%T = EVALUATE_T(POT_QN%L, POT_QN%S)
+    WRITE(*,*) "SET : ", POT_QN
+  END SUBROUTINE SET_QUANTUM_NUMBERS_2
+
+
+
+
+
+
+
+  SUBROUTINE EFT_PLESS_PW_TO_FIT(R, V)
+    IMPLICIT NONE
+    
+    INTEGER, SAVE :: L, S, J, T, TZ
+    DOUBLE PRECISION, INTENT(IN) :: R
+    DOUBLE PRECISION, INTENT(OUT):: V(2,2)
+  
+    LOGICAL, SAVE :: FIRST_CALL = .TRUE.
+    INTEGER, SAVE :: LS(2,2), TTZ, I2(2,2)
+    DOUBLE PRECISION, SAVE :: S12(2,2), RC
+  
+    IF (L.NE.(POT_QN%L) .OR. S.NE.(POT_QN%S) .OR. J.NE.(POT_QN%J) .OR. TZ.NE.(POT_QN%TZ)) THEN
+      FIRST_CALL = .TRUE.
+    ENDIF
+    IF (FIRST_CALL) THEN
+      L = POT_QN%L
+      S = POT_QN%S
+      J = POT_QN%J
+      TZ = POT_QN%TZ
+
+      RC = LECS%RCUTOFF
+
+      FIRST_CALL = .FALSE.
+      T =  EVALUATE_T(L, S)
+      CALL CREATE_IDENTITY_MATRIX(2)
+      CALL CREATE_LS_MATRIX()
+      CALL CREATE_S12_MATRIX()
+      CALL EVALUATE_TTZ()
+    ENDIF
+    
+    
+    V = 0.D0
+    IF     ( S.EQ.0 .AND. T.EQ.0 ) THEN         ! EXAMPLE 1P1
+  
+      V(1,1) = LECS%CNLO(1)* FI_R(1, R)
+  
+    ELSEIF ( S.EQ.1 .AND. T.EQ.0 ) THEN         ! EXAMPLE 3S1-3D1
+  
+      V =  LECS%CLO( 2)*I2       &
+          +LECS%CNLO(2)*I2*      FI_R(1, R) &
+          +LECS%CNLO(5)*S12*     FI_R(2, R) &
+          +LECS%CNLO(7)*LS*      FI_R(3, R)
+  
+    ELSEIF ( S.EQ.0 .AND. T.EQ.1 ) THEN         ! EXAMPLE 1S0
+  
+      V(1,1) =  LECS%CLO( 1)                 &
+               +LECS%CNLO(3) *    FI_R(1, R) &
+               +LECS%CIT(0)*TTZ
+
+               
+    ELSEIF ( S.EQ.1 .AND. T.EQ.1 ) THEN         ! EXAMPLE 3P0, 3P1, 3P2
+      
+      V =  LECS%CNLO(4)*I2*      FI_R(1, R) &
+          +LECS%CNLO(6)*S12*     FI_R(2, R) &
+          +LECS%CNLO(7)*LS*      FI_R(3, R) &
+          +LECS%CIT(0)*TTZ*I2
+    ELSE
+      WRITE(*,*) "ERROR: EFT_PLESS_PW_FIT, T, S = ", T, S
+    ENDIF
+    
+    V = V/(DEXP(R**2/RC**2)*PI**1.5D0*RC**3) 
+    V = V*HTC
+    RETURN
+    
+    CONTAINS 
+    SUBROUTINE CREATE_IDENTITY_MATRIX(DIM)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: DIM
+      INTEGER :: II, JJ
+      DO II = 1, DIM
+        DO JJ = 1, DIM
+          IF (II.EQ.JJ) THEN
+            I2(II,JJ) = 1
+          ELSE
+            I2(II,JJ) = 0
+          ENDIF
+        END DO
+      END DO
+    END SUBROUTINE CREATE_IDENTITY_MATRIX
+  
+    SUBROUTINE CREATE_LS_MATRIX()
+      IMPLICIT NONE
+      LS = 0
+      LS(1,1) = (J*(J+1) - L*(L+1) - S*(S+1))/2
+      IF (L.EQ.(J-1)) LS(2,2) = (J*(J+1) - (L+2)*(L+3) - S*(S+1))/2
+    END SUBROUTINE CREATE_LS_MATRIX
+  
+    SUBROUTINE CREATE_S12_MATRIX()
+      IMPLICIT NONE
+      S12 = 0.D0
+      IF (L.EQ.(J+1)) THEN
+        IF (J.EQ.0) THEN
+          S12(1,1) = -2.D0*(J+2.D0)/(2*J+1.D0)
+        ELSE
+          WRITE(*,*) "ERROR: EFT_PLESS_PW_FIT, L, S, J = ", L, S, J
+          STOP
+        ENDIF
+      ELSEIF (L.EQ.J) THEN
+        S12(1,1) = 2.D0
+      ELSEIF (L.EQ.(J-1)) THEN
+        S12(1,1) =-2.D0*(J-1.D0)/(2*J+1.D0)
+        S12(1,2) = 6.D0*DSQRT(J*(J+1.D0))/(2*J+1.D0)
+        S12(2,1) = 6.D0*DSQRT(J*(J+1.D0))/(2*J+1.D0)
+        S12(2,2) =-2.D0*(J+2.D0)/(2*J+1.D0)
+      ELSE
+        WRITE(*,*) "ERROR: EFT_PLESS_PW_FIT, L, S, J = ", L, S, J
+        STOP
+      ENDIF
+    END SUBROUTINE CREATE_S12_MATRIX
+  
+    SUBROUTINE EVALUATE_TTZ()
+      IMPLICIT NONE
+      IF (TZ.EQ.0) THEN
+        TTZ =-4
+      ELSE
+        TTZ = 2
+      ENDIF
+    END SUBROUTINE EVALUATE_TTZ
+  
+  END SUBROUTINE EFT_PLESS_PW_TO_FIT
+
+  ! This subroutine calculates the potential matrix elements for the EFT_PLESS model.
+  ! It takes in the parameters R, L, S, J, TZ, and C, and outputs the potential matrix V.
+  ! The RC array is used to store the cutoff radii for different channels.
+
+  ! Constants
+
+
+  FUNCTION FI_R(I, R) RESULT(F_VAL)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: I
+    DOUBLE PRECISION, INTENT(IN) :: R
+    DOUBLE PRECISION :: F_VAL
+    INTEGER :: IR
+
+    ! Use binary search to find the index IR of R in the ordered array RF%RR
+    INTEGER :: LOW, HIGH, MID
+    LOW = 1
+    HIGH = SIZE(RF%RR)
+
+    DO WHILE (LOW <= HIGH)
+      MID = (LOW + HIGH) / 2
+      IF (ABS(RF%RR(MID) - R) <= 1.D-12) THEN
+      IR = MID
+      EXIT
+      ELSEIF (RF%RR(MID) < R) THEN
+      LOW = MID + 1
+      ELSE
+      HIGH = MID - 1
+      ENDIF
+    END DO
+
+    IF (LOW > HIGH) IR = MAX(0, HIGH)
+
+    ! Return the corresponding RF%F(I)(IR)
+    SELECT CASE (I)
+    CASE (1)
+      F_VAL = RF%F1(IR)
+    CASE (2)
+      F_VAL = RF%F2(IR)
+    CASE (3)
+      F_VAL = RF%F3(IR)
+    CASE (4)
+      F_VAL = RF%F4(IR)
+    CASE (5)
+      F_VAL = RF%F5(IR)
+    CASE (6)
+      F_VAL = RF%F6(IR)
+    CASE (7)
+      F_VAL = RF%F7(IR)
+    CASE DEFAULT
+      WRITE(*,*) "ERROR: Invalid index I = ", I
+      STOP
+    END SELECT
+  END FUNCTION FI_R
+
+  FUNCTION EVALUATE_T(L, S) RESULT(T_)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: L, S
+    INTEGER :: T_
+    T_ = MOD(MOD(L+S, 2) + 1, 2)
+  END FUNCTION EVALUATE_T
+
+
+  SUBROUTINE PRINT_LECS()
+    IMPLICIT NONE
+    INTEGER :: I
+    WRITE(*,*) "LECs:"
+    WRITE(*,*) "  CLO:"
+    DO I = 1, 2
+      WRITE(*,'(A,I2,A,F12.6)') "    CLO(", I, ") = ", LECS%CLO(I)
+    END DO
+    WRITE(*,*) "  CNLO:"
+    DO I = 1, 7
+      WRITE(*,'(A,I2,A,F12.6)') "    CNLO(", I, ") = ", LECS%CNLO(I)
+    END DO
+    WRITE(*,*) "  DN3LO:"
+    DO I = 1, 11
+      WRITE(*,'(A,I2,A,F12.6)') "    DN3LO(", I, ") = ", LECS%DN3LO(I)
+    END DO
+    WRITE(*,*) "  CIT:"
+    DO I = 0, 4
+      WRITE(*,'(A,I2,A,F12.6)') "    CIT(", I, ") = ", LECS%CIT(I)
+    END DO
+    WRITE(*,'(A,F12.6)') "  RCUTOFF = ", LECS%RCUTOFF
+  END SUBROUTINE PRINT_LECS
+
+  SUBROUTINE PRINT_QUANTUM_NUMBERS()
+    IMPLICIT NONE
+    WRITE(*,*) "L = ", POT_QN%L
+    WRITE(*,*) "S = ", POT_QN%S
+    WRITE(*,*) "J = ", POT_QN%J
+    WRITE(*,*) "T = ", POT_QN%T
+    WRITE(*,*) "TZ = ", POT_QN%TZ
+  END SUBROUTINE PRINT_QUANTUM_NUMBERS
+
+  SUBROUTINE RESET_POTENTIAL()
+    IMPLICIT NONE
+    IS_CUTOFF_SET = .FALSE.
+    IF (ALLOCATED(RF%RR)) THEN
+      DEALLOCATE(RF%RR)
+    ENDIF
+    IF (ALLOCATED(RF%F1)) THEN
+      DEALLOCATE(RF%F1, RF%F2, RF%F3, RF%F4, RF%F5, RF%F6, RF%F7)
+    ENDIF
+  END SUBROUTINE RESET_POTENTIAL
+  
+
+END MODULE EFT_PLESS_TO_FIT
+

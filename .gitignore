@@ -7,3 +7,4 @@ fort.*
 output/*
 *.new
 doc/*
+tools/tabula/*
