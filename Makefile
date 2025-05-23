@@ -36,13 +36,14 @@ LDFLAGS += -lgsl -lgslcblas -llapack -lblas
 
 # Define directory paths
 SRC_DIR := src
+TEST_DIR := $(SRC_DIR)/tests
 BUILD_DIR := build
 LOG_DIR := $(BUILD_DIR)/logs
 DEP_DIR := $(BUILD_DIR)/dep
 OUT_DIR := output
 
 # Find all .f90 files (recursively in src/)
-ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90")
+ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90" ! -path "$(TEST_DIR)/*")
 
 # Select main program sources (e.g., src/main1.f90, src/main2.f90, ...)
 MAIN_SOURCES := $(filter $(SRC_DIR)/main%.f90, $(ALL_SOURCES))
