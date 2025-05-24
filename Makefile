@@ -101,16 +101,26 @@ run:
 
 # Check the graphs
 POT ?= AV18
+POT2 := $(POT)
+ifeq ($(POT),AV18)
+	POT2 := $(POT)_Laura
+else ifeq ($(POT),AV14)
+	POT2 := $(POT)_Laura
+else
+	POT2 := $(POT)
+endif
+
+
 check_graphs:
 	@echo "Checking graphs..."
-	xmgrace $(OUT_DIR)/$(POT)/delta_1S0.dat ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/0p.dat; \
-	xmgrace $(OUT_DIR)/$(POT)/delta_3P0.dat ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/0m.dat; \
-	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3S1-3D1.dat -nxy ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/1p.dat; \
-	xmgrace $(OUT_DIR)/$(POT)/delta_1P1.dat ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/1m.dat; \
-	xmgrace $(OUT_DIR)/$(POT)/delta_3P1.dat -block ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/1m.dat -bxy 1:3; \
-	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3P2-3F2.dat -nxy ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/2m.dat; \
-	xmgrace $(OUT_DIR)/$(POT)/delta_1D2.dat ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/2p.dat; \
-	xmgrace $(OUT_DIR)/$(POT)/delta_3D2.dat -block ../07b-Potential_revised/scattering/output/$(POT)_Laura/np/2p.dat -bxy 1:3; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_1S0.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/0p.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_3P0.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/0m.dat; \
+	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3S1-3D1.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/1p.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_1P1.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/1m.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_3P1.dat -block ../07b-Potential_revised/scattering/output/$(POT2)/np/1m.dat -bxy 1:3; \
+	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3P2-3F2.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/2m.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_1D2.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_3D2.dat -block ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat -bxy 1:3; \
 
 # Clean rule to delete all build artifacts
 clean:

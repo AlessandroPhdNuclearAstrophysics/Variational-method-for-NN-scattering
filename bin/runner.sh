@@ -5,14 +5,12 @@ make
 # Default values for the parameters
 EMAX=1.D0
 NE=200
-J=1
-L=0
-S=1
 TZ=0
 IPOT=18
 ILB=1
 LEMP=0
 PRINT_COEFF=".FALSE."
+OUTPUT_DIR="output/POT$IPOT/"
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -23,18 +21,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ne|--NE)
       NE="$2"
-      shift 2
-      ;;
-    -j|--J)
-      J="$2"
-      shift 2
-      ;;
-    -l|--L)
-      L="$2"
-      shift 2
-      ;;
-    -s|--S)
-      S="$2"
       shift 2
       ;;
     -tz|--TZ)
@@ -57,6 +43,10 @@ while [[ $# -gt 0 ]]; do
       PRINT_COEFF=".TRUE."
       shift
       ;;
+    -out_dir|--OUT_DIR)
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       exit 1
@@ -70,16 +60,19 @@ cat > "$NAMELIST_FILE" << EOF
 &IN
   EMAX = $EMAX,
   NE = $NE,
-  J = $J,
-  L = $L,
-  S = $S,
   TZ = $TZ,
   IPOT = $IPOT,
   ILB = $ILB,
   LEMP = $LEMP,
   PRINT_COEFFICIENTS = $PRINT_COEFF,
+  OUT_DIR = "$OUTPUT_DIR",
 /
 EOF
+
+# Create the output directory only if it does not exist
+if [ ! -d "$OUTPUT_DIR" ]; then
+  mkdir -p "$OUTPUT_DIR"
+fi
 
 # Run the Fortran program with the namelist file
 ./build/main_scattering_NN_variazional_method.x "$NAMELIST_FILE"

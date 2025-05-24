@@ -1,5 +1,5 @@
+!   CLO( 0)  => c10
 !   CLO( 1)  => c01
-!   CLO( 2)  => c10
 !   CNLO(1)  => c2c00
 !   CNLO(2)  => c2c10
 !   CNLO(3)  => c2c01
@@ -15,11 +15,13 @@ MODULE EFT_PLESS
   IMPLICIT NONE
   PRIVATE
 
+  DOUBLE PRECISION, PARAMETER :: HTC = 197.32697D0
+
   TYPE, PUBLIC :: LECS_EFT_PLESS
     INTEGER :: ILB = -1
     INTEGER :: ORDER = -1
     DOUBLE PRECISION :: RC(0:1,0:1) = 0.D0
-    DOUBLE PRECISION :: CLO(2)   = 0.D0
+    DOUBLE PRECISION :: CLO(0:1)   = 0.D0
     DOUBLE PRECISION :: CNLO(7) = 0.D0
     DOUBLE PRECISION :: CN3LO(11)= 0.D0
     DOUBLE PRECISION :: CIT(0:4)= 0.D0
@@ -52,7 +54,7 @@ CONTAINS
     CHARACTER(LEN=1024) :: LINE
     INTEGER :: UNIT
     INTEGER :: ILB
-    DOUBLE PRECISION :: RC(2,2), CLO(2), CNLO(7), CN3LO(11), CIT(0:4)
+    DOUBLE PRECISION :: RC(0:1,0:1), CLO(0:1), CNLO(7), CN3LO(11), CIT(0:4)
 
     IF (LECS_SET) RETURN
 
@@ -81,7 +83,7 @@ CONTAINS
 
     ! Read each LECS_EFT_PLESS entry
     DO I = 1, NMODELS
-      READ(UNIT, *, IOSTAT=IOS) ILB, RC, CLO, CNLO, CN3LO, CIT
+      READ(UNIT, *, IOSTAT=IOS) ILB, RC(0,0), RC(1,0), RC(0,1), RC(1,1), CLO(1), CLO(0), CNLO, CN3LO, CIT
       LECS_ALL(I)%ILB = ILB
       LECS_ALL(I)%RC  = RC
       LECS_ALL(I)%CLO = CLO
@@ -273,20 +275,19 @@ CONTAINS
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
       END SELECT
-      VPW = VPW * CR(R, RC)
     ENDIF
 
     IF ( S==1 .AND. T==0 ) THEN
       SELECT CASE (ORDER)
       CASE (0)
-        VPW = LECS%CLO(2) * I2
+        VPW = LECS%CLO(T) * I2
       CASE (1)
-        VPW = LECS%CLO(2) *I2
+        VPW = LECS%CLO(T) *I2
         VPW = VPW + LECS%CNLO(2) * CR_1(R, RC) * I2 &
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
                   + LECS%CNLO(7) * CR_3(R, RC) * LS
       CASE (3)
-        VPW = LECS%CLO(2) *I2
+        VPW = LECS%CLO(T) *I2
         VPW = VPW + LECS%CNLO(2) * CR_1(R, RC) * I2 &
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
                   + LECS%CNLO(7) * CR_3(R, RC) * LS
@@ -303,13 +304,13 @@ CONTAINS
     IF ( S==0 .AND. T==1 ) THEN
       SELECT CASE (ORDER)
       CASE (0)
-        VPW = LECS%CLO(1) * I2
+        VPW = LECS%CLO(T) * I2
       CASE (1)
-        VPW = LECS%CLO(1) *I2
+        VPW = LECS%CLO(T) *I2
         VPW = VPW + LECS%CNLO(3) * CR_1(R, RC) * I2 &
                   + LECS%CIT(0)                * TZ_OP * I2
       CASE (3)
-        VPW = LECS%CLO(1) *I2
+        VPW = LECS%CLO(T) *I2
         VPW = VPW + LECS%CNLO(3) * CR_1(R, RC) * I2 &
                   + LECS%CIT(0)                * TZ_OP * I2
         VPW = VPW + LECS%CN3LO(3) * CR_4(R, RC)     * I2 &
@@ -325,7 +326,7 @@ CONTAINS
       CASE (0)
         RETURN
       CASE (1)
-        VPW =   LECS%CNLO(4) * I2 &
+        VPW =   LECS%CNLO(4) * CR_4(R, RC) *  I2 &
               + LECS%CNLO(6) * CR_5(R, RC) *  S12 &
               + LECS%CNLO(7) * CR_3(R, RC) *  LS &
               + LECS%CIT(0)                *  TZ_OP * I2
@@ -345,7 +346,15 @@ CONTAINS
         STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
       END SELECT
     ENDIF
-    VPW = VPW/CR(R, RC)
+    
+    VPW = VPW * CR(R, RC)
+    VPW = VPW * HTC
+
+    IF (GET_CHANNEL_NCH(CHANNEL) == 1 ) THEN
+      VPW(1,2) = 0.D0
+      VPW(2,1) = 0.D0
+      VPW(2,2) = 0.D0
+    ENDIF
     RETURN
   END SUBROUTINE EFT_PLESS_PW
 
@@ -355,7 +364,7 @@ CONTAINS
     DOUBLE PRECISION, PARAMETER :: PI = 4.D0*DATAN(1.D0)
     DOUBLE PRECISION, INTENT(IN) :: R, RC
     DOUBLE PRECISION :: CR_OUT
-    CR_OUT = DEXP(-R**2/RC**2)/(PI**(3/2)*RC**3)
+    CR_OUT = DEXP(-R**2/RC**2)/(PI**(3.D0/2.D0)*RC**3)
   END FUNCTION CR
 
   PURE ELEMENTAL FUNCTION CR_1(R, RC) RESULT(F1)
@@ -528,7 +537,7 @@ CONTAINS
       WRITE(*,'(A,2F12.8)') "    ", LECS_IN%RC(I,0), LECS_IN%RC(I,1)
     END DO
     PRINT *, "  CLO:"
-    WRITE(*,'(A,2ES18.8E2)') "    ", LECS_IN%CLO(1), LECS_IN%CLO(2)
+    WRITE(*,'(A,2ES18.8E2)') "    ", LECS_IN%CLO(1), LECS_IN%CLO(0)
     PRINT *, "  CNLO:"
     WRITE(*,'(A,7ES18.8E2)') "    ", (LECS_IN%CNLO(J), J=1,7)
     PRINT *, "  CN3LO:"

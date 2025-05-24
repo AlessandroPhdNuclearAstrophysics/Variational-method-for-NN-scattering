@@ -42,7 +42,8 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   !> \brief Structure to hold phase shift results.
   TYPE(PHASE_SHIFT_RESULT) :: PHASE_SHIFTS
   !> \brief Namelist for input parameters.
-  NAMELIST /IN/ EMAX, NE, J, L, S, TZ, IPOT, ILB, LEMP, PRINT_COEFFICIENTS
+  CHARACTER(LEN=256) :: OUT_DIR
+  NAMELIST /IN/ EMAX, NE, TZ, IPOT, ILB, LEMP, PRINT_COEFFICIENTS, OUT_DIR
 
   !> \brief Input file name for namelist (if provided).
   CHARACTER(LEN=256) :: input_file
@@ -53,13 +54,11 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   has_arguments = COMMAND_ARGUMENT_COUNT() > 0
 
   !> \brief Initialize default values for quantum numbers and options.
-  J = 1
-  L = 0
-  S = 1
   TZ = 0
   IPOT = 18
   ILB = 1
   LEMP = 0
+  OUT_DIR = 'output/AV18/'
 
   
   !> \brief Read namelist from file if provided, otherwise prompt user.
@@ -99,7 +98,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
         CHANNEL_NAME = get_channel_name(CHANNEL)
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB, LEMP)
         PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
-        OPEN(21, FILE='output/AV18/delta_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+        OPEN(21, FILE=TRIM(OUT_DIR)//'delta_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
         DO I = 1, NE
           E =  ENERGIES(I)
           CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)

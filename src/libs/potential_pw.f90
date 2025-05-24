@@ -49,8 +49,7 @@ CONTAINS
       CALL AV18PW(ILB, L, S, J, T, T1Z, T2Z, R, VPW, LEMP)
       RETURN
     CASE (19)
-      ! CALL EFT_PLESS_PW(LEMP, ILB, L, S, J, T1Z, T2Z, R, VPW)
-      STOP "POT_PW: EFT_PLESS_PW not implemented"
+      CALL EFT_PLESS_PW(ILB, L, S, J, T1Z, T2Z, R, VPW, LEMP)
       RETURN
     CASE (21)
       CALL EFT_PLESS_PW_FITTED(ILB, R, L, S, J, T1Z + T2Z, VPW)
