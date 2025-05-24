@@ -141,10 +141,15 @@ CONTAINS
       S12_RES(1,1) = 2.0
       RETURN
     ELSEIF (ABS(J-L)==1) THEN
-      IF (J==0 .AND. L<J) THEN
-        S12_RES(1,1) =-2*(J-1.D0)/(2*J+1.D0)
-      ELSEIF (J==0 .AND. L>J) THEN
-        S12_RES(1,1) =-2*(J+2.D0)/(2*J+1.D0)
+      IF (J==0) THEN
+        IF (J==L+1) THEN
+          S12_RES(1,1) =-2*(J-1.D0)/(2*J+1.D0)
+        ELSEIF (J==L-1) THEN
+          S12_RES(1,1) =-2*(J+2.D0)/(2*J+1.D0)
+        ELSE
+          WRITE(*,*) "Wrong LSJ combination"
+          STOP
+        ENDIF
       ELSE
         S12_RES(1,1) =-2*(J-1.D0)/(2*J+1.D0)
         S12_RES(1,2) = 6*SQRT(J*(J+1.D0))/(2*J+1.D0)
@@ -249,7 +254,7 @@ CONTAINS
     TZ = (T1Z+T2Z)/2
     T = MOD(MOD((L+S),2)+1,2)
     CALL SET_CHANNEL(CHANNEL_NEW, J, L, S, TZ)
-    IS_NEW_CHANNEL = IS_SAME_CHANNEL(CHANNEL, CHANNEL_NEW)
+    IS_NEW_CHANNEL = .NOT.IS_SAME_CHANNEL(CHANNEL, CHANNEL_NEW)
     CHANNEL = CHANNEL_NEW
 
     IF (FIRST_CALL) THEN
