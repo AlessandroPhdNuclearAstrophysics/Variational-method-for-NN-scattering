@@ -332,8 +332,8 @@ CONTAINS
       CASE (0)
         RETURN
       CASE (1)
-        VPW =   LECS%CNLO(4) * CR_4(R, RC) *  I2 &
-              + LECS%CNLO(6) * CR_5(R, RC) *  S12 &
+        VPW =   LECS%CNLO(4) * CR_1(R, RC) *  I2 &
+              + LECS%CNLO(6) * CR_2(R, RC) *  S12 &
               + LECS%CNLO(7) * CR_3(R, RC) *  LS &
               + LECS%CIT(0)                *  TZ_OP * I2
       CASE (3)
