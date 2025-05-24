@@ -164,10 +164,10 @@ CONTAINS
     
     LS_OP = 0
     IF (LMIN==J .OR. J==0) THEN
-      LS_OP(1,1) = (J*(J+1)-S*(S+1)-LMIN*(LMIN+1))
+      LS_OP(1,1) = (J*(J+1)-S*(S+1)-LMIN*(LMIN+1))/2
     ELSEIF ((J-LMIN)==1 .AND. S==1) THEN
-      LS_OP(1,1) = (J*(J+1)-S*(S+1)-LMIN*(LMIN+1))
-      LS_OP(2,2) = (J*(J+1)-S*(S+1)-(LMIN+2)*(LMIN+3))
+      LS_OP(1,1) = (J*(J+1)-S*(S+1)-LMIN*(LMIN+1))/2
+      LS_OP(2,2) = (J*(J+1)-S*(S+1)-(LMIN+2)*(LMIN+3))/2
     ELSE
       WRITE(*,*) "Wrong LSJ combination"
       STOP
@@ -283,12 +283,12 @@ CONTAINS
       CASE (0)
         VPW = LECS%CLO(T) * I2
       CASE (1)
-        VPW = LECS%CLO(T) *I2
+        VPW = LECS%CLO(T) * I2
         VPW = VPW + LECS%CNLO(2) * CR_1(R, RC) * I2 &
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
                   + LECS%CNLO(7) * CR_3(R, RC) * LS
       CASE (3)
-        VPW = LECS%CLO(T) *I2
+        VPW = LECS%CLO(T) * I2
         VPW = VPW + LECS%CNLO(2) * CR_1(R, RC) * I2 &
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
                   + LECS%CNLO(7) * CR_3(R, RC) * LS
@@ -307,11 +307,11 @@ CONTAINS
       CASE (0)
         VPW = LECS%CLO(T) * I2
       CASE (1)
-        VPW = LECS%CLO(T) *I2
+        VPW = LECS%CLO(T) * I2
         VPW = VPW + LECS%CNLO(3) * CR_1(R, RC) * I2 &
                   + LECS%CIT(0)                * TZ_OP * I2
       CASE (3)
-        VPW = LECS%CLO(T) *I2
+        VPW = LECS%CLO(T) * I2
         VPW = VPW + LECS%CNLO(3) * CR_1(R, RC) * I2 &
                   + LECS%CIT(0)                * TZ_OP * I2
         VPW = VPW + LECS%CN3LO(3) * CR_4(R, RC)     * I2 &
