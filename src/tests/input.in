@@ -6,5 +6,5 @@
   ILB = 10,
   LEMP = 0,
   PRINT_COEFFICIENTS = .FALSE.,
-  OUT_DIR = "output/EFT_pless_15/",
+  OUT_DIR = "output/EFT_pless_10/",
 /

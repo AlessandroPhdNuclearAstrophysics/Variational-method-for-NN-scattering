@@ -262,6 +262,7 @@ CONTAINS
     
     RC = LECS%RC(S,T)
     ORDER = LECS%ORDER
+    
     IF ( S==0 .AND. T==0 ) THEN
       SELECT CASE (ORDER)
       CASE (0)
