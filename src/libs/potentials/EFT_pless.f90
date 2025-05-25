@@ -249,6 +249,7 @@ CONTAINS
     TYPE(SCATTERING_CHANNEL) :: CHANNEL_NEW
     LOGICAL :: IS_NEW_CHANNEL
     DOUBLE PRECISION :: RC
+    INTEGER :: LS2(2,2)
     
     VPW = 0
     TZ = (T1Z+T2Z)/2
@@ -293,6 +294,7 @@ CONTAINS
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
                   + LECS%CNLO(7) * CR_3(R, RC) * LS
       CASE (3)
+        LS2 = MATMUL(LS, LS)
         VPW = LECS%CLO(T) * I2
         VPW = VPW + LECS%CNLO(2) * CR_1(R, RC) * I2 &
                   + LECS%CNLO(5) * CR_2(R, RC) * S12 &
@@ -300,8 +302,8 @@ CONTAINS
         VPW = VPW + LECS%CN3LO(2) * CR_4(R, RC) * I2 &
                   + LECS%CN3LO(5) * CR_5(R, RC) * S12 &
                   + LECS%CN3LO(7) * CR_6(R, RC) * LS &
-                  + LECS%CN3LO(9) * CR_7(R, RC) * MATMUL(LS,LS) &
-                  + LECS%CN3LO(11)* CR_7(R, RC) *L2
+                  + LECS%CN3LO(9) * CR_7(R, RC) * LS2 &
+                  + LECS%CN3LO(11)* CR_7(R, RC) * L2
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
       END SELECT
@@ -317,11 +319,11 @@ CONTAINS
                   + LECS%CIT(0)                * TZ_OP * I2
       CASE (3)
         VPW = LECS%CLO(T) * I2
-        VPW = VPW + LECS%CNLO(3) * CR_1(R, RC) * I2 &
-                  + LECS%CIT(0)                * TZ_OP * I2
+        VPW = VPW + LECS%CNLO(3)  * CR_1(R, RC) * I2 &
+                  + LECS%CIT(0)                 * TZ_OP * I2
         VPW = VPW + LECS%CN3LO(3) * CR_4(R, RC)     * I2 &
                   + LECS%CN3LO(10)* CR_7(R, RC)     * L2 &
-                  + LECS%CIT(1)                     * TZ_OP * I2 
+                  + LECS%CIT(1)   * CR_1(R, RC)     * TZ_OP * I2 
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
       END SELECT
@@ -337,17 +339,21 @@ CONTAINS
               + LECS%CNLO(7) * CR_3(R, RC) *  LS &
               + LECS%CIT(0)                *  TZ_OP * I2
       CASE (3)
+        LS2 = MATMUL(LS, LS)
         VPW =   LECS%CNLO(4) * CR_1(R, RC) *  I2 &
-              + LECS%CNLO(6) * CR_5(R, RC) *  S12 &
+              + LECS%CNLO(6) * CR_2(R, RC) *  S12 &
               + LECS%CNLO(7) * CR_3(R, RC) *  LS &
               + LECS%CIT(0)                *  TZ_OP * I2
         VPW =   VPW &
               + LECS%CN3LO(4) * CR_4(R, RC)    * I2 &
               + LECS%CN3LO(6) * CR_5(R, RC)    * S12 &
               + LECS%CN3LO(8) * CR_6(R, RC)    * LS &
-              + LECS%CN3LO(9) * CR_7(R, RC)    *MATMUL(LS,LS) &
+              + LECS%CN3LO(9) * CR_7(R, RC)    * LS2 &
               + LECS%CN3LO(11)* CR_7(R, RC)    * L2 &
-              +(LECS%CIT(2)*CR_1(R,RC) - LECS%CIT(3)*CR_2(R, RC) + LECS%CIT(4)*CR_3(R, RC) ) * TZ_OP * I2
+              +(  LECS%CIT(2) * CR_1(R, RC)    * I2  + &
+                  LECS%CIT(3) * CR_2(R, RC)    * S12 + &
+                  LECS%CIT(4) * CR_3(R, RC)    * LS    & 
+                                                        ) * TZ_OP
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
       END SELECT
@@ -398,14 +404,14 @@ CONTAINS
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: R, RC
     DOUBLE PRECISION :: F4
-    F4 = 4.D0*( 4*R**2 - 20*RC*R + 15*RC**4 )/RC**8
+    F4 = 4.D0*( 4*R**4 - 20*RC**2*R**2 + 15*RC**4 )/RC**8
   END FUNCTION CR_4
 
   PURE ELEMENTAL FUNCTION CR_5(R, RC) RESULT(F5)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: R, RC
     DOUBLE PRECISION :: F5
-    F5 = 8*R**2*( 2*R**2 - 7*RC**2 )/RC**6
+    F5 = 8*R**2*( 2*R**2 - 7*RC**2 )/RC**8
   END FUNCTION CR_5
 
   PURE ELEMENTAL FUNCTION CR_6(R, RC) RESULT(F6)

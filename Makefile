@@ -20,7 +20,7 @@ else
             -fdefault-real-8 -fdefault-double-8
 endif
 
-OMP ?= 1
+OMP ?= 0
 ifeq ($(OMP),1)	
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
@@ -121,6 +121,28 @@ check_graphs:
 	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3P2-3F2.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/2m.dat; \
 	xmgrace $(OUT_DIR)/$(POT)/delta_1D2.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat; \
 	xmgrace $(OUT_DIR)/$(POT)/delta_3D2.dat -block ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat -bxy 1:3; \
+
+check_graphs_00:
+	@echo "Checking graphs ST=00..."
+	xmgrace $(OUT_DIR)/$(POT)/delta_1P1.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/1m.dat; \
+
+check_graphs_10:
+	@echo "Checking graphs ST=10..."
+	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3S1-3D1.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/1p.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_3D2.dat -block ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat -bxy 1:3; \
+
+check_graphs_01:
+	@echo "Checking graphs ST=01..."
+	xmgrace $(OUT_DIR)/$(POT)/delta_1S0.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/0p.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_1D2.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/2p.dat; \
+
+
+check_graphs_11:
+	@echo "Checking graphs ST=11..."
+	xmgrace $(OUT_DIR)/$(POT)/delta_3P0.dat ../07b-Potential_revised/scattering/output/$(POT2)/np/0m.dat; \
+	xmgrace $(OUT_DIR)/$(POT)/delta_3P1.dat -block ../07b-Potential_revised/scattering/output/$(POT2)/np/1m.dat -bxy 1:3; \
+	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3P2-3F2.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/2m.dat; \
+
 
 # Clean rule to delete all build artifacts
 clean:

@@ -3,8 +3,8 @@
   NE = 200,
   TZ = 0,
   IPOT = 19,
-  ILB = 10,
+  ILB = 15,
   LEMP = 0,
   PRINT_COEFFICIENTS = .FALSE.,
-  OUT_DIR = "output/EFT_pless_10/",
+  OUT_DIR = "output/EFT_pless_15/",
 /
