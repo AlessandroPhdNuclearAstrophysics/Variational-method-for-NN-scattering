@@ -3,7 +3,7 @@ build/*
 *.nb
 fort.*
 *.out
-*.txt
+profile*
 output/*
 *.new
 doc/*
