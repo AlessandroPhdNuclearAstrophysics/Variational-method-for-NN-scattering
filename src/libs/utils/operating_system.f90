@@ -130,6 +130,69 @@ CONTAINS
     END IF
   END FUNCTION GET_OS_NAME
 
-  
+  !> \brief Find all regex pattern matches in a string.
+  SUBROUTINE FIND_STRING_CASE_INSENSITIVE(input_string, pattern, matches, n_matches)
+    USE, INTRINSIC :: ISO_C_BINDING
+    CHARACTER(LEN=*), INTENT(IN) :: input_string
+    CHARACTER(LEN=*), INTENT(IN) :: pattern
+    CHARACTER(LEN=*), INTENT(OUT) :: matches(:)
+    INTEGER, INTENT(OUT) :: n_matches
+
+    INTEGER :: i, pos, next_pos, pattern_len, input_len
+    CHARACTER(LEN=:), ALLOCATABLE :: lowercase_input, lowercase_pattern
+
+    ! NOTE: This is a simplified implementation that only performs case-insensitive
+    ! substring matching, not full regex pattern matching. A real implementation
+    ! would require C/C++ regex libraries linked to Fortran.
+
+    n_matches = 0
+    pattern_len = LEN_TRIM(pattern)
+    input_len = LEN_TRIM(input_string)
+
+    IF (pattern_len == 0 .OR. input_len == 0) RETURN
+
+    ! Convert to lowercase for case-insensitive matching
+    ALLOCATE(CHARACTER(LEN=input_len) :: lowercase_input)
+    ALLOCATE(CHARACTER(LEN=pattern_len) :: lowercase_pattern)
+
+    lowercase_input = input_string(1:input_len)
+    lowercase_pattern = pattern(1:pattern_len)
+
+    CALL TO_LOWERCASE(lowercase_input)
+    CALL TO_LOWERCASE(lowercase_pattern)
+
+    ! Find all occurrences
+    pos = 1
+    DO WHILE (pos <= input_len - pattern_len + 1)
+      next_pos = INDEX(lowercase_input(pos:), TRIM(lowercase_pattern))
+      IF (next_pos == 0) EXIT
+
+      ! Found a match
+      n_matches = n_matches + 1
+      IF (n_matches <= SIZE(matches)) THEN
+        pos = pos + next_pos - 1
+        matches(n_matches) = input_string(pos:pos+pattern_len-1)
+        pos = pos + 1
+      ELSE
+        EXIT  ! Array is full
+      END IF
+    END DO
+
+    DEALLOCATE(lowercase_input)
+    DEALLOCATE(lowercase_pattern)
+  END SUBROUTINE FIND_STRING_CASE_INSENSITIVE
+
+  !> \brief Convert a string to lowercase
+  SUBROUTINE TO_LOWERCASE(string)
+    CHARACTER(LEN=*), INTENT(INOUT) :: string
+    INTEGER :: i, char_code
+
+    DO i = 1, LEN_TRIM(string)
+      char_code = IACHAR(string(i:i))
+      IF (char_code >= IACHAR('A') .AND. char_code <= IACHAR('Z')) THEN
+        string(i:i) = ACHAR(char_code + 32)  ! Convert to lowercase
+      END IF
+    END DO
+  END SUBROUTINE TO_LOWERCASE
 
 END MODULE OPERATING_SYSTEM_LINUX
