@@ -71,8 +71,18 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
     ! If no arguments, write the namelist and allow user to modify it
     WRITE(*, NML=IN)
     PRINT *, "Modify the above values if needed and press Enter to continue."
-    ! READ(*, NML=IN)
+    READ(*, NML=IN)
   END IF
+
+  !> \brief Ensure OUT_DIR ends with a slash.
+  IF (LEN_TRIM(OUT_DIR) > 0) THEN
+    IF (OUT_DIR(LEN_TRIM(OUT_DIR):LEN_TRIM(OUT_DIR)) /= '/') THEN
+      OUT_DIR = TRIM(OUT_DIR) // '/'
+    END IF
+  END IF
+  
+  !> \brief Create output directory if it does not exist.
+  CALL SYSTEM('mkdir -p "' // TRIM(OUT_DIR) // '"')
   
   !> \brief Print the final values of the namelist for confirmation.
   PRINT *, "Final values of the namelist:"
