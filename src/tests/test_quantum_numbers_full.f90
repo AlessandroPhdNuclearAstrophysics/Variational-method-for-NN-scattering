@@ -7,6 +7,11 @@ PROGRAM test_quantum_numbers_full
   INTEGER :: i, nch, L, S, J, T, TZ
   LOGICAL :: is_phys, is_coup, result
   
+  ! For EXTRACT_CHANNELS_FROM_WHOLE_FILENAME tests
+  CHARACTER(LEN=100) :: filename
+  CHARACTER(LEN=16) :: extracted_ch1, extracted_ch2
+  LOGICAL :: found, is_coupled_ch
+  
   WRITE(*,*) "=== Comprehensive Test of QUANTUM_NUMBERS Module ==="
   
   ! Test 1: Test initialization with different parameters
@@ -121,7 +126,90 @@ PROGRAM test_quantum_numbers_full
   name2 = GET_CHANNEL_NAME(ch)
   IF (TRIM(name) /= TRIM(name2)) STOP "FAIL: Round-trip name conversion failed"
   
-  WRITE(*,*) "All tests passed successfully!"
+  ! ! Test 8: Testing EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
+  ! WRITE(*,*) "Test 8: Testing EXTRACT_CHANNELS_FROM_WHOLE_FILENAME"
+  
+  ! ! Test 8.1: Simple filename with one channel
+  ! filename = "potential_model_1S0_output.dat"
+  ! extracted_ch1 = ""
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (.NOT. found) STOP "FAIL: Channel not found in filename with single channel"
+  ! IF (TRIM(extracted_ch1) /= "1S0") THEN
+  !   WRITE(*,*) "Expected: 1S0, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Incorrect channel extracted from single channel filename"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Single channel extraction"
+  
+  ! ! Test 8.2: Filename with coupled channel
+  ! filename = "phase_shift_3S1-3D1_calculation.txt"
+  ! extracted_ch1 = ""
+  ! extracted_ch2 = ""
+  ! is_coupled_ch = .FALSE.
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1, extracted_ch2, is_coupled_ch)
+  ! IF (.NOT. found) STOP "FAIL: Channels not found in coupled channel filename"
+  ! IF (.NOT. is_coupled_ch) STOP "FAIL: Coupled channels not detected"
+  ! IF (TRIM(extracted_ch1) /= "3S1" .OR. TRIM(extracted_ch2) /= "3D1") THEN
+  !   WRITE(*,*) "Expected: 3S1 and 3D1, Got: ", TRIM(extracted_ch1), " and ", TRIM(extracted_ch2)
+  !   STOP "FAIL: Incorrect channels extracted from coupled channel filename"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Coupled channel extraction with separate outputs"
+  
+  ! ! Test 8.3: Filename with coupled channel (single output parameter)
+  ! filename = "results_3P2-3F2_analysis.csv"
+  ! extracted_ch1 = ""
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (.NOT. found) STOP "FAIL: Channel not found in coupled channel filename (single output)"
+  ! IF (TRIM(extracted_ch1) /= "3P2-3F2") THEN
+  !   WRITE(*,*) "Expected: 3P2-3F2, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Incorrect channel extracted from coupled channel filename (single output)"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Coupled channel extraction with single output"
+  
+  ! ! Test 8.4: Filename with no valid channel
+  ! filename = "general_results_2023.dat"
+  ! extracted_ch1 = "should_be_empty"
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (found) STOP "FAIL: False positive channel detection"
+  ! IF (TRIM(extracted_ch1) /= "") THEN
+  !   WRITE(*,*) "Expected empty string, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Output not cleared for filename with no channel"
+  ! END IF
+  ! WRITE(*,*) "  Passed: No false positives"
+  
+  ! ! Test 8.5: Filename with channel in the middle
+  ! filename = "prefix_with_1D2_suffix.txt"
+  ! extracted_ch1 = ""
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (.NOT. found) STOP "FAIL: Channel not found in middle of filename"
+  ! IF (TRIM(extracted_ch1) /= "1D2") THEN
+  !   WRITE(*,*) "Expected: 1D2, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Incorrect channel extracted from middle of filename"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Channel extraction from middle of filename"
+  
+  ! ! Test 8.6: Edge case - channel at start of filename
+  ! filename = "3G4_results_file.dat"
+  ! extracted_ch1 = ""
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (.NOT. found) STOP "FAIL: Channel not found at start of filename"
+  ! IF (TRIM(extracted_ch1) /= "3G4") THEN
+  !   WRITE(*,*) "Expected: 3G4, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Incorrect channel extracted from start of filename"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Channel extraction from start of filename"
+  
+  ! ! Test 8.7: Edge case - channel at end of filename
+  ! filename = "nuclear_data_3H6"
+  ! extracted_ch1 = ""
+  ! found = EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(filename, extracted_ch1)
+  ! IF (.NOT. found) STOP "FAIL: Channel not found at end of filename"
+  ! IF (TRIM(extracted_ch1) /= "3H6") THEN
+  !   WRITE(*,*) "Expected: 3H6, Got: ", TRIM(extracted_ch1)
+  !   STOP "FAIL: Incorrect channel extracted from end of filename"
+  ! END IF
+  ! WRITE(*,*) "  Passed: Channel extraction from end of filename"
+  
+  ! WRITE(*,*) "All tests passed successfully!"
   
 CONTAINS
 

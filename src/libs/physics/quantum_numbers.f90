@@ -485,4 +485,60 @@ CONTAINS
       CHANNEL%TZ = TZ
     ENDIF
   END FUNCTION GET_CHANNEL_FROM_NAME
+
+  ! FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(FILENAME) RESULT(CHANNELS)
+  !   IMPLICIT NONE
+  !   CHARACTER(LEN=*), INTENT(IN) :: FILENAME
+  !   TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: CHANNELS(:)
+  !   TYPE(SCATTERING_CHANNEL) :: TMP
+
+  !   CHARACTER(LEN=16) :: CH_NAME
+  !   INTEGER :: I, N, LENF, START, ENDCH, COUNT
+  !   LOGICAL :: FIRST_NUMBER_IS_READ = .FALSE.
+  !   LOGICAL :: LAST_NUMBER_IS_READ = .FALSE.
+
+
+  !   ! Find and print all channels in the filename
+
+  !   LENF = LEN_TRIM(FILENAME)
+  !   COUNT = 0
+
+  !   I = 1
+  !   DO WHILE (I <= LENF - 2)
+  !     IF (.NOT.FIRST_NUMBER_IS_READ) THEN
+  !       ! Look for the first digit
+  !       IF (FILENAME(I:I) >= '0' .AND. FILENAME(I:I) <= '9') THEN
+  !         START = I
+  !         FIRST_NUMBER_IS_READ = .TRUE.
+  !       ENDIF
+  !       CH_NAME(1:1) = FILENAME(I:I)
+  !     ELSE
+  !       IF (FILENAME(I:I) < 'A' .AND. FILENAME(I:I) > 'Z') THEN
+  !         CH_NAME(2:2) = FILENAME(I:I)
+  !       ELSE
+  !         IF (FILENAME(I:I) >= '0' .AND. FILENAME(I:I) <= '9') THEN
+  !           CH_NAME(3:3) = FILENAME(I:I)
+  !           LAST_NUMBER_IS_READ = .TRUE.
+  !         ELSE
+  !           FIRST_NUMBER_IS_READ = .FALSE.
+  !         ENDIF
+  !       ENDIF
+  !     ENDIF
+  !     I = I + 1
+  !     IF (LAST_NUMBER_IS_READ) THEN
+  !       TMP = GET_CHANNEL_FROM_NAME(TRIM(CH_NAME))
+  !       =>>>>> TO FINISH
+  !   ENDDO
+
+  !   IF (COUNT > 0) THEN
+  !     ALLOCATE(CHANNELS(COUNT))
+  !     CHANNELS = TMP
+  !   ELSE
+  !     ALLOCATE(CHANNELS(0))
+  !   END IF
+
+
+
+  ! END FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
+    
 END MODULE QUANTUM_NUMBERS
