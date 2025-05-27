@@ -7,7 +7,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   INTEGER :: J, L, S, TZ
   
   ! Variables for file handling
-  CHARACTER(LEN=255) :: folder_path, file_path, output_file
+  CHARACTER(LEN=255) :: folder_path, file_path, output_file, output_file1, output_file2
   CHARACTER(LEN=255) :: file_list(1000), current_file
   INTEGER :: num_files, i, io_status, unit_in, unit_out
   
@@ -16,8 +16,9 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   DOUBLE PRECISION :: HTM, pi
   DOUBLE PRECISION, ALLOCATABLE :: energies(:), deltas1(:), deltas2(:), epsilons(:)
   DOUBLE PRECISION, ALLOCATABLE :: k_vals(:), k2_vals(:), kcotd1_vals(:), kcotd2_vals(:)
-  INTEGER :: num_lines, j_line, num_cols
+  INTEGER :: num_lines, j_line, NCH
   LOGICAL :: is_coupled
+  TYPE(SCATTERING_CHANNEL) :: TMP
   
   ! Constants
   pi = 4.0D0 * ATAN(1.0D0)
@@ -50,17 +51,42 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     IF (INDEX(current_file, "delta_") /= 1) CYCLE
     
     ! Parse filename to extract L, S, J
-    CALL PARSE_FILENAME(TRIM(current_file), S, L, J)
-    WRITE(*,*) "Processing file: ", TRIM(current_file), " with L=", L, " S=", S, " J=", J
-    
+    TMP = GET_CHANNEL_FROM_NAME(PARSE_FILENAME(TRIM(current_file)))
+    NCH = GET_CHANNEL_NCH(TMP)
+
+    WRITE(*,*) "Processing file: ", TRIM(current_file), " with"
+    L = GET_CHANNEL_L(TMP, 1)
+    S = GET_CHANNEL_S(TMP, 1)
+    J = GET_CHANNEL_J(TMP)
+    WRITE(*,*) "L=", L, " S=", S, " J=", J
+    IF (NCH > 1) THEN
+      L = GET_CHANNEL_L(TMP, 2)
+      S = GET_CHANNEL_S(TMP, 2)
+      J = GET_CHANNEL_J(TMP)
+      WRITE(*,*) "L=", L, " S=", S, " J=", J
+    END IF
+
     ! Construct full file path
     file_path = TRIM(folder_path) // "/" // TRIM(current_file)
     
-    ! Count number of lines and columns in the file
-    CALL COUNT_LINES_AND_COLUMNS(TRIM(file_path), num_lines, num_cols)
-    
     ! Determine if this is a coupled channel
-    is_coupled = (num_cols > 2)
+    IF (IS_CHANNEL_COUPLED(TMP)) THEN
+      is_coupled = .TRUE.
+      WRITE(*,*) "Coupled channel detected"
+    ELSE
+      is_coupled = .FALSE.
+      WRITE(*,*) "Single channel detected"
+    END IF
+
+    ! Open the file to count the number of data lines
+    OPEN(NEWUNIT=unit_in, FILE=TRIM(file_path), STATUS='OLD', ACTION='READ')
+    num_lines = 0
+    DO
+      READ(unit_in, *, IOSTAT=io_status)
+      IF (io_status /= 0) EXIT
+      num_lines = num_lines + 1
+    END DO
+    REWIND(unit_in)
     
     ! Allocate arrays using REALLOCATE_UTILS
     CALL REALLOCATE_1D_1(energies, num_lines)
@@ -73,7 +99,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     END IF
     
     ! Read data from file
-    OPEN(NEWUNIT=unit_in, FILE=TRIM(file_path), STATUS='OLD', ACTION='READ')
+    ! OPEN(NEWUNIT=unit_in, FILE=TRIM(file_path), STATUS='OLD', ACTION='READ')
     
     DO j_line = 1, num_lines
       IF (is_coupled) THEN
@@ -107,31 +133,46 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     
     CLOSE(unit_in)
     
-    ! Create output file name
-    output_file = TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(7:))
-    
     ! Write results to output file
-    OPEN(NEWUNIT=unit_out, FILE=TRIM(output_file), STATUS='REPLACE', ACTION='WRITE')
+    if (is_coupled) THEN
+      output_file = TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(7:9)) // ".dat"
+      output_file1= TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(11:13)) // ".dat"
+      output_file2= TRIM(folder_path) // "/k2_kcotd_epsilon_" // TRIM(current_file(7:))
+    ELSE
+      output_file = TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(7:9)) // ".dat"
+    END IF
     
     ! Write header
+    OPEN(unit_out, FILE=TRIM(output_file), STATUS='REPLACE', ACTION='WRITE')
+    IF (is_coupled) OPEN(unit_out+1, FILE=TRIM(output_file1), STATUS='REPLACE', ACTION='WRITE')
+    IF (is_coupled) OPEN(unit_out+2, FILE=TRIM(output_file2), STATUS='REPLACE', ACTION='WRITE')
+
+    WRITE(unit_out, '(A)') "# k^2    k^(2L+1)*cot(delta1)"
     IF (is_coupled) THEN
-      WRITE(unit_out, '(A)') "# k^2    k^(2L+1)*cot(delta1)    k^(2L+1)*cot(delta2)    epsilon"
-    ELSE
-      WRITE(unit_out, '(A)') "# k^2    k^(2L+1)*cot(delta)"
+      WRITE(unit_out+1, '(A)') "# k^2    k^(2L+1)*cot(delta2)"
+      WRITE(unit_out+2, '(A)') "# k^2    epsilon"
     END IF
     
     ! Write data
     DO j_line = 1, num_lines
       IF (is_coupled) THEN
-        WRITE(unit_out, '(4E18.10)') k2_vals(j_line), kcotd1_vals(j_line), &
-                                    kcotd2_vals(j_line), epsilons(j_line)
+        IF (IS_FINITE(kcotd1_vals(j_line))) WRITE(unit_out  , '(4E30.16)') k2_vals(j_line), kcotd1_vals(j_line)
+        IF (IS_FINITE(kcotd2_vals(j_line))) WRITE(unit_out+1, '(4E30.16)') k2_vals(j_line), kcotd2_vals(j_line)
+        IF (IS_FINITE(epsilons(j_line)))    WRITE(unit_out+2, '(4E30.16)') k2_vals(j_line), epsilons(j_line)
       ELSE
-        WRITE(unit_out, '(2E18.10)') k2_vals(j_line), kcotd1_vals(j_line)
+        IF (IS_FINITE(kcotd1_vals(j_line))) WRITE(unit_out, '(2E30.16)') k2_vals(j_line), kcotd1_vals(j_line)
       END IF
     END DO
     
     CLOSE(unit_out)
-    WRITE(*,*) "Created output file: ", TRIM(output_file)
+    if (is_coupled) CLOSE(unit_out+1)
+    if (is_coupled) CLOSE(unit_out+2)
+    ! Output file created
+    IF (is_coupled) THEN
+      WRITE(*,*) "Created output files: ", TRIM(output_file), " and ", TRIM(output_file1), " and ", TRIM(output_file2)
+    ELSE
+      WRITE(*,*) "Created output file: ", TRIM(output_file)
+    END IF
     
     ! Arrays will be deallocated automatically at next allocation or program end
   END DO
@@ -140,101 +181,24 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
 
 CONTAINS
 
-  SUBROUTINE PARSE_FILENAME(filename, S_out, L_out, J_out)
-    CHARACTER(LEN=*), INTENT(IN) :: filename
-    INTEGER, INTENT(OUT) :: S_out, L_out, J_out
+  FUNCTION IS_FINITE(NUMBER) RESULT(FINITE)
+    DOUBLE PRECISION, INTENT(IN) :: NUMBER
+    LOGICAL :: FINITE
+    FINITE = (ABS(NUMBER) < HUGE(1.0D0))
+  END FUNCTION IS_FINITE
+
+  FUNCTION PARSE_FILENAME(FILENAME) RESULT(PARSED)
+    CHARACTER(LEN=*), INTENT(IN) :: FILENAME
+    CHARACTER(LEN=8) :: PARSED
+
+    INTEGER :: POS_START, POS_END
     
-    CHARACTER(LEN=1) :: L_char
-    INTEGER :: s_val, pos_start, pos_end
+    ! EXTRACT THE PART AFTER "DELTA_"
+    POS_START = INDEX(FILENAME, "delta_") + 6
+    POS_END = INDEX(FILENAME, ".dat") - 1
     
-    ! Extract the part after "delta_"
-    pos_start = INDEX(filename, "delta_") + 6
-    pos_end = INDEX(filename, ".dat") - 1
-    
-    IF (pos_start <= 6 .OR. pos_end <= 0) THEN
-      WRITE(*,*) "Error parsing filename: ", TRIM(filename)
-      S_out = 0
-      L_out = 0
-      J_out = 0
-      RETURN
-    END IF
-    
-    ! Parse 2S+1 from first character
-    READ(filename(pos_start:pos_start), '(I1)') s_val
-    S_out = (s_val - 1) / 2
-    
-    ! Parse L from second character
-    L_char = filename(pos_start+1:pos_start+1)
-    SELECT CASE(L_char)
-      CASE('S')
-        L_out = 0
-      CASE('P')
-        L_out = 1
-      CASE('D')
-        L_out = 2
-      CASE('F')
-        L_out = 3
-      CASE('G')
-        L_out = 4
-      CASE DEFAULT
-        WRITE(*,*) "Unknown angular momentum: ", L_char
-        L_out = -1
-    END SELECT
-    
-    ! Parse J from last character
-    READ(filename(pos_start+2:pos_end), '(I1)') J_out
-  END SUBROUTINE PARSE_FILENAME
+    PARSED = FILENAME(POS_START:POS_END)
+  END function PARSE_FILENAME
   
-  SUBROUTINE COUNT_LINES_AND_COLUMNS(file_path, num_lines, num_cols)
-    CHARACTER(LEN=*), INTENT(IN) :: file_path
-    INTEGER, INTENT(OUT) :: num_lines, num_cols
-    
-    INTEGER :: unit_num, io_stat
-    CHARACTER(LEN=1000) :: line
-    CHARACTER(LEN=20) :: temp
-    INTEGER :: i, pos
-    
-    num_lines = 0
-    num_cols = 0
-    
-    OPEN(NEWUNIT=unit_num, FILE=TRIM(file_path), STATUS='OLD', ACTION='READ')
-    
-    ! Read first line to determine number of columns
-    READ(unit_num, '(A)', IOSTAT=io_stat) line
-    IF (io_stat == 0) THEN
-      line = ADJUSTL(line)
-      IF (line(1:1) /= '#') THEN
-        ! Count columns in first line
-        i = 1
-        pos = 1
-        DO WHILE (pos <= LEN_TRIM(line))
-          READ(line(pos:), *, IOSTAT=io_stat) temp
-          IF (io_stat /= 0) EXIT
-          num_cols = num_cols + 1
-          
-          ! Find position after this number
-          DO WHILE (pos <= LEN_TRIM(line) .AND. line(pos:pos) /= ' ')
-            pos = pos + 1
-          END DO
-          
-          ! Skip spaces
-          DO WHILE (pos <= LEN_TRIM(line) .AND. line(pos:pos) == ' ')
-            pos = pos + 1
-          END DO
-        END DO
-        
-        num_lines = 1
-      END IF
-    END IF
-    
-    ! Count remaining lines
-    DO
-      READ(unit_num, *, IOSTAT=io_stat)
-      IF (io_stat /= 0) EXIT
-      num_lines = num_lines + 1
-    END DO
-    
-    CLOSE(unit_num)
-  END SUBROUTINE COUNT_LINES_AND_COLUMNS
 
 END PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
