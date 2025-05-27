@@ -365,4 +365,122 @@ CONTAINS
     ENDDO
   END FUNCTION IS_SAME_CHANNEL
 
+  FUNCTION GET_CHANNEL_FROM_NAME(NAME) RESULT(CHANNEL)
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(SCATTERING_CHANNEL) :: CHANNEL
+    CHARACTER(LEN=:), ALLOCATABLE :: PARTS(:)
+    CHARACTER(LEN=16) :: TMPNAME
+    INTEGER :: L(2), S(2), J, TZ, NCH, ICH, POS, LEN1, LEN2
+
+    ! Default TZ
+    TZ = 0
+
+    ! Check if the name contains a '-' (coupled channel)
+    POS = INDEX(NAME, '-')
+    IF (POS == 0) THEN
+      ! Uncoupled channel
+      IF (LEN_TRIM(NAME) < 3) THEN
+        PRINT *, "Error: NAME must be at least 3 characters long."
+        STOP
+      ENDIF
+      IF (INDEX('SPDFGHIJKLMNOPQRSTUVWXYZ', NAME(2:2)) == 0) THEN
+        PRINT *, "Error: Invalid spectroscopic letter in NAME."
+        STOP
+      ENDIF
+      IF (NAME(1:1) < '1' .OR. NAME(1:1) > '9') THEN
+        PRINT *, "Error: Invalid spin multiplicity in NAME."
+        STOP
+      ENDIF
+      IF (NAME(3:3) < '0' .OR. NAME(3:3) > '9') THEN
+        PRINT *, "Error: Invalid total angular momentum in NAME."
+        STOP
+      ENDIF
+
+      READ(NAME(1:1), '(I1)') S(1)
+      SELECT CASE (NAME(2:2))
+        CASE ('S')
+          L(1) = 0
+        CASE ('P')
+          L(1) = 1
+        CASE ('D')
+          L(1) = 2
+        CASE ('F')
+          L(1) = 3
+        CASE DEFAULT
+          L(1) = INDEX('GHIJKLMNOPQRSTUVWXYZ', NAME(2:2)) + 4 - 1
+      END SELECT
+      READ(NAME(3:3), '(I1)') J
+
+      NCH = 1
+      CHANNEL = init_scattering_channel(J, MOD(L(1), 2) == 0, TZ)
+      CALL SET_CHANNEL(CHANNEL, J, L(1), S(1), TZ)
+    ELSE
+      ! Coupled channel: split at '-'
+      LEN1 = POS - 1
+      LEN2 = LEN_TRIM(NAME) - POS
+      TMPNAME = '                '
+      TMPNAME(1:LEN1) = NAME(1:LEN1)
+      ! First part
+      IF (LEN1 < 3) THEN
+        PRINT *, "Error: First channel name too short."
+        STOP
+      ENDIF
+      READ(TMPNAME(1:1), '(I1)') S(1)
+      SELECT CASE (TMPNAME(2:2))
+        CASE ('S')
+          L(1) = 0
+        CASE ('P')
+          L(1) = 1
+        CASE ('D')
+          L(1) = 2
+        CASE ('F')
+          L(1) = 3
+        CASE DEFAULT
+          L(1) = INDEX('GHIJKLMNOPQRSTUVWXYZ', TMPNAME(2:2)) + 4 - 1
+      END SELECT
+      READ(TMPNAME(3:3), '(I1)') J
+
+      ! Second part
+      TMPNAME = '                '
+      TMPNAME(1:LEN2) = NAME(POS+1:POS+LEN2)
+      IF (LEN2 < 3) THEN
+        PRINT *, "Error: Second channel name too short."
+        STOP
+      ENDIF
+      READ(TMPNAME(1:1), '(I1)') S(2)
+      SELECT CASE (TMPNAME(2:2))
+        CASE ('S')
+          L(2) = 0
+        CASE ('P')
+          L(2) = 1
+        CASE ('D')
+          L(2) = 2
+        CASE ('F')
+          L(2) = 3
+        CASE DEFAULT
+          L(2) = INDEX('GHIJKLMNOPQRSTUVWXYZ', TMPNAME(2:2)) + 4 - 1
+      END SELECT
+      ! J must be the same for both parts, so skip reading again
+
+      NCH = 2
+      CHANNEL = init_scattering_channel(J, MOD(L(1), 2) == 0, TZ)
+      ! Set both channels explicitly
+      CALL REALLOCATE_1D_1_INT(CHANNEL%L, 2)
+      CALL REALLOCATE_1D_1_INT(CHANNEL%S, 2)
+      CALL REALLOCATE_1D_1_INT(CHANNEL%T, 2)
+      CHANNEL%NCH = 2
+      CHANNEL%L(1) = L(1)
+      CHANNEL%S(1) = S(1)
+      CHANNEL%T(1) = EVALUATE_T(L(1), S(1), TZ)
+      CHANNEL%L(2) = L(2)
+      CHANNEL%S(2) = S(2)
+      CHANNEL%T(2) = EVALUATE_T(L(2), S(2), TZ)
+      CHANNEL%COUPLED = .TRUE.
+      CHANNEL%J = J
+      CHANNEL%TZ = TZ
+    ENDIF
+  END FUNCTION GET_CHANNEL_FROM_NAME
+
+  
+
 END MODULE QUANTUM_NUMBERS
