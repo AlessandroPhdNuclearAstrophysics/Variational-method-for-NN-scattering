@@ -2,7 +2,7 @@ MODULE FIT_MODULE
   IMPLICIT NONE
   PRIVATE
 
-  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION
+  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION
 
 
 CONTAINS
@@ -118,7 +118,116 @@ CONTAINS
     RETURN
   END SUBROUTINE QUADRATIC_REGRESSION
 
+  SUBROUTINE CUBIC_REGRESSION(Y, X, NMIN, NMAX, A, B, C, D, STEP)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NMIN, NMAX
+    DOUBLE PRECISION, INTENT(IN) :: Y(NMAX), X(NMAX)
+    DOUBLE PRECISION, INTENT(OUT) :: A, B, C, D
+    INTEGER, OPTIONAL, INTENT(IN) :: STEP
+    INTEGER :: I, N, STEP_I
+    DOUBLE PRECISION :: S6, S5, S4, S3, S2, S1, S0
+    DOUBLE PRECISION :: S3Y, S2Y, S1Y, S0Y
+    DOUBLE PRECISION :: M(4,4), RHS(4), DET
+    DOUBLE PRECISION :: M11, M12, M13, M14, M21, M22, M23, M24
+    DOUBLE PRECISION :: M31, M32, M33, M34, M41, M42, M43, M44
+    DOUBLE PRECISION :: V1, V2, V3, V4
 
+    IF (PRESENT(STEP)) THEN
+      STEP_I = STEP
+    ELSE
+      STEP_I = 1
+    END IF
+
+    ! Compute number of points
+    N = NMAX - NMIN + 1
+    IF (N < 4*STEP_I) THEN
+      PRINT *, "ERROR: NOT ENOUGH POINTS FOR CUBIC_REGRESSION"
+      STOP
+    END IF
+
+    ! Initialize sums
+    S6  = 0.D0
+    S5  = 0.D0  
+    S4  = 0.D0
+    S3  = 0.D0
+    S2  = 0.D0
+    S1  = 0.D0
+    S0  = 0.D0
+    S3Y = 0.D0
+    S2Y = 0.D0
+    S1Y = 0.D0
+    S0Y = 0.D0
+
+    ! Compute sums
+    N = 0
+    DO I = NMIN, NMAX, STEP_I
+      S6  = S6  + X(I)**6
+      S5  = S5  + X(I)**5
+      S4  = S4  + X(I)**4
+      S3  = S3  + X(I)**3
+      S2  = S2  + X(I)**2
+      S1  = S1  + X(I)
+      S3Y = S3Y + X(I)**3*Y(I)
+      S2Y = S2Y + X(I)**2*Y(I)
+      S1Y = S1Y + X(I)*Y(I)
+      S0Y = S0Y + Y(I)
+      N = N + 1
+    END DO
+    S0 = N
+
+    ! Setup the normal equations matrix
+    ! [S6 S5 S4 S3] [A]   [S3Y]
+    ! [S5 S4 S3 S2] [B] = [S2Y]
+    ! [S4 S3 S2 S1] [C]   [S1Y]
+    ! [S3 S2 S1 S0] [D]   [S0Y]
+    
+    M11 = S6; M12 = S5; M13 = S4; M14 = S3
+    M21 = S5; M22 = S4; M23 = S3; M24 = S2
+    M31 = S4; M32 = S3; M33 = S2; M34 = S1
+    M41 = S3; M42 = S2; M43 = S1; M44 = S0
+    
+    V1 = S3Y
+    V2 = S2Y
+    V3 = S1Y
+    V4 = S0Y
+    
+    ! Calculate determinant of the coefficient matrix
+    DET = M11*(M22*(M33*M44 - M34*M43) - M23*(M32*M44 - M34*M42) + M24*(M32*M43 - M33*M42)) - &
+          M12*(M21*(M33*M44 - M34*M43) - M23*(M31*M44 - M34*M41) + M24*(M31*M43 - M33*M41)) + &
+          M13*(M21*(M32*M44 - M34*M42) - M22*(M31*M44 - M34*M41) + M24*(M31*M42 - M32*M41)) - &
+          M14*(M21*(M32*M43 - M33*M42) - M22*(M31*M43 - M33*M41) + M23*(M31*M42 - M32*M41))
+    
+    IF (ABS(DET) < 1.D-15) THEN
+      PRINT *, "ERROR: DETERMINANT IS ZERO IN CUBIC_REGRESSION"
+      STOP
+    END IF
+    
+    ! Solve for A using Cramer's rule
+    A = (V1*(M22*(M33*M44 - M34*M43) - M23*(M32*M44 - M34*M42) + M24*(M32*M43 - M33*M42)) - &
+         M12*(V2*(M33*M44 - M34*M43) - M23*(V3*M44 - M34*V4) + M24*(V3*M43 - M33*V4)) + &
+         M13*(V2*(M32*M44 - M34*M42) - M22*(V3*M44 - M34*V4) + M24*(V3*M42 - M32*V4)) - &
+         M14*(V2*(M32*M43 - M33*M42) - M22*(V3*M43 - M33*V4) + M23*(V3*M42 - M32*V4))) / DET
+    
+    ! Solve for B using Cramer's rule
+    B = (M11*(V2*(M33*M44 - M34*M43) - M23*(V3*M44 - M34*V4) + M24*(V3*M43 - M33*V4)) - &
+         V1*(M21*(M33*M44 - M34*M43) - M23*(M31*M44 - M34*M41) + M24*(M31*M43 - M33*M41)) + &
+         M13*(M21*(V3*M44 - M34*V4) - V2*(M31*M44 - M34*M41) + M24*(M31*V4 - V3*M41)) - &
+         M14*(M21*(V3*M43 - M33*V4) - V2*(M31*M43 - M33*M41) + M23*(M31*V4 - V3*M41))) / DET
+    
+    ! Solve for C using Cramer's rule
+    C = (M11*(M22*(V3*M44 - M34*V4) - V2*(M32*M44 - M34*M42) + M24*(M32*V4 - V3*M42)) - &
+         M12*(M21*(V3*M44 - M34*V4) - V2*(M31*M44 - M34*M41) + M24*(M31*V4 - V3*M41)) + &
+         V1*(M21*(M32*M44 - M34*M42) - M22*(M31*M44 - M34*M41) + M24*(M31*M42 - M32*M41)) - &
+         M14*(M21*(M32*V4 - V3*M42) - M22*(M31*V4 - V3*M41) + V2*(M31*M42 - M32*M41))) / DET
+    
+    ! Solve for D using Cramer's rule
+    D = (M11*(M22*(M33*V4 - V3*M43) - M23*(M32*V4 - V3*M42) + V2*(M32*M43 - M33*M42)) - &
+         M12*(M21*(M33*V4 - V3*M43) - M23*(M31*V4 - V3*M41) + V2*(M31*M43 - M33*M41)) + &
+         M13*(M21*(M32*V4 - V3*M42) - M22*(M31*V4 - V3*M41) + V2*(M31*M42 - M32*M41)) - &
+         V1*(M21*(M32*M43 - M33*M42) - M22*(M31*M43 - M33*M41) + M23*(M31*M42 - M32*M41))) / DET
+
+    RETURN
+  END SUBROUTINE CUBIC_REGRESSION
 
 
 END MODULE FIT_MODULE

@@ -4,15 +4,17 @@ PROGRAM test_fit_module
   
   ! Arrays for test data
   INTEGER, PARAMETER :: N = 100
-  DOUBLE PRECISION :: X(N), Y_LINEAR(N), Y_QUADRATIC(N)
+  DOUBLE PRECISION :: X(N), Y_LINEAR(N), Y_QUADRATIC(N), Y_CUBIC(N)
   
   ! Expected coefficients (ground truth)
   DOUBLE PRECISION :: EXP_M = 2.5D0, EXP_Q = -1.2D0
   DOUBLE PRECISION :: EXP_A = 0.5D0, EXP_B = -1.5D0, EXP_C = 2.0D0
+  DOUBLE PRECISION :: EXP_A3 = 0.3D0, EXP_B3 = -0.8D0, EXP_C3 = 1.2D0, EXP_D3 = 0.5D0
   
   ! Fitted coefficients
   DOUBLE PRECISION :: FIT_M, FIT_Q
   DOUBLE PRECISION :: FIT_A, FIT_B, FIT_C
+  DOUBLE PRECISION :: FIT_A3, FIT_B3, FIT_C3, FIT_D3
   
   ! Tolerances for comparisons
   DOUBLE PRECISION, PARAMETER :: TOL = 1.0D-3  ! Changed from 1.0D-10 to be compatible with noise level
@@ -57,6 +59,22 @@ PROGRAM test_fit_module
   CALL QUADRATIC_REGRESSION(Y_QUADRATIC, X, N/2, N, FIT_A, FIT_B, FIT_C)
   CALL CHECK_QUADRATIC_RESULTS(FIT_A, FIT_B, FIT_C)
   
+  ! Test 7: Basic cubic regression
+  WRITE(*,*) "Test 7: Basic cubic regression"
+  CALL CUBIC_REGRESSION(Y_CUBIC, X, 1, N, FIT_A3, FIT_B3, FIT_C3, FIT_D3)
+  CALL CHECK_CUBIC_RESULTS(FIT_A3, FIT_B3, FIT_C3, FIT_D3)
+  
+  ! Test 8: Cubic regression with step parameter
+  WRITE(*,*) "Test 8: Cubic regression with step parameter"
+  STEP = 2
+  CALL CUBIC_REGRESSION(Y_CUBIC, X, 1, N, FIT_A3, FIT_B3, FIT_C3, FIT_D3, STEP)
+  CALL CHECK_CUBIC_RESULTS(FIT_A3, FIT_B3, FIT_C3, FIT_D3)
+  
+  ! Test 9: Cubic regression with subset of data
+  WRITE(*,*) "Test 9: Cubic regression with subset of data"
+  CALL CUBIC_REGRESSION(Y_CUBIC, X, N/2, N, FIT_A3, FIT_B3, FIT_C3, FIT_D3)
+  CALL CHECK_CUBIC_RESULTS(FIT_A3, FIT_B3, FIT_C3, FIT_D3)
+  
   WRITE(*,*) "All tests passed successfully!"
   
 CONTAINS
@@ -79,6 +97,9 @@ CONTAINS
       
       ! Quadratic function: y = a*x^2 + b*x + c
       Y_QUADRATIC(I) = EXP_A * X(I)**2 + EXP_B * X(I) + EXP_C
+      
+      ! Cubic function: y = a*x^3 + b*x^2 + c*x + d
+      Y_CUBIC(I) = EXP_A3 * X(I)**3 + EXP_B3 * X(I)**2 + EXP_C3 * X(I) + EXP_D3
     END DO
     
     ! Add small random noise to make it more realistic
@@ -88,6 +109,9 @@ CONTAINS
       
       CALL RANDOM_NUMBER(R)
       Y_QUADRATIC(I) = Y_QUADRATIC(I) + (2.0D0 * R - 1.0D0) * 0.001D0
+      
+      CALL RANDOM_NUMBER(R)
+      Y_CUBIC(I) = Y_CUBIC(I) + (2.0D0 * R - 1.0D0) * 0.001D0
     END DO
   END SUBROUTINE GENERATE_TEST_DATA
   
@@ -142,5 +166,40 @@ CONTAINS
     
     WRITE(*,*) "  PASSED"
   END SUBROUTINE CHECK_QUADRATIC_RESULTS
+  
+  ! Check if cubic regression results are correct
+  SUBROUTINE CHECK_CUBIC_RESULTS(A, B, C, D)
+    IMPLICIT NONE
+    DOUBLE PRECISION, INTENT(IN) :: A, B, C, D
+    
+    WRITE(*,*) "  Expected: A =", EXP_A3, "B =", EXP_B3, "C =", EXP_C3, "D =", EXP_D3
+    WRITE(*,*) "  Fitted:   A =", A, "B =", B, "C =", C, "D =", D
+    
+    IF (ABS(A - EXP_A3) > TOL) THEN
+      WRITE(*,*) "FAIL: Cubic coefficient (A) does not match expected value"
+      WRITE(*,*) "Expected:", EXP_A3, "Got:", A, "Diff:", ABS(A - EXP_A3)
+      STOP
+    END IF
+    
+    IF (ABS(B - EXP_B3) > TOL) THEN
+      WRITE(*,*) "FAIL: Quadratic coefficient (B) does not match expected value"
+      WRITE(*,*) "Expected:", EXP_B3, "Got:", B, "Diff:", ABS(B - EXP_B3)
+      STOP
+    END IF
+    
+    IF (ABS(C - EXP_C3) > TOL) THEN
+      WRITE(*,*) "FAIL: Linear coefficient (C) does not match expected value"
+      WRITE(*,*) "Expected:", EXP_C3, "Got:", C, "Diff:", ABS(C - EXP_C3)
+      STOP
+    END IF
+    
+    IF (ABS(D - EXP_D3) > TOL) THEN
+      WRITE(*,*) "FAIL: Constant term (D) does not match expected value"
+      WRITE(*,*) "Expected:", EXP_D3, "Got:", D, "Diff:", ABS(D - EXP_D3)
+      STOP
+    END IF
+    
+    WRITE(*,*) "  PASSED"
+  END SUBROUTINE CHECK_CUBIC_RESULTS
 
 END PROGRAM test_fit_module
