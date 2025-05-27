@@ -38,7 +38,8 @@ MODULE QUANTUM_NUMBERS
     GET_CHANNEL_J, &
     GET_CHANNEL_TZ, &
     IS_CHANNEL_COUPLED, &
-    IS_PHYSICAL_CHANNEL
+    IS_PHYSICAL_CHANNEL, &
+    GET_CHANNEL_FROM_NAME
 
 CONTAINS
   !> \brief Constructor for SCATTERING_CHANNEL.
@@ -397,6 +398,7 @@ CONTAINS
       ENDIF
 
       READ(NAME(1:1), '(I1)') S(1)
+      S(1) = (S(1) - 1) / 2  ! Convert from 2S+1 to S
       SELECT CASE (NAME(2:2))
         CASE ('S')
           L(1) = 0
@@ -426,6 +428,7 @@ CONTAINS
         STOP
       ENDIF
       READ(TMPNAME(1:1), '(I1)') S(1)
+      S(1) = (S(1) - 1) / 2  ! Convert from 2S+1 to S
       SELECT CASE (TMPNAME(2:2))
         CASE ('S')
           L(1) = 0
@@ -448,6 +451,7 @@ CONTAINS
         STOP
       ENDIF
       READ(TMPNAME(1:1), '(I1)') S(2)
+      S(2) = (S(2) - 1) / 2  ! Convert from 2S+1 to S
       SELECT CASE (TMPNAME(2:2))
         CASE ('S')
           L(2) = 0
@@ -464,6 +468,7 @@ CONTAINS
 
       NCH = 2
       CHANNEL = init_scattering_channel(J, MOD(L(1), 2) == 0, TZ)
+
       ! Set both channels explicitly
       CALL REALLOCATE_1D_1_INT(CHANNEL%L, 2)
       CALL REALLOCATE_1D_1_INT(CHANNEL%S, 2)
@@ -480,7 +485,4 @@ CONTAINS
       CHANNEL%TZ = TZ
     ENDIF
   END FUNCTION GET_CHANNEL_FROM_NAME
-
-  
-
 END MODULE QUANTUM_NUMBERS
