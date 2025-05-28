@@ -1,4 +1,5 @@
 PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
+  USE FIT_MODULE
   IMPLICIT NONE
   
   CHARACTER(LEN=256) :: filename
@@ -6,8 +7,13 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   INTEGER :: L, L1, L2
   INTEGER :: ios, i, npoints
   LOGICAL :: is_coupled
-  REAL, ALLOCATABLE :: K2(:), KCOTD(:)
-  
+  DOUBLE PRECISION, ALLOCATABLE :: K2(:), KCOTD(:)
+  DOUBLE PRECISION :: pred_kcotd0
+  DOUBLE PRECISION :: D, C, B, A, M, Q, Y0
+  DOUBLE PRECISION :: COEFF3(4)
+  DOUBLE PRECISION :: COEFF4(5)
+  DOUBLE PRECISION :: COEFF5(6)
+
   ! Get filename from command line
   IF (COMMAND_ARGUMENT_COUNT() < 1) THEN
     WRITE(*,*) "Error: Please provide input filename"
@@ -24,16 +30,49 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   
   ! Display results
   IF (is_coupled) THEN
-    WRITE(*,*) "Coupled channel: ", TRIM(channel1), "-", TRIM(channel2)
-    WRITE(*,*) "L1 = ", L1, ", L2 = ", L2
+    WRITE(*,*) "#Coupled channel: ", TRIM(channel1), "-", TRIM(channel2)
+    WRITE(*,*) "#L1 = ", L1, ", L2 = ", L2
   ELSE
-    WRITE(*,*) "Single channel: ", TRIM(channel1)
-    WRITE(*,*) "L = ", L
+    WRITE(*,*) "#Single channel: ", TRIM(channel1)
+    WRITE(*,*) "#L = ", L
   END IF
+
+  WRITE(*,*) "#Read ", npoints, " data points"
+  WRITE(*,*) "#K2 range: ", K2(1), " fm^2 to ", K2(npoints), " fm^2"
+  WRITE(*,*) "#K^(2L+1)COTdelta range: ", KCOTD(1), " to ", KCOTD(npoints)
   
-  WRITE(*,*) "Read ", npoints, " data points"
-  WRITE(*,*) "K2 range: ", K2(1), " to ", K2(npoints)
-  WRITE(*,*) "KCOTD range: ", KCOTD(1), " to ", KCOTD(npoints)
+  CALL LINEAR_REGRESSION(KCOTD, K2, 1, 10, M, Q)
+  Y0 = Q
+  WRITE(*,*) "#y = ", Y0
+
+  CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/100, M, Q)
+  WRITE(*,*) "#y = ", Q, " + ", M, "*x"
+
+  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints/100, A, B, C)
+  WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
+
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints/100, coeff3)
+  WRITE(*,*) "#y = ", coeff3(1), " + ", coeff3(2), "*x + ", coeff3(3), "*x^2 + ", coeff3(4), "*x^3"
+
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints/100, coeff4)
+  WRITE(*,*) "#y = ", coeff4(1), " + ", coeff4(2), "*x + ", coeff4(3), "*x^2 + ", coeff4(4), "*x^3 + ", coeff4(5), "*x^4"
+
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints/100, coeff5)
+  WRITE(*,*) "#y = ", coeff5(1), " + ", coeff5(2), "*x + ", coeff5(3), "*x^2 + ", coeff5(4), "*x^3 + ", coeff5(5), "*x^4", &
+        " + ", coeff5(6), "*x^5"
+
+  WRITE(*,*) 
+  WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
+
+  DO I=1, npoints/100\
+    WRITE(*, *) K2(I), KCOTD(I), &
+          Y0, &
+          Q + M*K2(I), &
+          C + B*K2(I) + A*K2(I)**2, &
+          coeff3(1) + coeff3(2)*K2(I) + coeff3(3)*K2(I)**2 + coeff3(4)*K2(I)**3, &
+          coeff4(1) + coeff4(2)*K2(I) + coeff4(3)*K2(I)**2 + coeff4(4)*K2(I)**3 + coeff4(5)*K2(I)**4, &
+          coeff5(1) + coeff5(2)*K2(I) + coeff5(3)*K2(I)**2 + coeff5(4)*K2(I)**3 + coeff5(5)*K2(I)**4 + coeff5(6)*K2(I)**5
+  ENDDO
   
   ! Clean up
   DEALLOCATE(K2, KCOTD)
@@ -112,13 +151,13 @@ CONTAINS
   
   SUBROUTINE read_data(fname, k2_values, kcotd_values, num_points)
     CHARACTER(LEN=*), INTENT(IN) :: fname
-    REAL, ALLOCATABLE, INTENT(OUT) :: k2_values(:), kcotd_values(:)
+    DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: k2_values(:), kcotd_values(:)
     INTEGER, INTENT(OUT) :: num_points
     
     INTEGER :: unit, io_stat, i, temp_size
-    REAL :: k2_temp, kcotd_temp
-    REAL, ALLOCATABLE :: temp_k2(:), temp_kcotd(:)
-    
+    DOUBLE PRECISION :: k2_temp, kcotd_temp
+    DOUBLE PRECISION, ALLOCATABLE :: temp_k2(:), temp_kcotd(:)
+
     ! First count the number of data points
     OPEN(NEWUNIT=unit, FILE=fname, STATUS='old', ACTION='read', IOSTAT=io_stat)
     IF (io_stat /= 0) THEN

@@ -2,7 +2,7 @@ MODULE FIT_MODULE
   IMPLICIT NONE
   PRIVATE
 
-  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION
+  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION, POLYNOMIAL_REGRESSION
 
 
 CONTAINS
@@ -228,6 +228,60 @@ CONTAINS
 
     RETURN
   END SUBROUTINE CUBIC_REGRESSION
+
+
+  SUBROUTINE POLYNOMIAL_REGRESSION(y, x, degree, n_points, coeffs)
+    ! Performs polynomial regression of specified degree using LAPACK
+    ! y = coeffs(1) + coeffs(2)*x + coeffs(3)*x^2 + ... + coeffs(degree+1)*x^degree
+    
+    INTEGER, INTENT(IN) :: degree, n_points
+    DOUBLE PRECISION, INTENT(IN) :: x(n_points), y(n_points)
+    DOUBLE PRECISION, INTENT(OUT) :: coeffs(degree+1)
+    
+    ! Local variables
+    DOUBLE PRECISION, ALLOCATABLE :: work(:), A(:,:), b(:)
+    INTEGER :: i, j, lwork, info, lda, ldb, nrhs
+    CHARACTER(1) :: trans
+    
+    ! Set up the Vandermonde matrix A
+    ALLOCATE(A(n_points, degree+1), b(n_points))
+    
+    ! Fill the Vandermonde matrix
+    DO i = 1, n_points
+      A(i, 1) = 1.0d0  ! Constant term
+      DO j = 2, degree+1
+        A(i, j) = A(i, j-1) * x(i)  ! x^(j-1)
+      END DO
+    END DO
+    
+    ! Copy y values to b (DGELS modifies the right-hand side)
+    b = y
+    
+    ! Prepare for DGELS call
+    lda = n_points
+    ldb = n_points
+    nrhs = 1
+    trans = 'N'  ! No transpose
+    
+    ! Query optimal workspace size
+    ALLOCATE(work(1))
+    CALL DGELS(trans, n_points, degree+1, nrhs, A, lda, b, ldb, work, -1, info)
+    lwork = INT(work(1))
+    DEALLOCATE(work)
+    ALLOCATE(work(lwork))
+    
+    ! Solve the least squares problem
+    CALL DGELS(trans, n_points, degree+1, nrhs, A, lda, b, ldb, work, lwork, info)
+    
+    IF (info /= 0) THEN
+      WRITE(*,*) "DGELS failed with error code:", info
+    ELSE
+      ! The solution is in the first degree+1 elements of b
+      coeffs = b(1:degree+1)
+    END IF
+    
+    DEALLOCATE(A, b, work)
+  END SUBROUTINE POLYNOMIAL_REGRESSION
 
 
 END MODULE FIT_MODULE

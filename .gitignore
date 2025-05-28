@@ -8,3 +8,4 @@ output/*
 *.new
 doc/*
 tools/tabula/*
+graphs/*
