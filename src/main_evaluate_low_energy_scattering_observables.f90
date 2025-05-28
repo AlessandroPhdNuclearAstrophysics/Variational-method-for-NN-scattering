@@ -45,26 +45,26 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   Y0 = Q
   WRITE(*,*) "#y = ", Y0
 
-  CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/100, M, Q)
+  CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/10, M, Q)
   WRITE(*,*) "#y = ", Q, " + ", M, "*x"
 
-  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints/100, A, B, C)
+  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints/10, A, B, C)
   WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints/100, coeff3)
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints, coeff3)
   WRITE(*,*) "#y = ", coeff3(1), " + ", coeff3(2), "*x + ", coeff3(3), "*x^2 + ", coeff3(4), "*x^3"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints/100, coeff4)
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints, coeff4)
   WRITE(*,*) "#y = ", coeff4(1), " + ", coeff4(2), "*x + ", coeff4(3), "*x^2 + ", coeff4(4), "*x^3 + ", coeff4(5), "*x^4"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints/100, coeff5)
+  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints, coeff5)
   WRITE(*,*) "#y = ", coeff5(1), " + ", coeff5(2), "*x + ", coeff5(3), "*x^2 + ", coeff5(4), "*x^3 + ", coeff5(5), "*x^4", &
         " + ", coeff5(6), "*x^5"
 
   WRITE(*,*) 
   WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
 
-  DO I=1, npoints/100\
+  DO I=1, npoints
     WRITE(*, *) K2(I), KCOTD(I), &
           Y0, &
           Q + M*K2(I), &
