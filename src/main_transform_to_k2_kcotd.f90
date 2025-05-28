@@ -118,6 +118,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
       deltas1(j_line) = deltas1(j_line) * pi / 180.0D0
       
       ! Calculate k^(2L+1)*cot(delta)
+      L = GET_CHANNEL_L(TMP, 1)
       kcotd1 = k**(2*L+1) * COS(deltas1(j_line)) / SIN(deltas1(j_line))
       
       k_vals(j_line) = k
@@ -125,6 +126,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
       kcotd1_vals(j_line) = kcotd1
       
       IF (is_coupled) THEN
+        L = GET_CHANNEL_L(TMP, 2)
         deltas2(j_line) = deltas2(j_line) * pi / 180.0D0
         kcotd2 = k**(2*L+1) * COS(deltas2(j_line)) / SIN(deltas2(j_line))
         kcotd2_vals(j_line) = kcotd2
