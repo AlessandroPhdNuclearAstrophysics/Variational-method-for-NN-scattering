@@ -40,23 +40,25 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
     
     CALL LINEAR_REGRESSION(KCOTD, K2, 1, 10, M, Q)
     Y0 = Q
-    WRITE(*,*) "#y = ", Y0
+    WRITE(*,'(A,F10.6)') "#y =", Y0
 
     CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/10, M, Q)
-    WRITE(*,*) "#y = ", Q, " + ", M, "*x"
+    WRITE(*,'(A,F10.6,A,F10.6,A)') "#y =", Q, " +", M, "*x"
 
     CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints, A, B, C)
-    WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A)') "#y =", C, " +", B, "*x +", A, "*x^2"
 
     CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints, coeff3)
-    WRITE(*,*) "#y = ", coeff3(1), " + ", coeff3(2), "*x + ", coeff3(3), "*x^2 + ", coeff3(4), "*x^3"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A,F10.6,A)') "#y =", coeff3(1), " +", coeff3(2), "*x +", &
+      coeff3(3), "*x^2 +", coeff3(4), "*x^3"
 
     CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints, coeff4)
-    WRITE(*,*) "#y = ", coeff4(1), " + ", coeff4(2), "*x + ", coeff4(3), "*x^2 + ", coeff4(4), "*x^3 + ", coeff4(5), "*x^4"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A,F10.6,A,F13.6,A)') "#y =", coeff4(1), " +", coeff4(2), &
+       "*x +", coeff4(3), "*x^2 +", coeff4(4), "*x^3 +", coeff4(5), "*x^4"
 
     CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints, coeff5)
-    WRITE(*,*) "#y = ", coeff5(1), " + ", coeff5(2), "*x + ", coeff5(3), "*x^2 + ", coeff5(4), "*x^3 + ", coeff5(5), "*x^4", &
-          " + ", coeff5(6), "*x^5"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A,F13.6,A,F13.6,A,F13.6,A)') "#y =", coeff5(1), " +", &
+      coeff5(2), "*x +", coeff5(3), "*x^2 +", coeff5(4), "*x^3 +", coeff5(5), "*x^4 +", coeff5(6), "*x^5"
 
     WRITE(*,*) 
     WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
@@ -78,22 +80,24 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
     WRITE(*,*) "#epsilon range: ", KCOTD(1), " to ", KCOTD(npoints)
     
     Y0 = 0.0D0
-    WRITE(*,*) "#y = ", Y0
+    WRITE(*,'(A,F10.6)') "#y =", Y0
 
     CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 1, 10, COEFF0)
-    WRITE(*,*) "#y = ", COEFF0(1), "*x"
+    WRITE(*,'(A,F10.6,A)') "#y =", COEFF0(1), "*x"
 
     CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 2, npoints, COEFF1)
-    WRITE(*,*) "#y = ", COEFF1(1), "*x + ", COEFF1(2), "*x^2"
+    WRITE(*,'(A,F10.6,A,F10.6,A)') "#y =", COEFF1(1), "*x + ", COEFF1(2), "*x^2"
 
     CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 3, npoints, COEFF2)
-    WRITE(*,*) "#y = ", COEFF2(1), "*x + ", COEFF2(2), "*x^2 + ", COEFF2(3), "*x^3"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A)') "#y =", COEFF2(1), "*x + ", COEFF2(2), "*x^2 + ", COEFF2(3), "*x^3"
 
     CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 4, npoints, COEFF3)
-    WRITE(*,*) "#y = ", COEFF3(1), "*x + ", COEFF3(2), "*x^2 + ", COEFF3(3), "*x^3 + ", COEFF3(4), "*x^4"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A,F10.6,A)') "#y =", COEFF3(1), "*x + ", COEFF3(2), "*x^2 + ", COEFF3(3), &
+     "*x^3 + ", COEFF3(4), "*x^4"
 
     CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 5, npoints, COEFF4)
-    WRITE(*,*) "#y = ", COEFF4(1), "*x + ", COEFF4(2), "*x^2 + ", COEFF4(3), "*x^3 + ", COEFF4(4), "*x^4 + ", COEFF4(5), "*x^5"
+    WRITE(*,'(A,F10.6,A,F10.6,A,F10.6,A,F10.6,A,F10.6,A)') "#y =", COEFF4(1), "*x + ", COEFF4(2), &
+     "*x^2 + ", COEFF4(3), "*x^3 + ", COEFF4(4), "*x^4 + ", COEFF4(5), "*x^5"
 
     WRITE(*,*) 
     WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
@@ -108,7 +112,18 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
             COEFF4(1)*K2(I) + COEFF4(2)*K2(I)**2 + COEFF4(3)*K2(I)**3 + COEFF4(4)*K2(I)**4 + COEFF4(5)*K2(I)**5
     ENDDO
   ENDIF
-  
+
+  ! DO I=NPOINTS/10, npoints, 10
+  !   CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 1, i, COEFF1)
+  !   CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 2, i, COEFF2)
+  !   CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, i, COEFF3)
+  !   CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, i, COEFF4)
+  !   WRITE(120,*) K2(I), COEFF1(1), COEFF2(1), COEFF3(1), COEFF4(1)
+  !   WRITE(121,*) K2(I), COEFF1(2), COEFF2(2), COEFF3(2), COEFF4(2)
+  !   WRITE(122,*) K2(I), COEFF2(3), COEFF3(3), COEFF4(3)
+  !   WRITE(123,*) K2(I), COEFF3(4), COEFF4(4)
+  ! ENDDO
+
   ! Clean up
   DEALLOCATE(K2, KCOTD)
   
