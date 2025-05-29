@@ -144,6 +144,17 @@ check_graphs_11:
 	xmgrace -nxy $(OUT_DIR)/$(POT)/delta_3P2-3F2.dat -nxy ../07b-Potential_revised/scattering/output/$(POT2)/np/2m.dat; \
 
 
+SRC_XMGRACE := $(shell find . -name "*.agr")
+OUT_XMGRACE := $(patsubst %.agr, %.pdf, $(SRC_XMGRACE))
+
+graphs: $(OUT_XMGRACE)
+
+$(OUT_XMGRACE): %.pdf: %.agr
+	@echo "Converting $< to PDF..."
+	xmgrace -hardcopy $< -hdevice EPS
+	epstopdf $(subst .agr,.eps,$<) -o $@
+	@rm -vf $(subst .agr,.eps,$<) 
+
 # Clean rule to delete all build artifacts
 clean:
 	rm -rvf $(BUILD_DIR)
