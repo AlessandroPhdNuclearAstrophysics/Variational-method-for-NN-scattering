@@ -1,4 +1,4 @@
-# Variazionale: Nuclear Scattering Variational Method
+# Two-Nucleon Scattering 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Language](https://img.shields.io/badge/language-Fortran-orange.svg)
@@ -125,10 +125,6 @@ make test
 ./build/main_transform_to_k2_kcotd.x output/AV18_50MeV/
 ```
 
-### Comparing with Other Results
-```bash
-make check_graphs POT=AV18
-```
 
 ## Output Files
 
@@ -193,4 +189,5 @@ You are welcome to use this project and contribute improvements, provided that y
 ## Contact
 
 Alessandro Grassi
+
 alessandro.grassi@df.unipi.it
