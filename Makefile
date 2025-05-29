@@ -151,13 +151,13 @@ graphs: $(OUT_XMGRACE)
 
 $(OUT_XMGRACE): %.pdf: %.agr
 	@echo "Converting $< to PDF..."
-	xmgrace -hardcopy $< -hdevice EPS
+	xmgrace -hardcopy $< -hdevice EPS -printfile $(subst .agr,.eps,$<)
 	epstopdf $(subst .agr,.eps,$<) -o $@
 	@rm -vf $(subst .agr,.eps,$<) 
 
 # Clean rule to delete all build artifacts
 clean:
-	rm -rvf $(BUILD_DIR)
+	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps")
 
 # Delete output files
 delete_out:
