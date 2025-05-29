@@ -163,7 +163,7 @@ The code implements the variational approach to scattering, which:
 
 For uncoupled channels, the effective range expansion is implemented as:
 ```
-$k^(2L+1)cot(δ) = Σ c_i k^(2i)$
+k^(2L+1)cot(δ) = Σ c_i k^(2i)
 ```
 
 From this expansion, we extract:
