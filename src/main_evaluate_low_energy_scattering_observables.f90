@@ -48,7 +48,7 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/10, M, Q)
   WRITE(*,*) "#y = ", Q, " + ", M, "*x"
 
-  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints/10, A, B, C)
+  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints, A, B, C)
   WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
 
   CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints, coeff3)

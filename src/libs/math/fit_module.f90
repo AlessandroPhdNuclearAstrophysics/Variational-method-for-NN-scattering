@@ -2,7 +2,7 @@ MODULE FIT_MODULE
   IMPLICIT NONE
   PRIVATE
 
-  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION, POLYNOMIAL_REGRESSION
+  PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION, POLYNOMIAL_REGRESSION, POLYNOMIAL_REGRESSION_NO_CONSTANT
 
 
 CONTAINS
@@ -282,6 +282,59 @@ CONTAINS
     
     DEALLOCATE(A, b, work)
   END SUBROUTINE POLYNOMIAL_REGRESSION
+
+
+  SUBROUTINE POLYNOMIAL_REGRESSION_NO_CONSTANT(y, x, degree, n_points, coeffs)
+    ! Performs polynomial regression of specified degree without constant term using LAPACK
+    ! y = coeffs(1)*x + coeffs(2)*x^2 + ... + coeffs(degree)*x^degree
+    
+    INTEGER, INTENT(IN) :: degree, n_points
+    DOUBLE PRECISION, INTENT(IN) :: x(n_points), y(n_points)
+    DOUBLE PRECISION, INTENT(OUT) :: coeffs(degree)
+    
+    ! Local variables
+    DOUBLE PRECISION, ALLOCATABLE :: work(:), A(:,:), b(:)
+    INTEGER :: i, j, lwork, info, lda, ldb, nrhs
+    CHARACTER(1) :: trans
+    
+    ! Set up the matrix A (no constant term)
+    ALLOCATE(A(n_points, degree), b(n_points))
+    
+    ! Fill the matrix (starting from x^1, no constant term)
+    DO i = 1, n_points
+      DO j = 1, degree
+        A(i, j) = x(i)**j  ! x^j for j = 1, 2, ..., degree
+      END DO
+    END DO
+    
+    ! Copy y values to b (DGELS modifies the right-hand side)
+    b = y
+    
+    ! Prepare for DGELS call
+    lda = n_points
+    ldb = n_points
+    nrhs = 1
+    trans = 'N'  ! No transpose
+    
+    ! Query optimal workspace size
+    ALLOCATE(work(1))
+    CALL DGELS(trans, n_points, degree, nrhs, A, lda, b, ldb, work, -1, info)
+    lwork = INT(work(1))
+    DEALLOCATE(work)
+    ALLOCATE(work(lwork))
+    
+    ! Solve the least squares problem
+    CALL DGELS(trans, n_points, degree, nrhs, A, lda, b, ldb, work, lwork, info)
+    
+    IF (info /= 0) THEN
+      WRITE(*,*) "DGELS failed with error code:", info
+    ELSE
+      ! The solution is in the first degree elements of b
+      coeffs = b(1:degree)
+    END IF
+    
+    DEALLOCATE(A, b, work)
+  END SUBROUTINE POLYNOMIAL_REGRESSION_NO_CONSTANT
 
 
 END MODULE FIT_MODULE
