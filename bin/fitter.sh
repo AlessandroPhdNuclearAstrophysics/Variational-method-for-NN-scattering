@@ -7,7 +7,7 @@ fi
 
 # Remove trailing slash from input_dir if present
 input_dir="${1%/}"
-output_dir="graphs/$(basename "$input_dir")"
+output_dir="fits/$(basename "$input_dir")"
 echo "Input directory: $input_dir"
 echo "Output directory: $output_dir"
 
