@@ -10,6 +10,9 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   DOUBLE PRECISION, ALLOCATABLE :: K2(:), KCOTD(:)
   DOUBLE PRECISION :: pred_kcotd0
   DOUBLE PRECISION :: D, C, B, A, M, Q, Y0
+  DOUBLE PRECISION :: COEFF0(1)
+  DOUBLE PRECISION :: COEFF1(2)
+  DOUBLE PRECISION :: COEFF2(3)
   DOUBLE PRECISION :: COEFF3(4)
   DOUBLE PRECISION :: COEFF4(5)
   DOUBLE PRECISION :: COEFF5(6)
@@ -28,51 +31,83 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   ! Read data from file
   CALL read_data(filename, K2, KCOTD, npoints)
   
-  ! Display results
-  IF (is_coupled) THEN
-    WRITE(*,*) "#Coupled channel: ", TRIM(channel1), "-", TRIM(channel2)
-    WRITE(*,*) "#L1 = ", L1, ", L2 = ", L2
-  ELSE
+  WRITE(*,*) "#Read ", npoints, " data points"
+  IF(.NOT.is_coupled) THEN
     WRITE(*,*) "#Single channel: ", TRIM(channel1)
     WRITE(*,*) "#L = ", L
-  END IF
+    WRITE(*,*) "#K2 range: ", K2(1), " fm^2 to ", K2(npoints), " fm^2"
+    WRITE(*,*) "#K^(2L+1)COTdelta range: ", KCOTD(1), " to ", KCOTD(npoints)
+    
+    CALL LINEAR_REGRESSION(KCOTD, K2, 1, 10, M, Q)
+    Y0 = Q
+    WRITE(*,*) "#y = ", Y0
 
-  WRITE(*,*) "#Read ", npoints, " data points"
-  WRITE(*,*) "#K2 range: ", K2(1), " fm^2 to ", K2(npoints), " fm^2"
-  WRITE(*,*) "#K^(2L+1)COTdelta range: ", KCOTD(1), " to ", KCOTD(npoints)
-  
-  CALL LINEAR_REGRESSION(KCOTD, K2, 1, 10, M, Q)
-  Y0 = Q
-  WRITE(*,*) "#y = ", Y0
+    CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/10, M, Q)
+    WRITE(*,*) "#y = ", Q, " + ", M, "*x"
 
-  CALL LINEAR_REGRESSION(KCOTD, K2, 1, npoints/10, M, Q)
-  WRITE(*,*) "#y = ", Q, " + ", M, "*x"
+    CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints, A, B, C)
+    WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
 
-  CALL QUADRATIC_REGRESSION(KCOTD, K2, 1, npoints, A, B, C)
-  WRITE(*,*) "#y = ", C, " + ", B, "*x + ", A, "*x^2"
+    CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints, coeff3)
+    WRITE(*,*) "#y = ", coeff3(1), " + ", coeff3(2), "*x + ", coeff3(3), "*x^2 + ", coeff3(4), "*x^3"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 3, npoints, coeff3)
-  WRITE(*,*) "#y = ", coeff3(1), " + ", coeff3(2), "*x + ", coeff3(3), "*x^2 + ", coeff3(4), "*x^3"
+    CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints, coeff4)
+    WRITE(*,*) "#y = ", coeff4(1), " + ", coeff4(2), "*x + ", coeff4(3), "*x^2 + ", coeff4(4), "*x^3 + ", coeff4(5), "*x^4"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 4, npoints, coeff4)
-  WRITE(*,*) "#y = ", coeff4(1), " + ", coeff4(2), "*x + ", coeff4(3), "*x^2 + ", coeff4(4), "*x^3 + ", coeff4(5), "*x^4"
+    CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints, coeff5)
+    WRITE(*,*) "#y = ", coeff5(1), " + ", coeff5(2), "*x + ", coeff5(3), "*x^2 + ", coeff5(4), "*x^3 + ", coeff5(5), "*x^4", &
+          " + ", coeff5(6), "*x^5"
 
-  CALL POLYNOMIAL_REGRESSION(KCOTD, K2, 5, npoints, coeff5)
-  WRITE(*,*) "#y = ", coeff5(1), " + ", coeff5(2), "*x + ", coeff5(3), "*x^2 + ", coeff5(4), "*x^3 + ", coeff5(5), "*x^4", &
-        " + ", coeff5(6), "*x^5"
+    WRITE(*,*) 
+    WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
 
-  WRITE(*,*) 
-  WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
+    DO I=1, npoints
+      WRITE(*, *) K2(I), KCOTD(I), &
+            Y0, &
+            Q + M*K2(I), &
+            C + B*K2(I) + A*K2(I)**2, &
+            coeff3(1) + coeff3(2)*K2(I) + coeff3(3)*K2(I)**2 + coeff3(4)*K2(I)**3, &
+            coeff4(1) + coeff4(2)*K2(I) + coeff4(3)*K2(I)**2 + coeff4(4)*K2(I)**3 + coeff4(5)*K2(I)**4, &
+            coeff5(1) + coeff5(2)*K2(I) + coeff5(3)*K2(I)**2 + coeff5(4)*K2(I)**3 + coeff5(5)*K2(I)**4 + coeff5(6)*K2(I)**5
+    ENDDO
+  ELSE
+    WRITE(*,*) "#Coupled channel mixing-angles: ", TRIM(channel1), "-", TRIM(channel2)
+    WRITE(*,*) "#L1 = ", L1, ", L2 = ", L2
 
-  DO I=1, npoints
-    WRITE(*, *) K2(I), KCOTD(I), &
-          Y0, &
-          Q + M*K2(I), &
-          C + B*K2(I) + A*K2(I)**2, &
-          coeff3(1) + coeff3(2)*K2(I) + coeff3(3)*K2(I)**2 + coeff3(4)*K2(I)**3, &
-          coeff4(1) + coeff4(2)*K2(I) + coeff4(3)*K2(I)**2 + coeff4(4)*K2(I)**3 + coeff4(5)*K2(I)**4, &
-          coeff5(1) + coeff5(2)*K2(I) + coeff5(3)*K2(I)**2 + coeff5(4)*K2(I)**3 + coeff5(5)*K2(I)**4 + coeff5(6)*K2(I)**5
-  ENDDO
+    WRITE(*,*) "#K2 range: ", K2(1), " fm^2 to ", K2(npoints), " fm^2"
+    WRITE(*,*) "#epsilon range: ", KCOTD(1), " to ", KCOTD(npoints)
+    
+    Y0 = 0.0D0
+    WRITE(*,*) "#y = ", Y0
+
+    CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 1, 10, COEFF0)
+    WRITE(*,*) "#y = ", COEFF0(1), "*x"
+
+    CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 2, npoints, COEFF1)
+    WRITE(*,*) "#y = ", COEFF1(1), "*x + ", COEFF1(2), "*x^2"
+
+    CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 3, npoints, COEFF2)
+    WRITE(*,*) "#y = ", COEFF2(1), "*x + ", COEFF2(2), "*x^2 + ", COEFF2(3), "*x^3"
+
+    CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 4, npoints, COEFF3)
+    WRITE(*,*) "#y = ", COEFF3(1), "*x + ", COEFF3(2), "*x^2 + ", COEFF3(3), "*x^3 + ", COEFF3(4), "*x^4"
+
+    CALL POLYNOMIAL_REGRESSION_NO_CONSTANT(KCOTD, K2, 5, npoints, COEFF4)
+    WRITE(*,*) "#y = ", COEFF4(1), "*x + ", COEFF4(2), "*x^2 + ", COEFF4(3), "*x^3 + ", COEFF4(4), "*x^4 + ", COEFF4(5), "*x^5"
+
+    WRITE(*,*) 
+    WRITE(*,*) "# K2 (fm^2)  KCOTD  Oth-order  1st-order  2nd-order  3rd-order  4th-order  5th-order"
+
+    DO I=1, npoints
+      WRITE(*, *) K2(I), KCOTD(I), &
+            Y0, &
+            COEFF0(1)*K2(I), &
+            COEFF1(1)*K2(I) + COEFF1(2)*K2(I)**2, &
+            COEFF2(1)*K2(I) + COEFF2(2)*K2(I)**2 + COEFF2(3)*K2(I)**3, &
+            COEFF3(1)*K2(I) + COEFF3(2)*K2(I)**2 + COEFF3(3)*K2(I)**3 + COEFF3(4)*K2(I)**4, &
+            COEFF4(1)*K2(I) + COEFF4(2)*K2(I)**2 + COEFF4(3)*K2(I)**3 + COEFF4(4)*K2(I)**4 + COEFF4(5)*K2(I)**5
+    ENDDO
+  ENDIF
   
   ! Clean up
   DEALLOCATE(K2, KCOTD)
