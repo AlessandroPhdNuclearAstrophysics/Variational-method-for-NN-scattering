@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           for i in 1 2 3; do
-            sudo apt-get update && sudo apt-get install -y gfortran libgsl-dev liblapack-dev && break
+            sudo apt-get update && sudo apt-get install -y gfortran libgsl-dev liblapack-dev libblas-dev && break
             sleep 10
           done
 
