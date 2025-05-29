@@ -110,9 +110,9 @@ make test
 - `-ne`: Number of energy points
 - `-tz`: Isospin (0 for np, 1 for pp/nn)
 - `-ipot`: Potential model (14 for AV14, 18 for AV18, etc.)
-- `-ilb`: Integration method
-- `-lemp`: Electromagnetic potential flag
-- `-print`: Print coefficients flag
+- `-ilb`: Potential submodel
+- `-lemp`: Electromagnetic potential flag (0 for pure Coulomb, 1 for full EM)
+- `-print`: Print info during calculations
 - `-out_dir`: Output directory
 
 ### Processing Phase Shifts
@@ -181,6 +181,15 @@ The code uses several numerical integration methods:
 - Block-adaptive integration for radial functions
 - Gauss-Laguerre quadrature for exponentially decaying functions
 - Exponentially growing grids for high resolution near the origin
+
+## To-Do List
+- [ ] Implement possibility to fit new potential models using calculating the potential radial functions once
+- [ ] Implement "nn" and "pp" cases in the same way as "np" (currently only np is implemented)
+- [ ] Implement the `lemp=1` option to include the electromagnetic potential in the calculations and the correct asymptotic behavior of the wave function
+- [ ] Implement additional potential models (e.g., EFT_pionfull)
+- [ ] Add more test cases for robustness
+- [ ] Improve documentation and examples
+- [ ] Optimize performance for large-scale calculations
 
 ## License
 
