@@ -134,7 +134,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT) :: ch1, ch2
     INTEGER, INTENT(OUT) :: ang_mom, ang_mom1, ang_mom2
 
-    INTEGER :: i, j, k
+    INTEGER :: idx_i, j, k
     CHARACTER(LEN=1) :: first_letter
 
     ! Check if it's a coupled channel (contains "epsilon")
@@ -142,11 +142,11 @@ CONTAINS
 
     IF (is_coup) THEN
       ! Format: k2_kcotd_epsilon_XXX-YYY.dat
-      i = INDEX(fname, "epsilon_") + 9
-      j = INDEX(fname(i:), "-") + i - 1
+      idx_i = INDEX(fname, "epsilon_") + 9
+      j = INDEX(fname(idx_i:), "-") + idx_i - 1
       k = INDEX(fname(j:), ".") + j - 2
 
-      ch1 = fname(i:j)
+      ch1 = fname(idx_i:j)
       ch2 = fname(j+2:k+1)
 
       ! Convert spectroscopic notation to L values
@@ -175,10 +175,10 @@ CONTAINS
       ang_mom = -1  ! Not applicable for coupled channels
     ELSE
       ! Format: k2_kcotd_XXX.dat
-      i = INDEX(fname, "kcotd_") + 6
-      j = INDEX(fname(i:), ".") + i - 2
+      idx_i = INDEX(fname, "kcotd_") + 6
+      j = INDEX(fname(idx_i:), ".") + idx_i - 2
 
-      ch1 = fname(i:j)
+      ch1 = fname(idx_i:j)
       ch2 = ""
 
       ! Convert spectroscopic notation to L value
@@ -203,7 +203,7 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: k2_values(:), kcotd_values(:)
     INTEGER, INTENT(OUT) :: num_points
 
-    INTEGER :: unit, io_stat, i
+    INTEGER :: unit, io_stat, j
     DOUBLE PRECISION :: k2_temp, kcotd_temp
 
     ! First count the number of data points
@@ -227,8 +227,8 @@ CONTAINS
     ALLOCATE(k2_values(num_points), kcotd_values(num_points))
 
     READ(unit, *, IOSTAT=io_stat)
-    DO i = 1, num_points
-      READ(unit, *) k2_values(i), kcotd_values(i)
+    DO j = 1, num_points
+      READ(unit, *) k2_values(j), kcotd_values(j)
     END DO
 
     CLOSE(unit)
