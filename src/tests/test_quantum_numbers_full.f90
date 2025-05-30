@@ -210,8 +210,8 @@ PROGRAM test_quantum_numbers_full
 CONTAINS
 
   ! Helper subroutine to test a channel against expected values
-  SUBROUTINE test_channel(ch, exp_J, exp_L, exp_S, exp_TZ, exp_nch, exp_coupled, exp_name)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: ch
+  SUBROUTINE test_channel(test_ch, exp_J, exp_L, exp_S, exp_TZ, exp_nch, exp_coupled, exp_name)
+    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: test_ch
     INTEGER, INTENT(IN) :: exp_J, exp_L, exp_S, exp_TZ, exp_nch
     LOGICAL, INTENT(IN) :: exp_coupled
     CHARACTER(LEN=*), INTENT(IN) :: exp_name
@@ -220,13 +220,13 @@ CONTAINS
     LOGICAL :: actual_coupled
     CHARACTER(LEN=16) :: actual_name
 
-    actual_J = GET_CHANNEL_J(ch)
-    actual_L = GET_CHANNEL_L(ch, 1)
-    actual_S = GET_CHANNEL_S(ch, 1)
-    actual_TZ = GET_CHANNEL_TZ(ch)
-    actual_nch = GET_CHANNEL_NCH(ch)
-    actual_coupled = IS_CHANNEL_COUPLED(ch)
-    actual_name = GET_CHANNEL_NAME(ch)
+    actual_J = GET_CHANNEL_J(test_ch)
+    actual_L = GET_CHANNEL_L(test_ch, 1)
+    actual_S = GET_CHANNEL_S(test_ch, 1)
+    actual_TZ = GET_CHANNEL_TZ(test_ch)
+    actual_nch = GET_CHANNEL_NCH(test_ch)
+    actual_coupled = IS_CHANNEL_COUPLED(test_ch)
+    actual_name = GET_CHANNEL_NAME(test_ch)
 
     IF (actual_J /= exp_J) STOP "FAIL: J mismatch"
     IF (actual_L /= exp_L) STOP "FAIL: L mismatch"

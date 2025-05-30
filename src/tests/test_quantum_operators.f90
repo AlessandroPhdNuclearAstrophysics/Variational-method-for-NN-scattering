@@ -65,7 +65,7 @@ PROGRAM TEST_QUANTUM_OPERATORS
   END IF
 
   ls_mat = LS_OPERATOR(1,1,2)
-  IF (ls_mat(1,1) == 2 .AND. ls_mat(2,2) == 6) THEN
+  IF (ls_mat(1,1) == 1 .AND. ls_mat(2,2) == -4) THEN
     PRINT *, "  LS_OPERATOR coupled OK"
   ELSE
     PRINT *, "  LS_OPERATOR coupled FAILED"
