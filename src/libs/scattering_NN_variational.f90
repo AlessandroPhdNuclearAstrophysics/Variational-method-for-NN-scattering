@@ -14,6 +14,7 @@
 MODULE SCATTERING_NN_VARIATIONAL
   USE REALLOCATE_UTILS
   USE QUANTUM_NUMBERS
+  USE EFT_PLESS
   IMPLICIT NONE
   PRIVATE
 
@@ -135,6 +136,9 @@ MODULE SCATTERING_NN_VARIATIONAL
   ! K_MINUS_E_AA_RI = < F_ALPHA | K - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   ! K_MINUS_E_AA_IR = < G_ALPHA | K - E | F_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   ! K_MINUS_E_AA_II = < G_ALPHA | K - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  TYPE(EFT_RADIAL_FUNCTIONS) :: EFT_RADIAL_CC, EFT_RADIAL_AC, EFT_RADIAL_AA
+  TYPE(LECS_EFT_PLESS) :: LECS
+  LOGICAL :: LECS_SET = .FALSE.
   DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_CC   (:,:,:,:)  ! K_MINUS_E_CC   (CH_INDEX, E, NALPHA, NALPHA')
   DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AC_R (:,:,:,:)  ! K_MINUS_E_AC_R (CH_INDEX, E, NALPHA, NALPHA')
   DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AC_I (:,:,:,:)  ! K_MINUS_E_AC_I (CH_INDEX, E, NALPHA, NALPHA')
@@ -1210,9 +1214,7 @@ CONTAINS
     DEALLOCATE(AM, AM1)
     DEALLOCATE(AXXM1, AKEM1, APEM, APEM1)
     DEALLOCATE(FUN, FUN1)
-
     RETURN
-
   END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
@@ -1621,77 +1623,89 @@ CONTAINS
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     NC = SIZE(CHANNELS)
-    ALLOCATE(V_CC(NC, VAR_P%NX_CC, 2, 2), V_AC(NC, VAR_P%NX_AC, 2, 2), V_AA(NC, VAR_P%NX_AA, 2, 2))
+    
+    IF (.NOT.USE_DYNAMIC) THEN
+      ALLOCATE(V_CC(NC, VAR_P%NX_CC, 2, 2), V_AC(NC, VAR_P%NX_AC, 2, 2), V_AA(NC, VAR_P%NX_AA, 2, 2))
 
 
-    DO ICH = 1, NC
-      NEQ_C = GET_CHANNEL_NCH(CHANNELS(ICH))
-      J   = GET_CHANNEL_J(CHANNELS(ICH))
-      TZ  = GET_CHANNEL_TZ(CHANNELS(ICH))
-      COUPLED = IS_CHANNEL_COUPLED(CHANNELS(ICH))
-      L   = GET_CHANNEL_L(CHANNELS(ICH), 1)
-      S   = GET_CHANNEL_S(CHANNELS(ICH), 1)
-      T   = GET_CHANNEL_T(CHANNELS(ICH), 1)
-      CALL EVAL_T1Z_T2Z
+      DO ICH = 1, NC
+        NEQ_C = GET_CHANNEL_NCH(CHANNELS(ICH))
+        J   = GET_CHANNEL_J(CHANNELS(ICH))
+        TZ  = GET_CHANNEL_TZ(CHANNELS(ICH))
+        COUPLED = IS_CHANNEL_COUPLED(CHANNELS(ICH))
+        L   = GET_CHANNEL_L(CHANNELS(ICH), 1)
+        S   = GET_CHANNEL_S(CHANNELS(ICH), 1)
+        T   = GET_CHANNEL_T(CHANNELS(ICH), 1)
+        CALL EVAL_T1Z_T2Z
 
-      DO IR = 1, VAR_P%NX_CC
-        R = XX_CC(IR)
-        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-        IF (COUPLED) THEN
-          V_CC(ICH,IR,:,:) = V2
-        ELSEIF (NEQ_C == 2) THEN
-          V_CC(ICH,IR,:,:) = ZERO
-          V_CC(ICH,IR,1,1) = V2(1,1)
-          L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-          S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-          T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+        DO IR = 1, VAR_P%NX_CC
+          R = XX_CC(IR)
           CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          V_CC(ICH,IR,2,2) = V2(1,1)
-        ELSE
-          V_CC(ICH,IR,:,:) = ZERO
-          V_CC(ICH,IR,1,1) = V2(1,1)
-        ENDIF
-      ENDDO
-
-      DO IR = 1, VAR_P%NX_AC
-        R = XX_AC(IR)
-        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-        IF (COUPLED) THEN
-          V_AC(ICH,IR,:,:) = V2
+          IF (COUPLED) THEN
+            V_CC(ICH,IR,:,:) = V2
           ELSEIF (NEQ_C == 2) THEN
-            V_AC(ICH,IR,:,:) = ZERO
-            V_AC(ICH,IR,1,1) = V2(1,1)
+            V_CC(ICH,IR,:,:) = ZERO
+            V_CC(ICH,IR,1,1) = V2(1,1)
             L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
             S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
             T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
             CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-            V_AC(ICH,IR,2,2) = V2(1,1)
+            V_CC(ICH,IR,2,2) = V2(1,1)
           ELSE
-            V_AC(ICH,IR,:,:) = ZERO
-            V_AC(ICH,IR,1,1) = V2(1,1)
+            V_CC(ICH,IR,:,:) = ZERO
+            V_CC(ICH,IR,1,1) = V2(1,1)
           ENDIF
-          ! if (r<=20) WRITE(1000+(2*S+1)*100+L*10+J,*) R, V2(1,1), V2(1,2), V2(2,1), V2(2,2)
-      ENDDO
+        ENDDO
 
-      DO IR = 1, VAR_P%NX_AA
-        R = XX_AA(IR)
-        CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-        IF (COUPLED) THEN
-          V_AA(ICH,IR,:,:) = V2
-        ELSEIF (NEQ_C == 2) THEN
-          V_AA(ICH,IR,:,:) = ZERO
-          V_AA(ICH,IR,1,1) = V2(1,1)
-          L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-          S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-          T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+        DO IR = 1, VAR_P%NX_AC
+          R = XX_AC(IR)
           CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          V_AA(ICH,IR,2,2) = V2(1,1)
-        ELSE
-          V_AA(ICH,IR,:,:) = ZERO
-          V_AA(ICH,IR,1,1) = V2(1,1)
-        ENDIF
+          IF (COUPLED) THEN
+            V_AC(ICH,IR,:,:) = V2
+            ELSEIF (NEQ_C == 2) THEN
+              V_AC(ICH,IR,:,:) = ZERO
+              V_AC(ICH,IR,1,1) = V2(1,1)
+              L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
+              S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
+              T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+              CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+              V_AC(ICH,IR,2,2) = V2(1,1)
+            ELSE
+              V_AC(ICH,IR,:,:) = ZERO
+              V_AC(ICH,IR,1,1) = V2(1,1)
+            ENDIF
+            ! if (r<=20) WRITE(1000+(2*S+1)*100+L*10+J,*) R, V2(1,1), V2(1,2), V2(2,1), V2(2,2)
+        ENDDO
+
+        DO IR = 1, VAR_P%NX_AA
+          R = XX_AA(IR)
+          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          IF (COUPLED) THEN
+            V_AA(ICH,IR,:,:) = V2
+          ELSEIF (NEQ_C == 2) THEN
+            V_AA(ICH,IR,:,:) = ZERO
+            V_AA(ICH,IR,1,1) = V2(1,1)
+            L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
+            S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
+            T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+            CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+            V_AA(ICH,IR,2,2) = V2(1,1)
+          ELSE
+            V_AA(ICH,IR,:,:) = ZERO
+            V_AA(ICH,IR,1,1) = V2(1,1)
+          ENDIF
+        ENDDO
       ENDDO
-    ENDDO
+    ELSE
+      ! FILL TO PREPARE POTENTIALS FOR DYNAMIC CASE
+      IF (.NOT.LECS_SET) THEN
+        PRINT *, "Error: LECS_NOT_SET"
+        STOP
+      ENDIF
+      CALL GET_EFT_RADIAL_FUNCTIONS(XX_CC, LECS%RC(VAR_P%S,VAR_P%T), EFT_RADIAL_CC, ORDER_POTENTIAL = LECS%ORDER)
+      CALL GET_EFT_RADIAL_FUNCTIONS(XX_AC, LECS%RC(VAR_P%S,VAR_P%T), EFT_RADIAL_AC, ORDER_POTENTIAL = LECS%ORDER)
+      CALL GET_EFT_RADIAL_FUNCTIONS(XX_AA, LECS%RC(VAR_P%S,VAR_P%T), EFT_RADIAL_AA, ORDER_POTENTIAL = LECS%ORDER)
+    ENDIF
 
     POTENTIAL_SET = .TRUE.
     ! stop
