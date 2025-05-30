@@ -183,7 +183,7 @@ The code uses several numerical integration methods:
 - Exponentially growing grids for high resolution near the origin
 
 ## To-Do List
-- [ ] Solve the problems with `OMP` parallelization
+- [x]  Solve the problems with `OMP` parallelization
 - [ ] Implement possibility to fit new potential models using calculating the potential radial functions once
 - [ ] Implement "nn" and "pp" cases in the same way as "np" (currently only np is implemented)
 - [ ] Implement the `lemp=1` option to include the electromagnetic potential in the calculations and the correct asymptotic behavior of the wave function

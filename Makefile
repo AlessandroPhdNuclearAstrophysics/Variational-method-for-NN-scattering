@@ -20,7 +20,7 @@ else
             -fdefault-real-8 -fdefault-double-8
 endif
 
-OMP ?= 0
+OMP ?= 1
 ifeq ($(OMP),1)	
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
