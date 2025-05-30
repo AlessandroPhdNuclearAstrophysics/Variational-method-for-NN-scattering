@@ -1,10 +1,10 @@
 !> \file av14.f90
 !! \brief Modulo per il potenziale nucleare Argonne v14 (AV14).
-!! 
+!!
 !! Questo modulo fornisce la funzione di potenziale nucleare AV14
 !! per il calcolo delle interazioni nucleone-nucleone in diversi canali
 !! di onde parziali, includendo effetti isospinici e termini elettromagnetici.
-!! 
+!!
 !! \author Alessandro Grassi
 !! \date 2025
 MODULE AV14

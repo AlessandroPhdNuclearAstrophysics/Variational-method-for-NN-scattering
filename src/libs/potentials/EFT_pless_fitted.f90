@@ -16,8 +16,8 @@ SUBROUTINE EFT_PLESS_PW_FITTED(ILB, R, L, S, J, TZ, V)
                       0.761781945701797D0,   & ! Alessandro, PETSc, AV18 1 MeV CM
                       0.23724000000000D1,    & ! Ylenia, MINUIT, Granada
                       0.27603D1              & ! Ylenia, MINUIT, AV18 1 MeV CM
-                    ] 
-  
+                    ]
+
   INTEGER, INTENT(IN) :: L, S, J, TZ, ILB
   DOUBLE PRECISION, INTENT(IN) :: R
   DOUBLE PRECISION, INTENT(OUT):: V(2,2)

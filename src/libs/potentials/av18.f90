@@ -1,13 +1,13 @@
 !> **********************************************************************
-!! Argonne v18 and vn' and Super-Soft Core (C) potential package 
+!! Argonne v18 and vn' and Super-Soft Core (C) potential package
 !!
-!! prepared 1 Sep 1994 by R. B. Wiringa, Physics Division, 
+!! prepared 1 Sep 1994 by R. B. Wiringa, Physics Division,
 !! Argonne National Laboratory, Argonne, IL 60439
-!! e-mail: wiringa@theory.phy.anl.gov 
-!! 
-!! reference: 
+!! e-mail: wiringa@theory.phy.anl.gov
+!!
+!! reference:
 !!  "Accurate nucleon-nucleon potential with charge-independence breaking"
-!!   R. B. Wiringa, V. G. J. Stoks, and R. Schiavilla, 
+!!   R. B. Wiringa, V. G. J. Stoks, and R. Schiavilla,
 !!   Physical Review C51, 38 (1995) - WSS95.
 !!
 !! option for v8' reprojection of v18 potential added 10 Jan 2001
@@ -48,16 +48,16 @@
 !! empot90  gives the electromagnetic part in operator format
 !! consts90 gives values of fundamental constants and masses used
 !!
-!! notes: 
+!! notes:
 !! 1) av18pw90 includes full EM interaction for lpot=1;
 !!    for lpot>1 it includes only C1(pp), i.e.,
 !!    Coulomb with a form factor for pp channels.
 !!
 !! 2) empot90 does not include the energy-dependence of the Coulomb
-!!    interaction used in eq.(4) of WSS95, i.e., it uses alpha, 
+!!    interaction used in eq.(4) of WSS95, i.e., it uses alpha,
 !!    not alpha'.
 !!
-!! 3) the vacuum polarization in empot90 is a short-range approximation 
+!! 3) the vacuum polarization in empot90 is a short-range approximation
 !!    to eq.(7) suitable for bound states, but not for scattering.
 !!    it is taken from eq.(3.13) of Rev. Mod. Phys. 44, 48 (1972)
 !!
@@ -69,8 +69,8 @@
 !!    DOUBLE PRECISION significance, e.g., on an IBM RS6000 the xlf compiler
 !!    option qdpc=e should be used; on SGI machines, the -r8 option
 !!    should be used; on a Cray no action is needed.
-!!    if such an option is not available and the default precision is 
-!!    real*4 (32 bits), then all constants should be explicitly 
+!!    if such an option is not available and the default precision is
+!!    real*4 (32 bits), then all constants should be explicitly
 !!    converted to double precision by appending a D0.
 !!
 !! 5) consts90 now (14 Feb 2007) depend upon potential:
@@ -145,7 +145,7 @@ MODULE AV18
     S1DS2=4*S-3
     T1DT2=4*T-3
     T12=3*T1Z*T2Z-T1DT2
-    VC=VNN(1)+T1DT2*VNN(2)+S1DS2*VNN(3)+S1DS2*T1DT2*VNN(4) & 
+    VC=VNN(1)+T1DT2*VNN(2)+S1DS2*VNN(3)+S1DS2*T1DT2*VNN(4) &
           +T12*VNN(15)+S1DS2*T12*VNN(16)+(T1Z+T2Z)*VNN(18)
     VT=VNN(5)+T1DT2*VNN(6)+T12*VNN(17)
     VLS=VNN(7)+T1DT2*VNN(8)
@@ -201,7 +201,7 @@ MODULE AV18
 
 
   ! *id* av18op90 **********************************************************
-  ! subroutine for strong interaction part of argonne v18 potential 
+  ! subroutine for strong interaction part of argonne v18 potential
   ! or super-soft core (C) v14 potential
   ! or reprojected vn' potential in operator format
   ! calls subroutine consts90
@@ -422,17 +422,17 @@ MODULE AV18
     RC4=1-EXP(-RR4)
     RC6=1-EXP(-RR**6)
     HR=10.463
-    P11=144.83*EXP(-RR4/.88787**2)& 
+    P11=144.83*EXP(-RR4/.88787**2)&
         +(-241.34*YC(3.3788*X)+(HR/3)*YC(X))*RC4
-    P10=215.32*EXP(-RR4/.85807**2)& 
+    P10=215.32*EXP(-RR4/.85807**2)&
         +(-883.6*YC(3.5042*X)-HR*YC(X))*RC4
-    P01=375.*EXP(-RR4/.47552**2)& 
+    P01=375.*EXP(-RR4/.47552**2)&
         +(-1001.6*YC(3.6071*X)-HR*YC(X))*RC4
-    P00=75.653*EXP(-RR4/3.0000**2)& 
+    P00=75.653*EXP(-RR4/3.0000**2)&
         +(-286.26*YC(2.0254*X)+3*HR*YC(X))*RC4
-    PT1=36.*EXP(-RR4/1.0805**2)& 
+    PT1=36.*EXP(-RR4/1.0805**2)&
         +(-110.*YT(3.9529*X)+(HR/3)*YT(X))*RC6
-    PT0=-58.951*EXP(-RR4/1.3171**2)& 
+    PT0=-58.951*EXP(-RR4/1.3171**2)&
         +(395.18*YT(4.3098*X)-HR*YT(X))*RC6
     PLS1=(520.*YLS(5.661*X)-54.85*YLS(4.0141*X))*RC6
     PLS0=(-40.466*YLS(5.768*X)-40.408*YLS(4.0676*X))*RC6
@@ -472,7 +472,7 @@ MODULE AV18
     VNN(13)=1.5*PQ0
     VNN(14)=-1.5*PQ0
     END IF
-    
+
   ! -------------------
   ! statement functions
   ! -------------------
@@ -530,16 +530,16 @@ MODULE AV18
     INTEGER, INTENT(IN) :: LPOT
     DOUBLE PRECISION, INTENT(IN) :: R
     DOUBLE PRECISION, INTENT(OUT) :: VEM(14)
-    
+
     DOUBLE PRECISION :: HC, MPI0, MPIC, MP, MN, ALPHA, MUP, MUN
     DOUBLE PRECISION :: B, BR, PI, ME, MR, GAMMA_VAL, BETA
     DOUBLE PRECISION :: FCOULR, FTR3, FLSR3, KR, FIVP, FDELTA, FNPR
     DOUBLE PRECISION, PARAMETER :: SMALL = 1.0E-5
     DOUBLE PRECISION, PARAMETER :: GAMMA_EULER = 0.577216
-    
+
     VEM = 0.0
     CALL CONSTS(LPOT, HC, MPI0, MPIC, MP, MN, ALPHA, MUP, MUN)
-    
+
     B = 4.27
     BR = B * R
     PI = ACOS(-1.0)
@@ -547,7 +547,7 @@ MODULE AV18
     MR = MP * MN / (MP + MN)
     GAMMA_VAL = GAMMA_EULER
     BETA = 0.0189
-    
+
     IF (R < SMALL) THEN
       FCOULR = 5.0 * B / 16.0
       FTR3 = B**3 * BR**2 / 720.0
@@ -559,17 +559,17 @@ MODULE AV18
       FLSR3 = (1.0 - (1.0 + BR + BR**2/2.0 + 7.0*BR**3/48.0 + BR**4/48.0) * EXP(-BR)) / R**3
       KR = ME * R / HC
     END IF
-    
+
     FIVP = -GAMMA_VAL - 5.0/6.0 + ABS(LOG(KR)) + 6.0*PI*KR/8.0
     FDELTA = B**3 * (1.0 + BR + BR**2/3.0) * EXP(-BR) / 16.0
     FNPR = B**3 * (15.0 + 15.0*BR + 6.0*BR**2 + BR**3) * EXP(-BR) / 384.0
-    
+
     VEM(1) = ALPHA * HC * FCOULR
-    
+
   ! ------------------------
     IF (LPOT >= 2) RETURN
   ! ------------------------
-    
+
     VEM(2) = -ALPHA * HC**3 * FDELTA / (4.0 * MP**2)
     VEM(3) = -VEM(1)**2 / MP
     VEM(4) = 2.0 * ALPHA * VEM(1) * FIVP / (3.0 * PI)

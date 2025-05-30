@@ -60,7 +60,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   LEMP = 0
   OUT_DIR = 'output/AV18/'
 
-  
+
   !> \brief Read namelist from file if provided, otherwise prompt user.
   IF (has_arguments) THEN
     CALL GET_COMMAND_ARGUMENT(1, input_file)
@@ -80,24 +80,24 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
       OUT_DIR = TRIM(OUT_DIR) // '/'
     END IF
   END IF
-  
+
   !> \brief Create output directory if it does not exist.
   CALL SYSTEM('mkdir -p "' // TRIM(OUT_DIR) // '"')
-  
+
   !> \brief Print the final values of the namelist for confirmation.
   PRINT *, "Final values of the namelist:"
   WRITE(*, NML=IN)
-  
+
   !> \brief Allocate and fill the energy grid.
   ALLOCATE(ENERGIES(NE))
   HE = EMAX / NE
   ENERGIES = (/ (I * HE, I = 1, NE) /)
-  
+
   !> \brief Prepare the list of all physical channels.
   CALL PREPARE_CHANNELS
   CALL SET_ENERGIES(ENERGIES)
   CALL SET_CHANNELS(CHANNELS)
-  
+
   !> \brief Loop over all possible L, S, J combinations and compute phase shifts for each channel.
   DO L = 0, 2
     DO S = 0, 1

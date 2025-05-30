@@ -109,7 +109,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, OPTIONAL, INTENT(IN) :: ORDER
     DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: CLO(2), CNLO(7), DN3LO(11), CIT(0:4), RCUTOFF
-    
+
     IF (PRESENT(ORDER))LECS%ORDER = ORDER
     IF (PRESENT(CLO))  LECS%CLO = CLO
     IF (PRESENT(CNLO)) LECS%CNLO = CNLO
@@ -159,15 +159,15 @@ CONTAINS
 
   SUBROUTINE EFT_PLESS_PW_TO_FIT(R, V)
     IMPLICIT NONE
-    
+
     INTEGER, SAVE :: L, S, J, T, TZ
     DOUBLE PRECISION, INTENT(IN) :: R
     DOUBLE PRECISION, INTENT(OUT):: V(2,2)
-  
+
     LOGICAL, SAVE :: FIRST_CALL = .TRUE.
     INTEGER, SAVE :: LS(2,2), TTZ, I2(2,2)
     DOUBLE PRECISION, SAVE :: S12(2,2), RC
-  
+
     IF (L.NE.(POT_QN%L) .OR. S.NE.(POT_QN%S) .OR. J.NE.(POT_QN%J) .OR. TZ.NE.(POT_QN%TZ)) THEN
       FIRST_CALL = .TRUE.
     ENDIF
@@ -186,29 +186,29 @@ CONTAINS
       CALL CREATE_S12_MATRIX()
       CALL EVALUATE_TTZ()
     ENDIF
-    
-    
+
+
     V = 0.D0
     IF     ( S.EQ.0 .AND. T.EQ.0 ) THEN         ! EXAMPLE 1P1
-  
+
       V(1,1) = LECS%CNLO(1)* FI_R(1, R)
-  
+
     ELSEIF ( S.EQ.1 .AND. T.EQ.0 ) THEN         ! EXAMPLE 3S1-3D1
-  
+
       V =  LECS%CLO( 2)*I2       &
           +LECS%CNLO(2)*I2*      FI_R(1, R) &
           +LECS%CNLO(5)*S12*     FI_R(2, R) &
           +LECS%CNLO(7)*LS*      FI_R(3, R)
-  
+
     ELSEIF ( S.EQ.0 .AND. T.EQ.1 ) THEN         ! EXAMPLE 1S0
-  
+
       V(1,1) =  LECS%CLO( 1)                 &
                +LECS%CNLO(3) *    FI_R(1, R) &
                +LECS%CIT(0)*TTZ
 
-               
+
     ELSEIF ( S.EQ.1 .AND. T.EQ.1 ) THEN         ! EXAMPLE 3P0, 3P1, 3P2
-      
+
       V =  LECS%CNLO(4)*I2*      FI_R(1, R) &
           +LECS%CNLO(6)*S12*     FI_R(2, R) &
           +LECS%CNLO(7)*LS*      FI_R(3, R) &
@@ -216,12 +216,12 @@ CONTAINS
     ELSE
       WRITE(*,*) "ERROR: EFT_PLESS_PW_FIT, T, S = ", T, S
     ENDIF
-    
-    V = V/(DEXP(R**2/RC**2)*PI**1.5D0*RC**3) 
+
+    V = V/(DEXP(R**2/RC**2)*PI**1.5D0*RC**3)
     V = V*HTC
     RETURN
-    
-    CONTAINS 
+
+    CONTAINS
     SUBROUTINE CREATE_IDENTITY_MATRIX(DIM)
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: DIM
@@ -236,14 +236,14 @@ CONTAINS
         END DO
       END DO
     END SUBROUTINE CREATE_IDENTITY_MATRIX
-  
+
     SUBROUTINE CREATE_LS_MATRIX()
       IMPLICIT NONE
       LS = 0
       LS(1,1) = (J*(J+1) - L*(L+1) - S*(S+1))/2
       IF (L.EQ.(J-1)) LS(2,2) = (J*(J+1) - (L+2)*(L+3) - S*(S+1))/2
     END SUBROUTINE CREATE_LS_MATRIX
-  
+
     SUBROUTINE CREATE_S12_MATRIX()
       IMPLICIT NONE
       S12 = 0.D0
@@ -266,7 +266,7 @@ CONTAINS
         STOP
       ENDIF
     END SUBROUTINE CREATE_S12_MATRIX
-  
+
     SUBROUTINE EVALUATE_TTZ()
       IMPLICIT NONE
       IF (TZ.EQ.0) THEN
@@ -275,7 +275,7 @@ CONTAINS
         TTZ = 2
       ENDIF
     END SUBROUTINE EVALUATE_TTZ
-  
+
   END SUBROUTINE EFT_PLESS_PW_TO_FIT
 
   ! This subroutine calculates the potential matrix elements for the EFT_PLESS model.
@@ -383,7 +383,7 @@ CONTAINS
       DEALLOCATE(RF%F1, RF%F2, RF%F3, RF%F4, RF%F5, RF%F6, RF%F7)
     ENDIF
   END SUBROUTINE RESET_POTENTIAL
-  
+
 
 END MODULE EFT_PLESS_TO_FIT
 

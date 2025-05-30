@@ -59,7 +59,7 @@ MODULE EFT_PLESS
   PRIVATE:: SET_OPERATORS
   PRIVATE:: PREPARE, S12_OPERATOR, LS_OPERATOR, L2_OPERATOR, T12_OPERATOR
 
-CONTAINS 
+CONTAINS
   SUBROUTINE SET_LECS_FROM_LECS(LECS_IN)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
@@ -165,7 +165,7 @@ CONTAINS
       IF (CIT4 /= 0.D0) AT_LEAST_ONE_LEC_IS_NOT_NULL = .TRUE.
     END IF
 
-    
+
     IF (PRESENT(R00)) LECS%RC(0,0) = R00
     IF (PRESENT(R10)) LECS%RC(1,0) = R10
     IF (PRESENT(R01)) LECS%RC(0,1) = R01
@@ -322,7 +322,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: LMIN, S, J
     INTEGER :: LS_OP(2,2)
-    
+
     LS_OP = 0
     IF (LMIN==J .OR. J==0) THEN
       LS_OP(1,1) = (J*(J+1)-S*(S+1)-LMIN*(LMIN+1))/2
@@ -376,7 +376,7 @@ CONTAINS
     T = GET_CHANNEL_T (CHANNEL, 1)
     TZ= GET_CHANNEL_TZ(CHANNEL)
     J = GET_CHANNEL_J (CHANNEL)
-    
+
     S12   = S12_OPERATOR(L, S, J)
     LS    = LS_OPERATOR (L, S, J)
     L2    = L2_OPERATOR (L)
@@ -406,7 +406,7 @@ CONTAINS
     LOGICAL :: IS_NEW_CHANNEL
     DOUBLE PRECISION :: RC
     INTEGER :: LS2(2,2)
-    
+
     VPW = 0
     TZ = (T1Z+T2Z)/2
     T = MOD(MOD((L+S),2)+1,2)
@@ -421,10 +421,10 @@ CONTAINS
     ELSEIF (IS_NEW_CHANNEL) THEN
       CALL PREPARE(ILB)
     ENDIF
-    
+
     RC = LECS%RC(S,T)
     ORDER = LECS%ORDER
-    
+
     IF ( S==0 .AND. T==0 ) THEN
       SELECT CASE (ORDER)
       CASE (0)
@@ -479,7 +479,7 @@ CONTAINS
                   + LECS%CIT(0)                 * T12 * I2
         VPW = VPW + LECS%CN3LO(3) * EFT_RADIAL_4(R, RC)     * I2 &
                   + LECS%CN3LO(10)* EFT_RADIAL_7(R, RC)     * L2 &
-                  + LECS%CIT(1)   * EFT_RADIAL_1(R, RC)     * T12 * I2 
+                  + LECS%CIT(1)   * EFT_RADIAL_1(R, RC)     * T12 * I2
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
       END SELECT
@@ -508,13 +508,13 @@ CONTAINS
               + LECS%CN3LO(11)* EFT_RADIAL_7(R, RC)    * L2 &
               +(  LECS%CIT(2) * EFT_RADIAL_1(R, RC)    * I2  + &
                   LECS%CIT(3) * EFT_RADIAL_2(R, RC)    * S12 + &
-                  LECS%CIT(4) * EFT_RADIAL_3(R, RC)    * LS    & 
+                  LECS%CIT(4) * EFT_RADIAL_3(R, RC)    * LS    &
                                                         ) * T12
       CASE DEFAULT
         STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
       END SELECT
     ENDIF
-    
+
     VPW = VPW * CR(R, RC)
     VPW = VPW * HTC
 
@@ -598,7 +598,7 @@ CONTAINS
     CIT = LECS_OLD%CIT
 
     ST_LECS%ILB       = LECS_OLD%ILB
-    ST_LECS%RC        = LECS_OLD%RC  
+    ST_LECS%RC        = LECS_OLD%RC
     ST_LECS%CLO       = LECS_OLD%CLO
     ST_LECS%CNLO(1)   = C(1) - 3*C(2) - 3*C(3) + 9*C(4)
     ST_LECS%CNLO(2)   = C(1) - 3*C(2) + C(3) - 3*C(4)
@@ -636,7 +636,7 @@ CONTAINS
     C1   = ST_LECS%CNLO
     D1   = ST_LECS%CN3LO
     CIT  = ST_LECS%CIT
-    
+
     OP_LECS%ILB= ST_LECS%ILB
     OP_LECS%RC = ST_LECS%RC
     OP_LECS%CLO = ST_LECS%CLO
@@ -734,14 +734,14 @@ CONTAINS
       PRINT *, "ERROR: No radial points provided for EFT radial functions."
       RETURN
     END IF
-    
+
     IMAX = 0
     IF (FUNCTIONS%ORDER == 1) THEN
       IMAX = 4
     ELSE
       IMAX = 7
-    END IF  
-      
+    END IF
+
     DO I=0, IMAX
       FUNCTIONS%FR_I(I,:) = EFT_RADIAL(I, R_ARRAY, RC)
     END DO
@@ -755,7 +755,7 @@ CONTAINS
 
     SELECT CASE (I)
     CASE (0)
-      FI = 1.d0 ! The CR function for I=0 
+      FI = 1.d0 ! The CR function for I=0
     CASE (1)
       FI = EFT_RADIAL_1(R, RC)
     CASE (2)

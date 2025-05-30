@@ -5,7 +5,7 @@ module strings_utils
   ! Public functions for character classification
   public :: is_upper, is_lower, is_letter, is_digit
   public :: is_alphanumeric, is_whitespace, is_special
-  
+
   ! Public functions for string manipulation
   public :: to_upper, to_lower, trim_str
   public :: replace, contains_str, index_of, split
@@ -53,7 +53,7 @@ contains
     character(len=*), intent(in) :: str
     character(len=len(str)) :: upper_str
     integer :: i
-    
+
     upper_str = str
     do i = 1, len(str)
       if (is_lower(str(i:i))) then
@@ -66,7 +66,7 @@ contains
     character(len=*), intent(in) :: str
     character(len=len(str)) :: lower_str
     integer :: i
-    
+
     lower_str = str
     do i = 1, len(str)
       if (is_upper(str(i:i))) then
@@ -78,7 +78,7 @@ contains
   function trim_str(str) result(trimmed)
     character(len=*), intent(in) :: str
     character(len=len(str)) :: trimmed
-    
+
     trimmed = trim(adjustl(str))
   end function trim_str
 
@@ -86,33 +86,33 @@ contains
     character(len=*), intent(in) :: str, search, replace_with
     character(len=len(str)*2) :: result_str
     integer :: pos, curr_pos
-    
+
     result_str = ""
     curr_pos = 1
-    
+
     do
       pos = index(str(curr_pos:), search)
       if (pos == 0) then
         result_str = trim(result_str) // str(curr_pos:)
         exit
       end if
-      
+
       result_str = trim(result_str) // str(curr_pos:curr_pos+pos-2) // replace_with
       curr_pos = curr_pos + pos + len(search) - 1
-      
+
       if (curr_pos > len(str)) exit
     end do
   end function replace
 
   logical function contains_str(str, substr) result(found)
     character(len=*), intent(in) :: str, substr
-    
+
     found = index(str, substr) > 0
   end function contains_str
 
   integer function index_of(str, substr) result(pos)
     character(len=*), intent(in) :: str, substr
-    
+
     pos = index(str, substr)
   end function index_of
 
@@ -120,20 +120,20 @@ contains
     character(len=*), intent(in) :: str, delimiter
     character(len=len(str)), allocatable :: parts(:)
     integer :: i, count, prev_pos, alloc_stat
-    
+
     ! Count number of parts
     count = 1
     do i = 1, len_trim(str) - len(delimiter) + 1
       if (str(i:i+len(delimiter)-1) == delimiter) count = count + 1
     end do
-    
+
     ! Allocate array for parts
     allocate(parts(count), stat=alloc_stat)
     if (alloc_stat /= 0) then
       ! Handle allocation error
       return
     end if
-    
+
     ! Extract parts
     prev_pos = 1
     count = 0
@@ -144,7 +144,7 @@ contains
         prev_pos = i + len(delimiter)
       end if
     end do
-    
+
     ! Add the last part
     count = count + 1
     parts(count) = str(prev_pos:len_trim(str))

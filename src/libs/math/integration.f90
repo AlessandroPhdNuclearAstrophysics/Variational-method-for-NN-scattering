@@ -39,7 +39,7 @@ CONTAINS
     DOUBLE PRECISION, INTENT(IN) :: H1, H2, H3 ! Step sizes for each block
     DOUBLE PRECISION, INTENT(IN) :: A(*)       ! Data array (size >= M1+M2+M3+3)
     DOUBLE PRECISION :: I5                     ! Integrated result
-    
+
     INTEGER :: BLOCK, N, NB, N1, L0, I, L_base
     DOUBLE PRECISION :: H, HL5, S2, S3, S4, AX
     INTEGER :: IDX
@@ -207,7 +207,7 @@ CONTAINS
 
   !> @brief Computes Gauss-Laguerre quadrature points and weights
   !!
-  !! @details Calculates the roots (XPNT) and weights (PWEIGHT) for N-point Gauss-Laguerre 
+  !! @details Calculates the roots (XPNT) and weights (PWEIGHT) for N-point Gauss-Laguerre
   !! quadrature.
   !! This implementation uses Newton's method with polynomial recurrence relations.
   !!
@@ -215,7 +215,7 @@ CONTAINS
   !! @param[out] XPNT     Array(N) of quadrature points (roots of Laguerre polynomial)
   !! @param[out] PWEIGHT  Array(N) of quadrature weights
   !!
-  !! @note 
+  !! @note
   !! - Uses Laguerre polynomials with α=0 (standard Gauss-Laguerre quadrature)
   !! - Implements Newton-Raphson iteration with MAXIT=10 and EPS=1D-12 tolerance
   !! - Includes initial root approximations for faster convergence
