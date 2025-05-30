@@ -82,11 +82,7 @@ CONTAINS
     CHARACTER(LEN=256) :: command
     INTEGER :: ios
 
-    command = 'pwd'
-    OPEN(UNIT=10, FILE='current_dir.txt', STATUS='REPLACE', ACTION='WRITE')
-    WRITE(10, '(A)') command
-    CLOSE(10)
-
+    command = 'pwd > current_dir.txt'
     CALL SYSTEM(command)
     OPEN(UNIT=10, FILE='current_dir.txt', STATUS='OLD', ACTION='READ', IOSTAT=ios)
     IF (ios == 0) THEN
@@ -113,11 +109,7 @@ CONTAINS
     CHARACTER(LEN=256) :: command
     INTEGER :: ios
 
-    command = 'uname -s'
-    OPEN(UNIT=10, FILE='os_name.txt', STATUS='REPLACE', ACTION='WRITE')
-    WRITE(10, '(A)') command
-    CLOSE(10)
-
+    command = 'uname -s > os_name.txt'
     CALL SYSTEM(command)
     OPEN(UNIT=10, FILE='os_name.txt', STATUS='OLD', ACTION='READ', IOSTAT=ios)
     IF (ios == 0) THEN
