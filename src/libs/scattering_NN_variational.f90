@@ -1013,12 +1013,16 @@ CONTAINS
           ENDIF
 
     ! CALCULATING POTENTIAL ENERGY
-          SUM = ZERO
-          INTEGRAND = V0_CC(IL,:)*V0_CC(IR,:)*V_CC(ICH,:,IAB,IAK)
-          DO I=1,NX
-            SUM = SUM + XX_CC(I)**2 *INTEGRAND(I) * A_CC(I)
-          ENDDO
-          POT_MATRIX(ICH,IB,IK) = SUM/GAMMA
+          IF (.NOT.USE_DYNAMIC) THEN
+            SUM = ZERO
+            INTEGRAND = V0_CC(IL,:)*V0_CC(IR,:)*V_CC(ICH,:,IAB,IAK)
+            DO I=1,NX
+              SUM = SUM + XX_CC(I)**2 *INTEGRAND(I) * A_CC(I)
+            ENDDO
+            POT_MATRIX(ICH,IB,IK) = SUM/GAMMA
+          ELSE
+            ! FILL FOR CALCULATING DYNAMIC POTENTIAL ENERGY
+          ENDIF
 
         ENDDO ! IR
         ENDDO ! IL
@@ -1026,15 +1030,16 @@ CONTAINS
       ENDDO ! IAK
       ENDDO ! IAB
       IE = FIND_ENERGY_INDEX(VAR_P%E)
-      HCC(ICH,1:NNN,1:NNN) = ( KIN_MATRIX(1:NNN,1:NNN) + POT_MATRIX(ICH,1:NNN,1:NNN) )
-      DO IE = 1, NE
-        H_MINUS_E_CC(ICH, IE, 1:NNN, 1:NNN) = (HCC(ICH,1:NNN,1:NNN) - ENCC(IE,1:NNN,1:NNN))/ HTM
-      ENDDO
-      IF (USE_DYNAMIC) THEN
+      IF (.NOT. USE_DYNAMIC) THEN
+        HCC(ICH,1:NNN,1:NNN) = ( KIN_MATRIX(1:NNN,1:NNN) + POT_MATRIX(ICH,1:NNN,1:NNN) )
+        DO IE = 1, NE
+          H_MINUS_E_CC(ICH, IE, 1:NNN, 1:NNN) = (HCC(ICH,1:NNN,1:NNN) - ENCC(IE,1:NNN,1:NNN))/ HTM
+        ENDDO
+      ELSE
         DO IE = 1, NE
           K_MINUS_E_CC(ICH, IE, 1:NNN, 1:NNN) = (KIN_MATRIX(1:NNN,1:NNN) - ENCC(IE,1:NNN,1:NNN))/ HTM
         ENDDO ! IE
-      ENDIF ! USE_DYNAMIC
+      ENDIF 
     ENDDO ! ICH
 
     ! IF (PRINT_I) WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
@@ -1150,16 +1155,21 @@ CONTAINS
 
 
             ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
-              FUN (1) = ZERO
-              FUN1(1) = ZERO
-              FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
-              FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+              IF (.NOT. USE_DYNAMIC) THEN
+                FUN (1) = ZERO
+                FUN1(1) = ZERO
+                FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+                FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+                
+                APE  = B5_SINGLE(NX,H5,FUN,1)
+                APEM(IB,IAK) = APE
 
-              APE  = B5_SINGLE(NX,H5,FUN,1)
-              APEM(IB,IAK) = APE
+                APE1 = B5_SINGLE(NX,H5,FUN1,1)
+                APEM1(IB,IAK) = APE1
+              ELSE
+                ! FILL HERE TO CALCULATE DYNAMIC POTENTIAL ENERGY
+              ENDIF
 
-              APE1 = B5_SINGLE(NX,H5,FUN1,1)
-              APEM1(IB,IAK) = APE1
               ! write(113,*) iab, iak, il, IB, ape, ape1
               IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
                 WRITE(*,*)
@@ -1185,13 +1195,15 @@ CONTAINS
           ENDDO
         ENDDO
         !$OMP END PARALLEL DO
-        H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM (1:NNN, 1:NEQ)
-        H_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AM1(1:NNN, 1:NEQ)
-
-        IF (USE_DYNAMIC) THEN
+        
+        IF (.NOT. USE_DYNAMIC) THEN ! DO NOT USE_DYNAMIC
+          ! Store the matrix elements in the global arrays
+          H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM(1:NNN, 1:NEQ)
+          H_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AM1(1:NNN, 1:NEQ)
+        ELSE ! USE_DYNAMIC
           K_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AKEM1(1:NNN, 1:NEQ) / HTM
           K_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AXXM1(1:NNN, 1:NEQ) / HTM
-        ENDIF ! USE_DYNAMIC
+        ENDIF ! END USE_DYNAMIC
       ENDDO
     ENDDO
 
@@ -1300,35 +1312,37 @@ CONTAINS
 
       ! SI CALCOLA ENERGIA POTENZIALE DEL CASO REGOLARE-IRREGOLARE (APE),
       !      IRREGOLARE-REGOLARE (APE1), REGOLARE-REGOLARE (APE2), IRREGOLARE-IRREGOLARE (APE3)
-          APE  = ZERO
-          APE1 = ZERO
-          APE2 = ZERO
-          APE3 = ZERO
-          FUN (1) = ZERO
-          FUN1(1) = ZERO
-          FUN2(1) = ZERO
-          FUN3(1) = ZERO
-          FUN (2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-          FUN1(2:) = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-          FUN2(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-          FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+          IF (.NOT.USE_DYNAMIC) THEN
+            APE  = ZERO
+            APE1 = ZERO
+            APE2 = ZERO
+            APE3 = ZERO
+            FUN (1) = ZERO
+            FUN1(1) = ZERO
+            FUN2(1) = ZERO
+            FUN3(1) = ZERO
+            FUN (2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            FUN1(2:) = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            FUN2(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
 
-          APE=  B5_SINGLE(NX,H5,FUN,1)
-          APEM(IAB,IAK)=APE
-          APE1= B5_SINGLE(NX,H5,FUN1,1)
-          APEM1(IAB,IAK)=APE1
-          APE2= B5_SINGLE(NX,H5,FUN2,1)
-          APEM2(IAB,IAK)=APE2
-          APE3= B5_SINGLE(NX,H5,FUN3,1)
-          APEM3(IAB,IAK)=APE3
-          IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
-            WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
-            WRITE(*,*) 'POTENTIAL RI(1,1)', APE
-            WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
-            WRITE(*,*) 'POTENTIAL II(1,1)', APE3
-          ENDIF
-
-
+            APE=  B5_SINGLE(NX,H5,FUN,1)
+            APEM(IAB,IAK)=APE
+            APE1= B5_SINGLE(NX,H5,FUN1,1)
+            APEM1(IAB,IAK)=APE1
+            APE2= B5_SINGLE(NX,H5,FUN2,1)
+            APEM2(IAB,IAK)=APE2
+            APE3= B5_SINGLE(NX,H5,FUN3,1)
+            APEM3(IAB,IAK)=APE3
+            IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
+              WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
+              WRITE(*,*) 'POTENTIAL RI(1,1)', APE
+              WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
+              WRITE(*,*) 'POTENTIAL II(1,1)', APE3
+            ENDIF
+          ELSE
+            ! FILL HERE TO CALCULATE DYNAMIC POTENTIAL ENERGY
+          ENDIF 
 
       ! SI CALCOLA HAMILTONIANA PER I VARI CASI:REGOLARE-IRREGOLARE(AM), IRREGOLARE-REGOLARE(AM1),
       !         REGOLARE-REGOLARE(AM2),IRREGOLARE-IRREGOLARE(AM3)
@@ -1340,16 +1354,17 @@ CONTAINS
           CHECK(IAB,IAK) = (AM1(IAB,IAK)-AM(IAB,IAK))
         ENDDO !IAB
         ENDDO !IAK
-        H_MINUS_E_AA_RR(ICH, IE, :, :) = AM2
-        H_MINUS_E_AA_RI(ICH, IE, :, :) = AM
-        H_MINUS_E_AA_IR(ICH, IE, :, :) = AM1
-        H_MINUS_E_AA_II(ICH, IE, :, :) = AM3
-        IF (USE_DYNAMIC) THEN
+        IF (.NOT.USE_DYNAMIC) THEN ! NOT USE_DYNAMIC
+          H_MINUS_E_AA_RR(ICH, IE, :, :) = AM2
+          H_MINUS_E_AA_RI(ICH, IE, :, :) = AM
+          H_MINUS_E_AA_IR(ICH, IE, :, :) = AM1
+          H_MINUS_E_AA_II(ICH, IE, :, :) = AM3
+        ELSE ! USE_DYNAMIC
           K_MINUS_E_AA_RR(ICH, IE, :, :) = (AKEM - AXXM) / HTM
           K_MINUS_E_AA_RI(ICH, IE, :, :) =  0.D0
           K_MINUS_E_AA_IR(ICH, IE, :, :) =  0.D0
           K_MINUS_E_AA_II(ICH, IE, :, :) = (AKEM3 - AXXM3) / HTM
-        ENDIF ! USE_DYNAMIC
+        ENDIF ! ENDIF USE_DYNAMIC
       ENDDO ! IE
     ENDDO ! ICH
 
