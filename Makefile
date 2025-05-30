@@ -73,13 +73,13 @@ all: $(LOG_DIR) $(DEP_DIR) $(ALL_EXECUTABLES)
 
 # Rule to build executables: link only its own object and NON_MAIN_OBJECTS
 $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
-	@echo "Linking $@"
+	@echo "\033[0;32mLinking $@\033[0m"
 	$(FC) $^ $(LDFLAGS) -o $@ > $(LOG_DIR)/$(notdir $@).link.log 2>&1 || (cat $(LOG_DIR)/$(notdir $@).link.log && false)
 
 # Rule to compile each .f90 file into a .o object
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.f90
 	@mkdir -p $(dir $@)
-	@echo "Compiling $<"
+	@echo "\033[0;32mCompiling $<\033[0m"
 	$(FC) $(FFLAGS) -o $@ $< > $(LOG_DIR)/$(subst /,_,$(notdir $<)).log 2>&1
 
 # Rule to generate dependency files using the Python script
