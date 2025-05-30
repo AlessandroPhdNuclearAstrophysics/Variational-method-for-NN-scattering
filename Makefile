@@ -158,6 +158,7 @@ test: $(TEST_EXECUTABLES)
 		echo "Running $$t"; \
 		$$t || exit 1; \
 	done
+	@./bin/tests/test_variational_module.sh
 
 # Include all dependency files if they exist
 -include $(DEPFILES) $(TEST_DEPFILES)
