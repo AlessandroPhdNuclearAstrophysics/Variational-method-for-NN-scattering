@@ -218,7 +218,7 @@ CONTAINS
     IF (LECS_ALL_SET) RETURN
 
     ! Set the filename (you can change this as needed)
-    FILENAME = 'src/libs/potentials/lecs_eft.dat'
+    FILENAME = './src/libs/physics/potentials/lecs_eft.dat'
 
     ! Open the file
     UNIT = 100
