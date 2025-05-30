@@ -5,11 +5,10 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   CHARACTER(LEN=256) :: filename
   CHARACTER(LEN=10) :: channel1, channel2
   INTEGER :: L, L1, L2
-  INTEGER :: ios, i, npoints
+  INTEGER :: i, npoints
   LOGICAL :: is_coupled
   DOUBLE PRECISION, ALLOCATABLE :: K2(:), KCOTD(:)
-  DOUBLE PRECISION :: pred_kcotd0
-  DOUBLE PRECISION :: D, C, B, A, M, Q, Y0
+  DOUBLE PRECISION :: C, B, A, M, Q, Y0
   DOUBLE PRECISION :: COEFF0(1)
   DOUBLE PRECISION :: COEFF1(2)
   DOUBLE PRECISION :: COEFF2(3)
@@ -204,9 +203,8 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: k2_values(:), kcotd_values(:)
     INTEGER, INTENT(OUT) :: num_points
     
-    INTEGER :: unit, io_stat, i, temp_size
+    INTEGER :: unit, io_stat, i
     DOUBLE PRECISION :: k2_temp, kcotd_temp
-    DOUBLE PRECISION, ALLOCATABLE :: temp_k2(:), temp_kcotd(:)
 
     ! First count the number of data points
     OPEN(NEWUNIT=unit, FILE=fname, STATUS='old', ACTION='read', IOSTAT=io_stat)

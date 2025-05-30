@@ -85,7 +85,7 @@ contains
   function replace(str, search, replace_with) result(result_str)
     character(len=*), intent(in) :: str, search, replace_with
     character(len=len(str)*2) :: result_str
-    integer :: i, pos, curr_pos
+    integer :: pos, curr_pos
     
     result_str = ""
     curr_pos = 1
@@ -119,7 +119,7 @@ contains
   function split(str, delimiter) result(parts)
     character(len=*), intent(in) :: str, delimiter
     character(len=len(str)), allocatable :: parts(:)
-    integer :: i, count, pos, prev_pos, alloc_stat
+    integer :: i, count, prev_pos, alloc_stat
     
     ! Count number of parts
     count = 1

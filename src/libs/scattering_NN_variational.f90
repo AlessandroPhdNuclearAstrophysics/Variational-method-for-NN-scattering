@@ -61,6 +61,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   INTEGER, PARAMETER :: NCH_MAX = 2
   INTEGER :: NCH
   INTEGER :: NNN, NNN_MAX
+  LOGICAL :: USE_DYNAMIC = .FALSE.
 
   DOUBLE PRECISION, PARAMETER :: HC = 197.327053D0
   DOUBLE PRECISION, PARAMETER :: MP = 938.272029D0
@@ -111,7 +112,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   LOGICAL :: LAGUERRE_SET = .FALSE.
 
 
-  ! Matrix elements for all energies and channels
+  ! Matrix elements for all energies and channels, evaluated once in case USE_DYNAMIC is .FALSE.
   ! H_MINUS_E_CC    = < n alpha | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   ! H_MINUS_E_AC_R  = < F_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
   ! H_MINUS_E_AC_I  = < G_ALPHA | H - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
@@ -127,6 +128,36 @@ MODULE SCATTERING_NN_VARIATIONAL
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_IR(:,:,:,:)  ! H_MINUS_E_AA_IR(CH_INDEX, E, NALPHA, NALPHA')
   DOUBLE PRECISION, ALLOCATABLE :: H_MINUS_E_AA_II(:,:,:,:)  ! H_MINUS_E_AA_II(CH_INDEX, E, NALPHA, NALPHA')
 
+  ! K_MINUS_E_CC    = < n alpha | K - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AC_R  = < F_ALPHA | K - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AC_I  = < G_ALPHA | K - E | n' alpha' >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AA_RR = < F_ALPHA | K - E | F_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AA_RI = < F_ALPHA | K - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AA_IR = < G_ALPHA | K - E | F_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  ! K_MINUS_E_AA_II = < G_ALPHA | K - E | G_ALPHA'  >, depends on (n alpha), (n' alpha'), E and the channel (reverse order)
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_CC   (:,:,:,:)  ! K_MINUS_E_CC   (CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AC_R (:,:,:,:)  ! K_MINUS_E_AC_R (CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AC_I (:,:,:,:)  ! K_MINUS_E_AC_I (CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AA_RR(:,:,:,:)  ! K_MINUS_E_AA_RR(CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AA_RI(:,:,:,:)  ! K_MINUS_E_AA_RI(CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AA_IR(:,:,:,:)  ! K_MINUS_E_AA_IR(CH_INDEX, E, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: K_MINUS_E_AA_II(:,:,:,:)  ! K_MINUS_E_AA_II(CH_INDEX, E, NALPHA, NALPHA')
+
+  ! VM_CC    = < n alpha | V | n' alpha' >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AC_R  = < F_ALPHA | V | n' alpha' >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AC_I  = < G_ALPHA | V | n' alpha' >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AA_RR = < F_ALPHA | V | F_ALPHA'  >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AA_RI = < F_ALPHA | V | G_ALPHA'  >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AA_IR = < G_ALPHA | V | F_ALPHA'  >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  ! VM_AA_II = < G_ALPHA | V | G_ALPHA'  >, depends on (n alpha), (n' alpha') and the channel (reverse order)
+  DOUBLE PRECISION, ALLOCATABLE :: VM_CC   (:,:,:)  ! VM_CC   (CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AC_R (:,:,:)  ! VM_AC_R (CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AC_I (:,:,:)  ! VM_AC_I (CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AA_RR(:,:,:)  ! VM_AA_RR(CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AA_RI(:,:,:)  ! VM_AA_RI(CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AA_IR(:,:,:)  ! VM_AA_IR(CH_INDEX, NALPHA, NALPHA')
+  DOUBLE PRECISION, ALLOCATABLE :: VM_AA_II(:,:,:)  ! VM_AA_II(CH_INDEX, NALPHA, NALPHA')  
+
   TYPE(VARIATIONAL_PARAMETERS), PRIVATE :: VAR_P
 
   PUBLIC :: SET_NNL
@@ -137,6 +168,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: NN_SCATTERING_VARIATIONAL
   PUBLIC :: SET_VARIATIONAL_PARAMETERS
   PUBLIC :: GET_HTM
+  PUBLIC :: SET_DYNAMIC
   
   PRIVATE:: PRINT_DIVIDER
   PRIVATE:: SET_M_T1Z_T2Z_HTM
@@ -463,6 +495,16 @@ CONTAINS
   IF (PRINT_I) CALL PRINT_DIVIDER
   
   IE = FIND_ENERGY_INDEX(E)
+
+  IF (USE_DYNAMIC) THEN
+    H_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN)   = K_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN) &
+                                               + VM_CC(CH_INDEX, 1:NNN, 1:NNN)
+    H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH) = K_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH) &
+                                               + VM_AC_R(CH_INDEX, 1:NNN, 1:NCH)
+    H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) = K_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) &
+                                               + VM_AC_I(CH_INDEX, 1:NNN, 1:NCH)
+  ENDIF
+
   C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
   CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
   CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
@@ -864,8 +906,8 @@ CONTAINS
       IMPLICIT NONE
       DOUBLE COMPLEX :: SM1, SM2
       DOUBLE PRECISION :: SI2E, CI2E, CX, SX
-      SM1  = SMAT(1,1)*SMAT(2,2)-SMAT(1,2)*SMAT(1,2)
-      SI2E =-SMAT(1,2)*SMAT(1,2)/SM1
+      SM1  = REAL(SMAT(1,1)*SMAT(2,2)-SMAT(1,2)*SMAT(1,2))
+      SI2E =-REAL(SMAT(1,2)*SMAT(1,2)/SM1)
       CI2E = ONE - SI2E
       SI2E = DSQRT(SI2E)
       CI2E = DSQRT(CI2E)
@@ -1713,6 +1755,12 @@ CONTAINS
 
     HTM_VALUE = HTM
   END FUNCTION GET_HTM
+
+  SUBROUTINE SET_DYNAMIC(FLAG)
+    IMPLICIT NONE
+    LOGICAL, INTENT(IN) :: FLAG
+    USE_DYNAMIC = FLAG
+  END SUBROUTINE SET_DYNAMIC
 
 
 END MODULE SCATTERING_NN_VARIATIONAL

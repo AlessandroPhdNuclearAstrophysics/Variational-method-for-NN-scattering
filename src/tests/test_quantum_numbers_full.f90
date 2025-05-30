@@ -2,16 +2,12 @@ PROGRAM test_quantum_numbers_full
   USE QUANTUM_NUMBERS
   IMPLICIT NONE
   
-  TYPE(SCATTERING_CHANNEL) :: ch, ch2, ch3
+  TYPE(SCATTERING_CHANNEL) :: ch, ch2
   CHARACTER(LEN=16) :: name, name2
-  INTEGER :: i, nch, L, S, J, T, TZ
+  INTEGER :: L, S, J, T, TZ
   LOGICAL :: is_phys, is_coup, result
   
   ! For EXTRACT_CHANNELS_FROM_WHOLE_FILENAME tests
-  CHARACTER(LEN=100) :: filename
-  CHARACTER(LEN=16) :: extracted_ch1, extracted_ch2
-  LOGICAL :: found, is_coupled_ch
-  
   WRITE(*,*) "=== Comprehensive Test of QUANTUM_NUMBERS Module ==="
   
   ! Test 1: Test initialization with different parameters

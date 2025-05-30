@@ -20,7 +20,7 @@ PROGRAM test_fit_module
   DOUBLE PRECISION, PARAMETER :: TOL = 1.0D-3  ! Changed from 1.0D-10 to be compatible with noise level
   
   ! Loop variables
-  INTEGER :: I, STEP
+  INTEGER :: STEP
   
   WRITE(*,*) "=== Testing FIT_MODULE ==="
   

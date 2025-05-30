@@ -9,10 +9,10 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   ! Variables for file handling
   CHARACTER(LEN=255) :: folder_path, file_path, output_file, output_file1, output_file2
   CHARACTER(LEN=255) :: file_list(1000), current_file
-  INTEGER :: num_files, i, io_status, unit_in, unit_out
+  INTEGER :: num_files, i, io_status, unit_in = 32412, unit_out = 23421
   
   ! Variables for data processing
-  DOUBLE PRECISION :: energy, delta1, delta2, epsilon, k, k2, kcotd1, kcotd2
+  DOUBLE PRECISION :: k, k2, kcotd1, kcotd2
   DOUBLE PRECISION :: HTM, pi
   DOUBLE PRECISION, ALLOCATABLE :: energies(:), deltas1(:), deltas2(:), epsilons(:)
   DOUBLE PRECISION, ALLOCATABLE :: k_vals(:), k2_vals(:), kcotd1_vals(:), kcotd2_vals(:)

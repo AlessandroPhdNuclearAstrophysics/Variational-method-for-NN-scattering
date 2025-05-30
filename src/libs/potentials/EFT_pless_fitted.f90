@@ -25,6 +25,15 @@ SUBROUTINE EFT_PLESS_PW_FITTED(ILB, R, L, S, J, TZ, V)
   INTEGER :: T
 
   T = MOD(MOD(L+S, 2) + 1, 2)
+  IF (ABS(TZ) > T) THEN
+    WRITE(*,*) "EFT_PLESS_PW_FITTED: Invalid TZ value"
+    RETURN
+  ENDIF
+
+  IF (ABS(L-S)> J .OR. L+S < J) THEN
+    WRITE(*,*) "EFT_PLESS_PW_FITTED: Invalid L, S, J combination"
+    RETURN
+  ENDIF
 
   V = 0.D0
   IF ( T.EQ.0 .AND. S.EQ.0 ) THEN

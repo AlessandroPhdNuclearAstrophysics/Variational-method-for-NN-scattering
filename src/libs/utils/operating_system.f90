@@ -47,7 +47,7 @@ CONTAINS
     CHARACTER(LEN=*), OPTIONAL :: extension
 
     CHARACTER(LEN=256) :: command
-    INTEGER :: ios, i
+    INTEGER :: ios
     CHARACTER(LEN=255) :: temp_file
 
     temp_file = 'temp_file_list.txt'
@@ -130,7 +130,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT) :: matches(:)
     INTEGER, INTENT(OUT) :: n_matches
 
-    INTEGER :: i, pos, next_pos, pattern_len, input_len
+    INTEGER :: pos, next_pos, pattern_len, input_len
     CHARACTER(LEN=:), ALLOCATABLE :: lowercase_input, lowercase_pattern
 
     ! NOTE: This is a simplified implementation that only performs case-insensitive

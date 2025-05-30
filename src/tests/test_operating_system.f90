@@ -2,8 +2,8 @@ PROGRAM test_operating_system
   USE OPERATING_SYSTEM_LINUX
   IMPLICIT NONE
   
-  CHARACTER(LEN=255) :: current_dir, test_dir, temp_file, os_name
-  CHARACTER(LEN=255) :: files(100)
+  CHARACTER(LEN=256) :: current_dir, test_dir, temp_file, os_name
+  CHARACTER(LEN=256) :: files(100)
   INTEGER :: i, count, stat
   LOGICAL :: exists
   
