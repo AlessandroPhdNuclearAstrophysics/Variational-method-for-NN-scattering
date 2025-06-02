@@ -703,121 +703,131 @@ CONTAINS
     FI = FI * CR(R, RC)
   END FUNCTION EFT_RADIAL
 
-  ! SUBROUTINE COMBINE_POTENTIAL(CHANNEL, FR_MATRIX_EL, LECS_IN, POTENTIAL_OUT)
+  ! SUBROUTINE COMBINE_POTENTIAL(CHANNELS, FR_MATRIX_EL, LECS_IN, POTENTIAL_OUT)
   !   IMPLICIT NONE
-  !   TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
-  !   DOUBLE PRECISION, INTENT(IN) :: FR_MATRIX_EL(:,:,:,:)
+  !   TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
+  !   DOUBLE PRECISION, INTENT(IN) :: FR_MATRIX_EL(:,:,:)
   !   TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
   !   DOUBLE PRECISION :: POTENTIAL_OUT(:,:,:)
   !   INTEGER :: NR, ORDER_, IORDER, N_OPERATORS, NIT_OPERATORS, IOP
   !   INTEGER :: S, T, LS1(2,2), LS2(2,2)
+  !   INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA
 
+  !   POTENTIAL_OUT = 0.D0
   !   ORDER_ = LECS_IN%ORDER
   !   IF (ORDER_ /= 0 .AND. ORDER_ /= 1 .AND. ORDER_ /= 3) THEN
   !     STOP "ERROR IN COMBINE_POTENTIAL: ORDER must be 0, 1, or 3"
   !   END IF
 
-  !   S = GET_CHANNEL_S(CHANNEL, 1)
-  !   T = GET_CHANNEL_T(CHANNEL, 1)
+  !   NCHANNELS = SIZE(CHANNELS)
+  !   N = SIZE(FR_MATRIX_EL, 2)
+  !   DO ICH = 1, NCHANNELS
+  !     S = GET_CHANNEL_S(CHANNELS(ICH), 1)
+  !     T = GET_CHANNEL_T(CHANNELS(ICH), 1)
 
-  !   IF ( S==0 .AND. T==0 ) THEN
-  !     SELECT CASE (ORDER)
-  !     CASE (0)
-  !       RETURN
-  !     CASE (1)
-  !       POTENTIAL_OUT = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,:,:,:) * I2
-  !     CASE (3)
-  !       POTENTIAL_OUT = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,:,:,:) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,:,:,:) *I2 &
-  !                 + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,:,:,:) *L2_OPERATOR(CHANNEL)
-  !     CASE DEFAULT
-  !       STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
-  !     END SELECT
-  !   ENDIF
+  !     IF ( S==0 .AND. T==0 ) THEN
+  !       SELECT CASE (ORDER)
+  !       CASE (0)
+  !         RETURN
+  !       CASE (1)
+  !         DO ALPHA=1, 2
+  !         DO BETA =1, 2
+  !           POTENTIAL_OUT(ICH,ALPHA,BETA) = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,:,:) * I2(ALPHA,BETA)
+  !         ENDDO
+  !         ENDDO
+  !       CASE (3)
+  !         POTENTIAL_OUT = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,ALPHA,BETA) * I2
+  !         POTENTIAL_OUT = POTENTIAL_OUT &
+  !                   + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,ALPHA,BETA) *I2 &
+  !                   + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ALPHA,BETA) *L2_OPERATOR(CHANNEL)
+  !       CASE DEFAULT
+  !         STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
+  !       END SELECT
+  !     ENDIF
 
-  !   IF ( S==1 .AND. T==0 ) THEN
-  !     SELECT CASE (ORDER)
-  !     CASE (0)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !     CASE (1)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,:,:,:) * I2 &
-  !                 + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,:,:,:) * S12_OPERATOR(CHANNEL) &
-  !                 + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,:,:,:) * LS_OPERATOR(CHANNEL)
-  !     CASE (3)
-  !       LS1 = LS_OPERATOR(CHANNEL)
-  !       LS2 = MATMUL(LS1, LS1)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,:,:,:) * I2 &
-  !                 + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,:,:,:) * S12_OPERATOR(CHANNEL) &
-  !                 + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,:,:,:) * LS_OPERATOR(CHANNEL)
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CN3LO(2) * FR_MATRIX_EL(5,:,:,:) * I2 &
-  !                 + LECS_IN%CN3LO(5) * FR_MATRIX_EL(6,:,:,:) * S12_OPERATOR(CHANNEL) &
-  !                 + LECS_IN%CN3LO(7) * FR_MATRIX_EL(7,:,:,:) * LS_OPERATOR(CHANNEL) &
-  !                 + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,:,:,:) * LS2 &
-  !                 + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,:,:,:) * L2_OPERATOR(CHANNEL)
-  !     CASE DEFAULT
-  !       STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
-  !     END SELECT
-  !   ENDIF
+  !     IF ( S==1 .AND. T==0 ) THEN
+  !       ! SELECT CASE (ORDER)
+  !       ! CASE (0)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       ! CASE (1)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,:,:,:) * I2 &
+  !       !             + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,:,:,:) * S12_OPERATOR(CHANNEL) &
+  !       !             + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,:,:,:) * LS_OPERATOR(CHANNEL)
+  !       ! CASE (3)
+  !       !   LS1 = LS_OPERATOR(CHANNEL)
+  !       !   LS2 = MATMUL(LS1, LS1)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,:,:,:) * I2 &
+  !       !             + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,:,:,:) * S12_OPERATOR(CHANNEL) &
+  !       !             + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,:,:,:) * LS_OPERATOR(CHANNEL)
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CN3LO(2) * FR_MATRIX_EL(5,:,:,:) * I2 &
+  !       !             + LECS_IN%CN3LO(5) * FR_MATRIX_EL(6,:,:,:) * S12_OPERATOR(CHANNEL) &
+  !       !             + LECS_IN%CN3LO(7) * FR_MATRIX_EL(7,:,:,:) * LS_OPERATOR(CHANNEL) &
+  !       !             + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,:,:,:) * LS2 &
+  !       !             + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,:,:,:) * L2_OPERATOR(CHANNEL)
+  !       ! CASE DEFAULT
+  !       !   STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
+  !       ! END SELECT
+  !     ENDIF
 
-  !   IF ( S==0 .AND. T==1 ) THEN
-  !     SELECT CASE (ORDER)
-  !     CASE (0)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !     CASE (1)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CNLO(3)    * FR_MATRIX_EL(2,:,:,:) * I2 &
-  !                 + LECS_IN%CIT(0)     * FR_MATRIX_EL(1,:,:,:) * T12_OPERATOR(CHANNEL) * I2
-  !     CASE (3)
-  !       POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CNLO(3)     * FR_MATRIX_EL(2,:,:,:) * I2 &
-  !                 + LECS_IN%CIT(0)      * FR_MATRIX_EL(1,:,:,:) * T12_OPERATOR(CHANNEL) * I2
-  !       POTENTIAL_OUT = POTENTIAL_OUT &
-  !                 + LECS_IN%CN3LO(3) * FR_MATRIX_EL(5,:,:,:)     * I2 &
-  !                 + LECS_IN%CN3LO(10)* FR_MATRIX_EL(8,:,:,:)     * L2_OPERATOR(CHANNEL) &
-  !                 + LECS_IN%CIT(1)   * FR_MATRIX_EL(2,:,:,:)     * T12_OPERATOR(CHANNEL) * I2
-  !     CASE DEFAULT
-  !       STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
-  !     END SELECT
-  !   ENDIF
+  !     IF ( S==0 .AND. T==1 ) THEN
+  !       ! SELECT CASE (ORDER)
+  !       ! CASE (0)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       ! CASE (1)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CNLO(3)    * FR_MATRIX_EL(2,:,:,:) * I2 &
+  !       !             + LECS_IN%CIT(0)     * FR_MATRIX_EL(1,:,:,:) * T12_OPERATOR(CHANNEL) * I2
+  !       ! CASE (3)
+  !       !   POTENTIAL_OUT = LECS_IN%CLO(T) * FR_MATRIX_EL(1,:,:,:) * I2
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CNLO(3)     * FR_MATRIX_EL(2,:,:,:) * I2 &
+  !       !             + LECS_IN%CIT(0)      * FR_MATRIX_EL(1,:,:,:) * T12_OPERATOR(CHANNEL) * I2
+  !       !   POTENTIAL_OUT = POTENTIAL_OUT &
+  !       !             + LECS_IN%CN3LO(3) * FR_MATRIX_EL(5,:,:,:)     * I2 &
+  !       !             + LECS_IN%CN3LO(10)* FR_MATRIX_EL(8,:,:,:)     * L2_OPERATOR(CHANNEL) &
+  !       !             + LECS_IN%CIT(1)   * FR_MATRIX_EL(2,:,:,:)     * T12_OPERATOR(CHANNEL) * I2
+  !       ! CASE DEFAULT
+  !       !   STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
+  !       ! END SELECT
+  !     ENDIF
 
-  !   IF ( S==1 .AND. T==1 ) THEN
-  !     SELECT CASE (ORDER)
-  !     CASE (0)
-  !       RETURN
-  !     CASE (1)
-  !       POTENTIAL_OUT = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,:,:,:) *  I2 &
-  !             + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,:,:,:) *  S12_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,:,:,:) *  LS_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,:,:,:) *  T12_OPERATOR(CHANNEL) * I2
-  !     CASE (3)
-  !       LS1 = LS_OPERATOR(CHANNEL)
-  !       LS2 = MATMUL(LS1, LS1)
-  !       POTENTIAL_OUT = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,:,:,:) *  I2 &
-  !             + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,:,:,:) *  S12_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,:,:,:) *  LS_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,:,:,:) *  T12_OPERATOR(CHANNEL) * I2
-  !       POTENTIAL_OUT =   POTENTIAL_OUT &
-  !             + LECS_IN%CN3LO(4) * FR_MATRIX_EL(5,:,:,:)    * I2 &
-  !             + LECS_IN%CN3LO(6) * FR_MATRIX_EL(6,:,:,:)    * S12_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CN3LO(8) * FR_MATRIX_EL(7,:,:,:)    * LS_OPERATOR(CHANNEL) &
-  !             + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,:,:,:)    * LS2 &
-  !             + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,:,:,:)    * L2_OPERATOR(CHANNEL) &
-  !             +(  LECS_IN%CIT(2) * FR_MATRIX_EL(2,:,:,:)    * I2  + &
-  !                 LECS_IN%CIT(3) * FR_MATRIX_EL(3,:,:,:)    * S12_OPERATOR(CHANNEL) + &
-  !                 LECS_IN%CIT(4) * FR_MATRIX_EL(4,:,:,:)    * LS_OPERATOR(CHANNEL) &
-  !                                                       ) * T12_OPERATOR(CHANNEL)
-  !     CASE DEFAULT
-  !       STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
-  !     END SELECT
-  !   ENDIF
+  !     IF ( S==1 .AND. T==1 ) THEN
+  !       SELECT CASE (ORDER)
+  !       CASE (0)
+  !         RETURN
+  !       CASE (1)
+  !       !   POTENTIAL_OUT = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,:,:,:) *  I2 &
+  !       !         + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,:,:,:) *  S12_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,:,:,:) *  LS_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,:,:,:) *  T12_OPERATOR(CHANNEL) * I2
+  !       ! CASE (3)
+  !       !   LS1 = LS_OPERATOR(CHANNEL)
+  !       !   LS2 = MATMUL(LS1, LS1)
+  !       !   POTENTIAL_OUT = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,:,:,:) *  I2 &
+  !       !         + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,:,:,:) *  S12_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,:,:,:) *  LS_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,:,:,:) *  T12_OPERATOR(CHANNEL) * I2
+  !       !   POTENTIAL_OUT =   POTENTIAL_OUT &
+  !       !         + LECS_IN%CN3LO(4) * FR_MATRIX_EL(5,:,:,:)    * I2 &
+  !       !         + LECS_IN%CN3LO(6) * FR_MATRIX_EL(6,:,:,:)    * S12_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CN3LO(8) * FR_MATRIX_EL(7,:,:,:)    * LS_OPERATOR(CHANNEL) &
+  !       !         + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,:,:,:)    * LS2 &
+  !       !         + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,:,:,:)    * L2_OPERATOR(CHANNEL) &
+  !       !         +(  LECS_IN%CIT(2) * FR_MATRIX_EL(2,:,:,:)    * I2  + &
+  !       !             LECS_IN%CIT(3) * FR_MATRIX_EL(3,:,:,:)    * S12_OPERATOR(CHANNEL) + &
+  !       !             LECS_IN%CIT(4) * FR_MATRIX_EL(4,:,:,:)    * LS_OPERATOR(CHANNEL) &
+  !       !                                                   ) * T12_OPERATOR(CHANNEL)
+  !       CASE DEFAULT
+  !         STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
+  !       END SELECT
+  !     ENDIF
+  !   ENDDO
   ! END SUBROUTINE COMBINE_POTENTIAL
 
 END MODULE EFT_PLESS
