@@ -1,13 +1,17 @@
-!   CLO( 0)  => c10
-!   CLO( 1)  => c01
-!   CNLO(1)  => c2c00
-!   CNLO(2)  => c2c10
-!   CNLO(3)  => c2c01
-!   CNLO(4)  => c2c11
-!   CNLO(5)  => c2t0
-!   CNLO(6)  => c2t1
-!   CNLO(7)  => c2b
-!   CIT( 0)  => c0ct
+!> \file EFT_pless.f90
+!! \brief Effective Field Theory (EFT) potential module for NN scattering.
+!!
+!! This module defines the low-energy constants (LECs) and radial functions for
+!! the Plesset-style EFT potential, and provides routines to evaluate the
+!! potential matrix elements for use in variational and Numerov solvers.
+!!
+!! \details
+!! - Supports LO, NLO, and N3LO orders.
+!! - Provides routines to set LECs, print them, and combine operator matrix elements.
+!! - Used by the main variational scattering code.
+!!
+!! \author Alessandro
+!! \date 2025
 
 MODULE EFT_PLESS
   USE REALLOCATE_UTILS
@@ -18,6 +22,7 @@ MODULE EFT_PLESS
 
   DOUBLE PRECISION, PARAMETER :: HTC = 197.32697D0
 
+  !> \brief Structure for storing all LECs for a given EFT model.
   TYPE, PUBLIC :: LECS_EFT_PLESS
     INTEGER :: ILB = -1
     INTEGER :: ORDER = -1
@@ -28,6 +33,7 @@ MODULE EFT_PLESS
     DOUBLE PRECISION :: CIT(0:4)= 0.D0
   END TYPE LECS_EFT_PLESS
 
+  !> \brief Structure for storing radial functions for a given cutoff and order.
   TYPE, PUBLIC :: EFT_RADIAL_FUNCTIONS
     INTEGER :: ORDER
     DOUBLE PRECISION, ALLOCATABLE :: RC
@@ -63,6 +69,8 @@ MODULE EFT_PLESS
   PRIVATE:: PREPARE
 
 CONTAINS
+  !> \brief Set LECs from another LECS_EFT_PLESS structure.
+  !! \param[in] LECS_IN Input LECs structure
   SUBROUTINE SET_LECS_FROM_LECS(LECS_IN)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
@@ -70,6 +78,8 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_FROM_LECS
 
+  !> \brief Set LECs from individual values (with optional arguments).
+  !! \param[in] R00, R10, ... LEC values
   SUBROUTINE SET_LECS_SINGLE(R00, R10, R01, R11, C10, C01, C200, C201, C210, C211, C2T0, C2T1, C2B, &
     C400, C410, C401, C411, C4T0, C4T1, C4B0, C4B1, C4BB0, C4BB1, C4Q, &
     CIT0, CIT1, CIT2, CIT3, CIT4)
@@ -207,6 +217,7 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_SINGLE
 
+  !> \brief Set all LECs from file.
   SUBROUTINE SET_ALL_LECS
     IMPLICIT NONE
     INTEGER :: I, IOS
@@ -260,6 +271,7 @@ CONTAINS
     LECS_ALL_SET = .TRUE.
   END SUBROUTINE
 
+  !> \brief Set the order of the LECs structure based on nonzero entries.
   SUBROUTINE SET_LECS_ORDER(LECS_IN)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(INOUT) :: LECS_IN
@@ -278,6 +290,8 @@ CONTAINS
 
   END SUBROUTINE SET_LECS_ORDER
 
+  !> \brief Set LECs by model index (ILB).
+  !! \param[in] ILB Model index
   SUBROUTINE SET_LECS_ILB(ILB)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ILB
@@ -289,6 +303,7 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_ILB
 
+  !> \brief Set up operator matrices for the current channel.
   SUBROUTINE SET_OPERATORS()
     IMPLICIT NONE
     INTEGER :: L, S, J, T, TZ, I
@@ -313,6 +328,8 @@ CONTAINS
 
 
 
+  !> \brief Prepare the LECs and operators for a given model.
+  !! \param[in] ILB Model index
   SUBROUTINE PREPARE(ILB)
     IMPLICIT NONE
     DOUBLE PRECISION, PARAMETER :: MINR = 1.D-1, ZERO = 1.D-10
@@ -323,6 +340,9 @@ CONTAINS
     IF (SUM(ABS(LECS%RC)) < MINR) STOP "RC not set"
   END SUBROUTINE PREPARE
 
+  !> \brief Evaluate the EFT Plesset potential for a given channel and radius.
+  !! \param[in] ILB, L, S, J, T1Z, T2Z, R, LEMP
+  !! \param[out] VPW(2,2) Potential matrix
   SUBROUTINE EFT_PLESS_PW(ILB, L, S, J, T1Z, T2Z, R, VPW, LEMP)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ILB, L, S, J, T1Z, T2Z, LEMP
@@ -703,6 +723,11 @@ CONTAINS
     FI = FI * CR(R, RC)
   END FUNCTION EFT_RADIAL
 
+  !> \brief Combine operator matrix elements with LECs to form the full potential.
+  !! \param[in] CHANNELS Array of channels
+  !! \param[in] FR_MATRIX_EL Operator matrix elements
+  !! \param[in] LECS_IN LECs structure
+  !! \param[out] POTENTIAL_OUT Output potential matrix
   SUBROUTINE COMBINE_POTENTIAL(CHANNELS, FR_MATRIX_EL, LECS_IN, POTENTIAL_OUT)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
@@ -711,7 +736,7 @@ CONTAINS
     DOUBLE PRECISION :: POTENTIAL_OUT(:,:,:,:)
     INTEGER :: ORDER_, IORDER, N_OPERATORS, NIT_OPERATORS, IOP
     INTEGER :: S, T, LS1(2,2), LS2(2,2)
-    INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA, NALPHA, NEQ, NNL
+    INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA, NALPHA, NEQ, NEQ_MAX, NNL
     INTEGER :: IL, IR, AR, AL, NL, NR
     INTEGER :: SL, SR, TL, TR
 
@@ -723,14 +748,15 @@ CONTAINS
 
     NCHANNELS = SIZE(CHANNELS)
     NALPHA = SIZE(FR_MATRIX_EL, 5)
-    NEQ = 2
-    NNL = NALPHA / NEQ
+    NEQ_MAX = 2
+    NNL = NALPHA / NEQ_MAX
     DO ICH = 1, NCHANNELS
       S12 = S12_OPERATOR(CHANNELS(ICH))
       LS1 = LS_OPERATOR(CHANNELS(ICH))
       LS2 = MATMUL(LS1, LS1)
       L2  = L2_OPERATOR(CHANNELS(ICH))
       T12 = T12_OPERATOR(CHANNELS(ICH))
+      NEQ = GET_CHANNEL_NCH(CHANNELS(ICH))
 
       IR = 0
       IL = 0

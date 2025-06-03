@@ -6,31 +6,18 @@
 !!
 !! \author Alessandro
 !! \date 2025
+
 MODULE INTEGRATION_MOD
   USE OMP_LIB ! OpenMP library for parallel processing
 CONTAINS
-  !> @brief Numerical integration block configuration
-  !!
-  !! @details Controls adaptive numerical integration across 1-3 blocks with independent step sizes.
-  !!
-  !! @param[in] JB    Integration block mode (1, 2, or 3 blocks)
-  !! @param[in] IAS   Starting abscissa point for integration
-  !! @param[in] M1    Number of steps in Block 1
-  !! @param[in] M2    Number of steps in Block 2 (if JB ≥ 2)
-  !! @param[in] M3    Number of steps in Block 3 (if JB = 3)
-  !! @param[in] H1    Step size for Block 1
-  !! @param[in] H2    Step size for Block 2 (if JB ≥ 2)
-  !! @param[in] H3    Step size for Block 3 (if JB = 3)
-  !! @param[in,out] HI Input step size (automatically divided by 22.5 for internal use)
-  !!
-  !! @note The 22.5 scaling factor optimizes stability for stiff systems.
-  !! @warning JB values > 3 will cause array bounds errors.
-  !!
-  !! @code{.f90}
-  !! ! Example usage:
-  !! call integrate_system(JB=2, IAS=0.0d0, M1=100, M2=50, &
-  !!                      H1=0.01d0, H2=0.02d0, HI=initial_step)
-  !! @endcode
+
+  !> \brief Block-adaptive numerical integration over up to 3 blocks.
+  !! \param[in] JB    Number of blocks (1-3)
+  !! \param[in] M1,M2,M3 Number of steps in each block
+  !! \param[in] H1,H2,H3 Step sizes for each block
+  !! \param[in] A     Data array to integrate
+  !! \param[in] IAS   Starting index
+  !! \return   I5     Integrated result
   FUNCTION B5(JB, M1, M2, M3, H1, H2, H3, A, IAS) RESULT(I5)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: JB          ! Number of blocks (1 to 3)
@@ -125,17 +112,12 @@ CONTAINS
 
   END FUNCTION B5
 
-  !> \brief Perform numerical integration over a single block using a high-order rule.
-  !!
-  !! This function integrates an array of values using a composite rule suitable for
-  !! smooth functions, with corrections for leftover points when the number of intervals
-  !! is not a multiple of four. Parallel reduction is used for large arrays.
-  !!
-  !! \param[in]  M    Number of steps in the block (must be >= 4)
+  !> \brief Numerical integration over a single block using a high-order rule.
+  !! \param[in]  M    Number of steps in the block (>=4)
   !! \param[in]  H    Step size for the block
-  !! \param[in]  A    Data array to integrate (size >= M+3)
-  !! \param[in]  IAS  Starting index into A
-  !! \return     I5   Integrated result (double precision)
+  !! \param[in]  A    Data array to integrate
+  !! \param[in]  IAS  Starting index
+  !! \return     I5   Integrated result
   FUNCTION B5_SINGLE(M, H, A, IAS) RESULT(I5)
     IMPLICIT NONE
     INTEGER, INTENT(IN)          :: M           ! Number of steps in the block (>=4)
@@ -205,41 +187,10 @@ CONTAINS
 
   END FUNCTION B5_SINGLE
 
-  !> @brief Computes Gauss-Laguerre quadrature points and weights
-  !!
-  !! @details Calculates the roots (XPNT) and weights (PWEIGHT) for N-point Gauss-Laguerre
-  !! quadrature.
-  !! This implementation uses Newton's method with polynomial recurrence relations.
-  !!
-  !! @param[in]  N        Number of quadrature points (1 ≤ N ≤ 600)
-  !! @param[out] XPNT     Array(N) of quadrature points (roots of Laguerre polynomial)
-  !! @param[out] PWEIGHT  Array(N) of quadrature weights
-  !!
-  !! @note
-  !! - Uses Laguerre polynomials with α=0 (standard Gauss-Laguerre quadrature)
-  !! - Implements Newton-Raphson iteration with MAXIT=10 and EPS=1D-12 tolerance
-  !! - Includes initial root approximations for faster convergence
-  !!
-  !! @warning
-  !! - Terminates if N < 1 or N > NNR (600)
-  !! - Stops with error if convergence fails within MAXIT iterations
-  !!
-  !! @algorithm
-  !! 1. Generates initial guess for ith root using empirical formulas
-  !! 2. Refines root using Newton's method on Laguerre polynomial recurrence.
-  !! 3. Computes weights using derivative relationship.
-  !!
-  !! @code{.f90}
-  !! ! Example usage:
-  !! integer, parameter :: n = 10
-  !! double precision :: x(n), w(n)
-  !! call gaulag(n, x, w)
-  !! ! x now contains quadrature points, w contains weights
-  !! @endcode
-  !!
-  !! @reference
-  !! - Adapted from Numerical Recipes with modified root approximations
-  !! - See Golub & Welsch (1969) for mathematical foundation
+  !> \brief Computes Gauss-Laguerre quadrature points and weights.
+  !! \param[in]  N        Number of quadrature points (1 ≤ N ≤ 600)
+  !! \param[out] XPNT     Array(N) of quadrature points (roots)
+  !! \param[out] PWEIGHT  Array(N) of quadrature weights
   SUBROUTINE GAULAG(N,XPNT,PWEIGHT)
     IMPLICIT DOUBLE PRECISION (A-H,O-Z)
     PARAMETER(NNR=600)
@@ -291,11 +242,6 @@ CONTAINS
   END SUBROUTINE GAULAG
 
   !> \brief Generate an exponentially growing radial grid and weights.
-  !!
-  !! This routine computes a grid R and corresponding weights W for integration,
-  !! using an exponentially growing spacing. The grid is suitable for problems
-  !! where higher resolution is needed near the origin.
-  !!
   !! \param[in]  H     Initial step size
   !! \param[in]  AF    Exponential growth factor (>1)
   !! \param[inout] RANGE  Maximum range (may be updated)

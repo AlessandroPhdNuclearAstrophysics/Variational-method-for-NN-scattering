@@ -184,6 +184,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: SET_VARIATIONAL_PARAMETERS
   PUBLIC :: GET_HTM
   PUBLIC :: SET_DYNAMIC
+  PUBLIC :: SET_NEW_LECS
 
   PRIVATE:: PRINT_DIVIDER
   PRIVATE:: SET_M_T1Z_T2Z_HTM
@@ -1388,10 +1389,13 @@ CONTAINS
 
             APE=  B5_SINGLE(NX,H5,FUN,1)
             APEM(IAB,IAK)=APE
+
             APE1= B5_SINGLE(NX,H5,FUN1,1)
             APEM1(IAB,IAK)=APE1
+
             APE2= B5_SINGLE(NX,H5,FUN2,1)
             APEM2(IAB,IAK)=APE2
+
             APE3= B5_SINGLE(NX,H5,FUN3,1)
             APEM3(IAB,IAK)=APE3
             IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
@@ -1878,6 +1882,12 @@ CONTAINS
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
+  !> @brief Returns the Hamiltonian time constant (HTM).
+  !>
+  !> This function retrieves the value of the Hamiltonian time constant (HTM).
+  !> If the HTM value has not been set, an error message is printed and the program stops.
+  !>
+  !> @return The value of the Hamiltonian time constant (HTM).
   FUNCTION GET_HTM() RESULT(HTM_VALUE)
     IMPLICIT NONE
     DOUBLE PRECISION :: HTM_VALUE
@@ -1891,12 +1901,28 @@ CONTAINS
     HTM_VALUE = HTM
   END FUNCTION GET_HTM
 
+  !> @brief Sets the dynamic flag for the calculation.
+  !>
+  !> This subroutine assigns the value of the input logical variable FLAG to the module variable USE_DYNAMIC,
+  !> controlling whether dynamic behavior is enabled or disabled in the calculation.
+  !>
+  !> @param[in] FLAG Logical flag to enable (TRUE) or disable (FALSE) dynamic behavior.
   SUBROUTINE SET_DYNAMIC(FLAG)
     IMPLICIT NONE
     LOGICAL, INTENT(IN) :: FLAG
     USE_DYNAMIC = FLAG
   END SUBROUTINE SET_DYNAMIC
 
+  !> @brief Sets new Low Energy Constants (LECs) for the EFT potential.
+  !>
+  !> This subroutine updates the global LECs variable with the provided values.
+  !> If the regulator cutoffs have changed, it recalculates the potential functions,
+  !> their integrals, and prepares all necessary matrix elements and asymptotic functions.
+  !>
+  !> @param[in] LECS_NEW  New set of LECs (type LECS_EFT_PLESS) to be used.
+  !>
+  !> The subroutine also sets flags to indicate that the LECs and potential are up-to-date.
+  !> If required, it prepares Bessel and Laguerre functions and matrix elements for the new potential.
   SUBROUTINE SET_NEW_LECS(LECS_NEW)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_NEW

@@ -1,11 +1,22 @@
+!> \file operating_system.f90
+!! \brief Utilities for interacting with the operating system (Linux).
+!!
+!! Provides routines for directory and file management, listing files, and
+!! basic string operations, designed for use in scientific Fortran codes.
+!!
+!! \author Alessandro
+!! \date 2025
+
 MODULE OPERATING_SYSTEM_LINUX
   IMPLICIT NONE
 
+  !> \brief Public interface for directory creation.
   PUBLIC :: CREATE_DIRECTORY
 
 CONTAINS
 
   !> \brief Create a directory if it does not exist.
+  !! \param[in] OUT_DIR Directory path to create
   SUBROUTINE CREATE_DIRECTORY(OUT_DIR)
     CHARACTER(LEN=*), INTENT(IN) :: OUT_DIR
     CHARACTER(LEN=256) :: command
@@ -15,6 +26,8 @@ CONTAINS
   END SUBROUTINE CREATE_DIRECTORY
 
   !> \brief Check if a file exists.
+  !! \param[in] filename File path to check
+  !! \return .TRUE. if file exists, .FALSE. otherwise
   LOGICAL FUNCTION FILE_EXISTS(filename)
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER :: ios
@@ -29,6 +42,7 @@ CONTAINS
   END FUNCTION FILE_EXISTS
 
   !> \brief Remove a file if it exists.
+  !! \param[in] filename File path to remove
   SUBROUTINE REMOVE_FILE(filename)
     CHARACTER(LEN=*), INTENT(IN) :: filename
     CHARACTER(LEN=256) :: command
@@ -40,6 +54,10 @@ CONTAINS
   END SUBROUTINE REMOVE_FILE
 
   !> \brief List files in a directory. Optionally filter by extension.
+  !! \param[in]  dir_path  Directory to list
+  !! \param[out] files     Array of file names
+  !! \param[out] count     Number of files found
+  !! \param[in]  extension (optional) Filter by file extension
   SUBROUTINE LIST_FILES_IN_DIRECTORY(dir_path, files, count, extension)
     CHARACTER(LEN=*), INTENT(IN) :: dir_path
     CHARACTER(LEN=255), INTENT(OUT) :: files(*)
@@ -77,6 +95,7 @@ CONTAINS
   END SUBROUTINE LIST_FILES_IN_DIRECTORY
 
   !> \brief Get the current working directory.
+  !! \param[out] current_dir Path of current directory
   SUBROUTINE GET_CURRENT_DIRECTORY(current_dir)
     CHARACTER(LEN=*), INTENT(OUT) :: current_dir
     CHARACTER(LEN=256) :: command
@@ -96,6 +115,7 @@ CONTAINS
   END SUBROUTINE GET_CURRENT_DIRECTORY
 
   !> \brief Change the current working directory.
+  !! \param[in] new_dir Directory to change to
   SUBROUTINE CHANGE_DIRECTORY(new_dir)
     CHARACTER(LEN=*), INTENT(IN) :: new_dir
     CHARACTER(LEN=256) :: command
@@ -105,6 +125,7 @@ CONTAINS
   END SUBROUTINE CHANGE_DIRECTORY
 
   !> \brief Get the operating system name.
+  !! \return OS name string
   CHARACTER(LEN=256) FUNCTION GET_OS_NAME()
     CHARACTER(LEN=256) :: command
     INTEGER :: ios
@@ -122,7 +143,11 @@ CONTAINS
     END IF
   END FUNCTION GET_OS_NAME
 
-  !> \brief Find all regex pattern matches in a string.
+  !> \brief Find all case-insensitive substring matches in a string.
+  !! \param[in]  input_string String to search
+  !! \param[in]  pattern      Pattern to match
+  !! \param[out] matches      Array of matches found
+  !! \param[out] n_matches    Number of matches found
   SUBROUTINE FIND_STRING_CASE_INSENSITIVE(input_string, pattern, matches, n_matches)
     USE, INTRINSIC :: ISO_C_BINDING
     CHARACTER(LEN=*), INTENT(IN) :: input_string
@@ -174,7 +199,8 @@ CONTAINS
     DEALLOCATE(lowercase_pattern)
   END SUBROUTINE FIND_STRING_CASE_INSENSITIVE
 
-  !> \brief Convert a string to lowercase
+  !> \brief Convert a string to lowercase (in-place).
+  !! \param[inout] string String to convert
   SUBROUTINE TO_LOWERCASE(string)
     CHARACTER(LEN=*), INTENT(INOUT) :: string
     INTEGER :: i, char_code

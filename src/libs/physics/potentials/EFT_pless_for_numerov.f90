@@ -1,13 +1,17 @@
-!   CLO( 1)  => c01
-!   CLO( 2)  => c10
-!   CNLO(1)  => c2c00
-!   CNLO(2)  => c2c10
-!   CNLO(3)  => c2c01
-!   CNLO(4)  => c2c11
-!   CNLO(5)  => c2t0
-!   CNLO(6)  => c2t1
-!   CNLO(7)  => c2b
-!   CIT( 0)  => c0ct
+!> \file EFT_pless_for_numerov.f90
+!! \brief EFT Plesset potential module for Numerov integration and fitting.
+!!
+!! This module provides routines and data structures for evaluating the
+!! Plesset-style EFT potential on a radial grid, for use with Numerov solvers
+!! and fitting procedures.
+!!
+!! \details
+!! - Defines LEC structure and quantum numbers.
+!! - Provides routines to set LECs, quantum numbers, and prepare radial functions.
+!! - Main routine: EFT_PLESS_PW_TO_FIT for evaluating the potential matrix.
+!!
+!! \author Alessandro
+!! \date 2025
 
 MODULE EFT_PLESS_TO_FIT
   IMPLICIT NONE
@@ -19,6 +23,7 @@ MODULE EFT_PLESS_TO_FIT
     DOUBLE PRECISION, ALLOCATABLE :: RR(:), F1(:), F2(:), F3(:), F4(:), F5(:), F6(:), F7(:)
   END TYPE RADIAL_FUNCTIONS
 
+  !> \brief Structure for storing LECs for fitting.
   TYPE, PUBLIC :: LEC
     INTEGER :: ORDER = -1
     DOUBLE PRECISION :: RCUTOFF
@@ -28,6 +33,7 @@ MODULE EFT_PLESS_TO_FIT
     DOUBLE PRECISION :: CIT(0:4)
   END TYPE LEC
 
+  !> \brief Structure for storing quantum numbers for the potential.
   TYPE, PUBLIC :: POTENTIAL_QUANTUM_NUMBERS
     INTEGER :: L, S, J, T, TZ
   END TYPE POTENTIAL_QUANTUM_NUMBERS
@@ -52,6 +58,9 @@ MODULE EFT_PLESS_TO_FIT
   LOGICAL :: IS_CUTOFF_SET = .FALSE.
 
 CONTAINS
+  !> \brief Prepare the potential by evaluating all radial functions on the grid.
+  !! \param[in] RR Radial grid
+  !! \param[in] N  Number of grid points
   SUBROUTINE PREPARE_POTENTIAL(RR, N)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: N
@@ -105,6 +114,7 @@ CONTAINS
 
   END SUBROUTINE EVALUATE_RF
 
+  !> \brief Set LECs from individual values or another LEC structure.
   SUBROUTINE SET_LECS_1(ORDER, CLO, CNLO, DN3LO, CIT, RCUTOFF)
     IMPLICIT NONE
     INTEGER, OPTIONAL, INTENT(IN) :: ORDER
@@ -132,6 +142,7 @@ CONTAINS
     ENDIF
   END SUBROUTINE SET_LECS_2
 
+  !> \brief Set quantum numbers for the potential.
   SUBROUTINE SET_QUANTUM_NUMBERS_1(L, S, J, TZ)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: L, S, J, TZ
@@ -151,12 +162,9 @@ CONTAINS
     WRITE(*,*) "SET : ", POT_QN
   END SUBROUTINE SET_QUANTUM_NUMBERS_2
 
-
-
-
-
-
-
+  !> \brief Evaluate the EFT Plesset potential matrix for given R.
+  !! \param[in]  R  Radial coordinate
+  !! \param[out] V  Potential matrix (2x2)
   SUBROUTINE EFT_PLESS_PW_TO_FIT(R, V)
     IMPLICIT NONE
 
@@ -341,6 +349,7 @@ CONTAINS
   END FUNCTION EVALUATE_T
 
 
+  !> \brief Print the current LECs to standard output.
   SUBROUTINE PRINT_LECS()
     IMPLICIT NONE
     INTEGER :: I
@@ -364,6 +373,7 @@ CONTAINS
     WRITE(*,'(A,F12.6)') "  RCUTOFF = ", LECS%RCUTOFF
   END SUBROUTINE PRINT_LECS
 
+  !> \brief Print the current quantum numbers to standard output.
   SUBROUTINE PRINT_QUANTUM_NUMBERS()
     IMPLICIT NONE
     WRITE(*,*) "L = ", POT_QN%L
@@ -373,6 +383,7 @@ CONTAINS
     WRITE(*,*) "TZ = ", POT_QN%TZ
   END SUBROUTINE PRINT_QUANTUM_NUMBERS
 
+  !> \brief Reset the potential and deallocate arrays.
   SUBROUTINE RESET_POTENTIAL()
     IMPLICIT NONE
     IS_CUTOFF_SET = .FALSE.

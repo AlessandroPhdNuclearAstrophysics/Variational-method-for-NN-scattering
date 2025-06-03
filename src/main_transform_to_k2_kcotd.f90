@@ -1,3 +1,18 @@
+!> \file main_transform_to_k2_kcotd.f90
+!! \brief Transform phase shift files to k^2 and k^{2L+1}cot(delta) representation.
+!!
+!! This program reads phase shift files (delta_XXX.dat) for nucleon-nucleon scattering channels,
+!! computes the corresponding k^2 and k^{2L+1}cot(delta) values, and writes them to output files.
+!! For coupled channels, it also processes the second phase shift and mixing angle (epsilon).
+!!
+!! \details
+!! - Input: Folder containing phase shift files named as delta_XXX.dat.
+!! - Output: Files with k^2 and kcotd for each channel, and epsilon for coupled channels.
+!! - Uses modules: SCATTERING_NN_VARIATIONAL, OPERATING_SYSTEM_LINUX, REALLOCATE_UTILS, QUANTUM_NUMBERS.
+!!
+!! \author Alessandro
+!! \date 2025
+
 PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   USE SCATTERING_NN_VARIATIONAL
   USE OPERATING_SYSTEM_LINUX
@@ -43,6 +58,11 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   CALL LIST_FILES_IN_DIRECTORY(TRIM(folder_path), file_list, num_files)
   WRITE(*,*) "Found ", num_files, " files in folder"
 
+  !> \brief Main loop: process each phase shift file in the folder.
+  !> - Detects single/coupled channels.
+  !> - Reads energies and phase shifts.
+  !> - Computes k, k^2, and k^{2L+1}cot(delta).
+  !> - Writes results to output files.
   ! Process each file
   DO i = 1, num_files
     current_file = TRIM(file_list(i))
@@ -183,12 +203,18 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
 
 CONTAINS
 
+  !> \brief Check if a floating-point number is finite.
+  !! \param[in] NUMBER Value to check
+  !! \return .TRUE. if finite, .FALSE. otherwise
   FUNCTION IS_FINITE(NUMBER) RESULT(FINITE)
     DOUBLE PRECISION, INTENT(IN) :: NUMBER
     LOGICAL :: FINITE
     FINITE = (ABS(NUMBER) < HUGE(1.0D0))
   END FUNCTION IS_FINITE
 
+  !> \brief Parse the filename to extract the channel name.
+  !! \param[in] FILENAME Input filename (e.g., "delta_XXX.dat")
+  !! \return Channel name string (e.g., "XXX")
   FUNCTION PARSE_FILENAME(FILENAME) RESULT(PARSED)
     CHARACTER(LEN=*), INTENT(IN) :: FILENAME
     CHARACTER(LEN=8) :: PARSED

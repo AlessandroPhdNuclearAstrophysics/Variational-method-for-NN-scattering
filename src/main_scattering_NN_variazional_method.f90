@@ -1,9 +1,15 @@
 !> \file main_scattering_NN_variazional_method.f90
 !! \brief Main program for computing NN scattering phase shifts using the variational method.
 !!
-!! This program sets up the quantum numbers, energies, and channels for nucleon-nucleon
+!! This program sets up quantum numbers, energies, and channels for nucleon-nucleon
 !! scattering, then computes phase shifts and mixing angles for all physical channels
 !! using the variational approach. Results are written to output files for each channel.
+!!
+!! \details
+!! - Reads input parameters from a namelist or prompts the user.
+!! - Allocates energy grid and prepares all physical channels.
+!! - Loops over all L, S, J combinations and computes phase shifts.
+!! - Output: Files named delta_XXX.dat for each channel.
 !!
 !! \author Alessandro
 !! \date 2025
@@ -121,6 +127,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
 
 CONTAINS
   !> \brief Prepare the array of all physical scattering channels for the given quantum numbers.
+  !! Populates the CHANNELS array with all valid (L,S,J) combinations.
   SUBROUTINE PREPARE_CHANNELS()
     IMPLICIT NONE
 

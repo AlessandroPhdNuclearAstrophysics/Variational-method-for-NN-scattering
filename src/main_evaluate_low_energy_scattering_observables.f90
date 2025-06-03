@@ -1,3 +1,18 @@
+!> \file main_evaluate_low_energy_scattering_observables.f90
+!! \brief Evaluate low-energy scattering observables from k^2-kcotd data.
+!!
+!! This program reads k^2 and k^{2L+1}cot(delta) data files, performs polynomial
+!! regression fits (up to 5th order), and prints the fit results and predictions.
+!! Handles both single and coupled channels (epsilon mixing).
+!!
+!! \details
+!! - Input: k2_kcotd_XXX.dat or k2_kcotd_epsilon_XXX-YYY.dat
+!! - Output: Fit coefficients and predicted values for each order.
+!! - Uses: FIT_MODULE for regression routines.
+!!
+!! \author Alessandro
+!! \date 2025
+
 PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
   USE FIT_MODULE
   IMPLICIT NONE
@@ -128,6 +143,12 @@ PROGRAM EVALUATE_LOW_ENERGY_SCATTERING_OBSERVABLES
 
 CONTAINS
 
+  !> \brief Parse the filename to determine channel type and extract L values.
+  !! \param[in]  fname   Input filename
+  !! \param[out] is_coup .TRUE. if coupled channel (epsilon), .FALSE. otherwise
+  !! \param[out] ch1     First channel name
+  !! \param[out] ch2     Second channel name (if coupled)
+  !! \param[out] ang_mom, ang_mom1, ang_mom2  Orbital angular momenta
   SUBROUTINE parse_filename(fname, is_coup, ch1, ch2, ang_mom, ang_mom1, ang_mom2)
     CHARACTER(LEN=*), INTENT(IN) :: fname
     LOGICAL, INTENT(OUT) :: is_coup
@@ -198,6 +219,11 @@ CONTAINS
     END IF
   END SUBROUTINE parse_filename
 
+  !> \brief Read k^2 and kcotd data from file.
+  !! \param[in]  fname         Input filename
+  !! \param[out] k2_values     Array of k^2 values
+  !! \param[out] kcotd_values  Array of kcotd values
+  !! \param[out] num_points    Number of data points read
   SUBROUTINE read_data(fname, k2_values, kcotd_values, num_points)
     CHARACTER(LEN=*), INTENT(IN) :: fname
     DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: k2_values(:), kcotd_values(:)

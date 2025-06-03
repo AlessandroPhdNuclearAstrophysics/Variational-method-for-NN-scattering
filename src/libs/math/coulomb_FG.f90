@@ -7,12 +7,13 @@
 !!
 !! \author Alessandro
 !! \date 2025
+
 module gsl_coulomb
   use, intrinsic :: iso_c_binding
   implicit none
   private
 
-  ! Exposed types and procedures
+  !> \brief Expose main types and procedures.
   public :: coulomb_wave_FG, gsl_sf_result
 
   !> \brief Fortran type matching GSL's gsl_sf_result struct.

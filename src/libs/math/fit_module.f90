@@ -1,11 +1,26 @@
+!> \file fit_module.f90
+!! \brief Polynomial and linear regression utilities for scattering analysis.
+!!
+!! This module provides routines for linear, quadratic, cubic, and general polynomial
+!! regression, including versions with and without constant terms, using LAPACK.
+!!
+!! \author Alessandro
+!! \date 2025
+
 MODULE FIT_MODULE
   IMPLICIT NONE
   PRIVATE
 
+  !> \brief Public regression routines.
   PUBLIC :: LINEAR_REGRESSION, QUADRATIC_REGRESSION, CUBIC_REGRESSION, POLYNOMIAL_REGRESSION, POLYNOMIAL_REGRESSION_NO_CONSTANT
 
-
 CONTAINS
+
+  !> \brief Perform linear regression (y = m*x + q).
+  !! \param[in]  Y, X   Data arrays
+  !! \param[in]  NMIN, NMAX Range of indices to use
+  !! \param[out] M, Q   Slope and intercept
+  !! \param[in]  STEP   (optional) Step size for subsampling
   SUBROUTINE LINEAR_REGRESSION(Y, X, NMIN, NMAX, M, Q, STEP)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NMIN, NMAX
@@ -58,8 +73,11 @@ CONTAINS
     RETURN
   END SUBROUTINE LINEAR_REGRESSION
 
-
-
+  !> \brief Perform quadratic regression (y = a*x^2 + b*x + c).
+  !! \param[in]  Y, X   Data arrays
+  !! \param[in]  NMIN, NMAX Range of indices to use
+  !! \param[out] A, B, C Quadratic coefficients
+  !! \param[in]  STEP   (optional) Step size for subsampling
   SUBROUTINE QUADRATIC_REGRESSION(Y, X, NMIN, NMAX, A, B, C, STEP)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NMIN, NMAX
@@ -118,6 +136,11 @@ CONTAINS
     RETURN
   END SUBROUTINE QUADRATIC_REGRESSION
 
+  !> \brief Perform cubic regression (y = a*x^3 + b*x^2 + c*x + d).
+  !! \param[in]  Y, X   Data arrays
+  !! \param[in]  NMIN, NMAX Range of indices to use
+  !! \param[out] A, B, C, D Cubic coefficients
+  !! \param[in]  STEP   (optional) Step size for subsampling
   SUBROUTINE CUBIC_REGRESSION(Y, X, NMIN, NMAX, A, B, C, D, STEP)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NMIN, NMAX
@@ -229,7 +252,11 @@ CONTAINS
     RETURN
   END SUBROUTINE CUBIC_REGRESSION
 
-
+  !> \brief Perform general polynomial regression (with constant term).
+  !! \param[in]  y, x   Data arrays
+  !! \param[in]  degree Degree of polynomial
+  !! \param[in]  n_points Number of data points
+  !! \param[out] coeffs Polynomial coefficients (constant term first)
   SUBROUTINE POLYNOMIAL_REGRESSION(y, x, degree, n_points, coeffs)
     ! Performs polynomial regression of specified degree using LAPACK
     ! y = coeffs(1) + coeffs(2)*x + coeffs(3)*x^2 + ... + coeffs(degree+1)*x^degree
@@ -283,7 +310,11 @@ CONTAINS
     DEALLOCATE(A, b, work)
   END SUBROUTINE POLYNOMIAL_REGRESSION
 
-
+  !> \brief Perform polynomial regression without constant term.
+  !! \param[in]  y, x   Data arrays
+  !! \param[in]  degree Degree of polynomial
+  !! \param[in]  n_points Number of data points
+  !! \param[out] coeffs Polynomial coefficients (no constant term)
   SUBROUTINE POLYNOMIAL_REGRESSION_NO_CONSTANT(y, x, degree, n_points, coeffs)
     ! Performs polynomial regression of specified degree without constant term using LAPACK
     ! y = coeffs(1)*x + coeffs(2)*x^2 + ... + coeffs(degree)*x^degree
@@ -335,6 +366,5 @@ CONTAINS
 
     DEALLOCATE(A, b, work)
   END SUBROUTINE POLYNOMIAL_REGRESSION_NO_CONSTANT
-
 
 END MODULE FIT_MODULE
