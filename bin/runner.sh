@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make
+make -j 
 
 # Default values for the parameters
 EMAX=1.D0
@@ -54,6 +54,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+echo "OUTPUT_DIR: $OUTPUT_DIR"
 # Create a temporary namelist input file
 NAMELIST_FILE=$(mktemp)
 cat > "$NAMELIST_FILE" << EOF

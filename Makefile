@@ -8,19 +8,19 @@ GMON ?= 0
 
 ifeq ($(DEBUG),1)
   FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
-           -Wall -g -fcheck=all -finit-real=snan -finit-local-zero \
+           -Wall -g -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-real=snan -finit-local-zero \
            -fbacktrace -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -g -fcheck=all -finit-real=snan -finit-local-zero \
+  LDFLAGS = -Wall -g -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-real=snan -finit-local-zero \
             -fdefault-real-8 -fdefault-double-8
 else
   FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
            -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
-           -fdefault-real-8 -fdefault-double-8
+           -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
   LDFLAGS = -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
-            -fdefault-real-8 -fdefault-double-8
+            -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
 endif
 
-OMP ?= 1
+OMP ?= 0
 ifeq ($(OMP),1)	
 	FFLAGS += -fopenmp
 	LDFLAGS += -fopenmp

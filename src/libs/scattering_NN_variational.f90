@@ -428,7 +428,8 @@ CONTAINS
   DOUBLE PRECISION, ALLOCATABLE, SAVE :: XRCOEFF(:,:), XICOEFF(:,:)
   DOUBLE PRECISION, ALLOCATABLE, SAVE :: IPIV(:)
   DOUBLE PRECISION, ALLOCATABLE, SAVE :: C(:,:), CC(:,:), CCC(:,:)
-  INTEGER :: INFO, IAK, IAB, IE, NNN
+  INTEGER :: INFO, IAK, IAB, IE
+  INTEGER, SAVE :: NNN
 
   ! MATRICES FOR THE VARIATIONAL METHOD
   DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: ARI, AIR, ARR, AII
@@ -940,11 +941,20 @@ CONTAINS
     !> \brief Calculate phase shifts and mixing angle in the Stapp convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP()
       IMPLICIT NONE
+      DOUBLE PRECISION, PARAMETER :: TOL = 1.D-14
       DOUBLE COMPLEX :: SM1, SM2
       DOUBLE PRECISION :: SI2E, CI2E, CX, SX
       SM1  = REAL(SMAT(1,1)*SMAT(2,2)-SMAT(1,2)*SMAT(1,2))
       SI2E =-REAL(SMAT(1,2)*SMAT(1,2)/SM1)
       CI2E = ONE - SI2E
+      IF (CI2E.LT.ZERO) THEN
+        PRINT *, "Error: CI2E is negative in CALCULATE_PHASE_SHIFTS_STAPP", CI2E
+        STOP
+      ENDIF
+      IF (SI2E.LT.ZERO) THEN
+        PRINT *, "Error: SI2E is negative in CALCULATE_PHASE_SHIFTS_STAPP", SI2E
+        STOP
+      ENDIF
       SI2E = DSQRT(SI2E)
       CI2E = DSQRT(CI2E)
 
@@ -953,14 +963,54 @@ CONTAINS
       SM2 = CDSQRT(SMAT(2,2)/CI2E)
       CX  = DREAL(SM1)
       SX  = DIMAG(SM1)
+      IF (ABS(CX).GT.ONE) THEN
+        IF (ABS(CX-1).LT.TOL) THEN
+          CX = CX/DABS(CX)
+        ELSE
+          PRINT *, "Error: CX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", CX, " CX - 1", CX-1
+          STOP
+        ENDIF 
+      ENDIF
+      IF (ABS(SX).GT.ONE) THEN
+        IF (ABS(SX-1).LT.TOL) THEN
+          SX = SX/DABS(SX)
+        ELSE
+          PRINT *, "Error: SX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SX, " SX - 1", SX-1
+          STOP
+        ENDIF
+      ENDIF
       DELTA1S = DACOS(CX)*180.D0/PI
       IF(SX.LT.ZERO) DELTA1S = -DELTA1S
 
       CX = DREAL(SM2)
       SX = DIMAG(SM2)
+      IF (ABS(CX).GT.ONE) THEN
+        IF (ABS(CX-1).LT.TOL) THEN
+          CX = CX/DABS(CX)
+        ELSE
+          PRINT *, "Error: CX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", CX, " CX - 1", CX-1
+          STOP
+        ENDIF
+      ENDIF
+      IF (ABS(SX).GT.ONE) THEN
+        IF (ABS(SX-1).LT.TOL) THEN
+          SX = SX/DABS(SX)
+        ELSE
+          PRINT *, "Error: SX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SX, " SX - 1", SX-1
+          STOP
+        ENDIF
+      ENDIF
       DELTA2S = DACOS(CX)*180.D0/PI
       IF(SX.LT.ZERO) DELTA2S = -DELTA2S
 
+      IF (ABS(SI2E).GT.ONE) THEN
+        IF (ABS(SI2E-1).LT.TOL) THEN
+          SI2E = SI2E/DABS(SI2E)
+        ELSE
+          PRINT *, "Error: SI2E is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SI2E, " SI2E - 1", SI2E-1
+          STOP
+        ENDIF
+      ENDIF
       AMIXGS = (0.5D0*DASIN(SI2E))*180.D0/PI
 
     END SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP
