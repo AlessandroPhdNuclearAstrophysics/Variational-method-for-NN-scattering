@@ -12,3 +12,6 @@ graphs/*
 fits/*
 tabula*
 *.tmp
+*aux
+*log
+*gz

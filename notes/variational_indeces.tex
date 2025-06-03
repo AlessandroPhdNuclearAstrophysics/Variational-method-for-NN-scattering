@@ -1,0 +1,407 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath, amsfonts,amsthm,bm,amssymb, graphics, setspace}
+\usepackage{mathtools}
+\usepackage[left=2.00cm, right=2.00cm, top=3.00cm, bottom=3.00cm]{geometry}
+\usepackage{xfrac}
+\usepackage{empheq}
+\usepackage[most]{tcolorbox}
+\usepackage{appendix}
+\usepackage[table]{xcolor} 
+\author{Alessandro Grassi}
+
+
+\newtcbox{\mymathUtil}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=white!10, boxrule=1pt,
+	#1}
+
+\newtcbox{\mymath}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=blue!10, boxrule=1pt,
+	#1}
+
+\newtcbox{\mymathUsed}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=yellow!30, boxrule=1pt,
+	#1}
+
+\DeclarePairedDelimiter\Bra{\langle}{\rvert}
+\DeclarePairedDelimiter\Ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\Braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+
+\DeclarePairedDelimiter\wBra{\bigg\langle}{\bigg\rvert}
+\DeclarePairedDelimiter\wKet{\bigg\lvert}{\bigg\rangle}
+\DeclarePairedDelimiterX\wBraket[2]{\bigg\langle}{\bigg\rangle}{#1 \delimsize\vert #2}
+
+\newcommand{\bra}[1]{\Bra{#1}}
+\newcommand{\ket}[1]{\Ket{#1}}
+\newcommand{\braket}[2]{\Braket{#1}{#2}}
+
+\newcommand{\wbra}[1]{\wBra{#1}}
+\newcommand{\wket}[1]{\wKet{#1}}
+\newcommand{\wbraket}[2]{\wBraket{#1}{#2}}
+
+
+\newcommand{\matrixelement}[3]{\bra{#1}\,#2\,\ket{#3}}
+\newcommand{\wmatrixelement}[3]{\wbra{#1}\,#2\,\wket{#3}}
+\newcommand{\matrixelementred}[3]{\langle #1 \Vert #2 \Vert #3\rangle}
+
+\newcommand{\CG}[3]{\braket{#1\,#2\,}{#3}}
+\newcommand{\eq}[1]{Eq.~#1}
+\newcommand{\de}[1]{\mathrm{d}#1\,}
+\newcommand{\ve}[1]{\mathbf{#1}}
+\newcommand{\onehalf}{\sfrac{1}{2}\,}
+\newcommand{\ylm}[3]{Y_{#1}^{#2}(#3)}
+\newcommand{\versor}[1]{\ve{\hat{#1}}}
+\newcommand{\mand}{\qquad\mathrm{and}\qquad}
+\newcommand{\pd}[2]{\frac{\partial^{#1}}{\partial{#2}^{#1}}}
+\newcommand{\mtm}[1]{\mathrm{#1}}
+
+
+
+\newcommand{\threejsymbol}[6]{
+	\begin{pmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{pmatrix}
+	}
+\newcommand{\sixjsymbol}[6]{
+	\begin{Bmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{Bmatrix}
+}
+
+\mathtoolsset{showonlyrefs,showmanualtags}
+
+\title{About indexes and matrix elements}
+
+
+\begin{document}
+	\maketitle
+	\begin{table}[b]
+		\centering
+		\renewcommand{\arraystretch}{1.3}
+		\setlength{\tabcolsep}{6pt}
+		\begin{tabular}{|ccc|ccc|}
+			\hline
+			\textcolor{red}{(1,1)} & \textcolor{red}{(1,2)} & \textcolor{red}{(1,3)} & \textcolor{blue}{(1,4)} & \textcolor{blue}{(1,5)} & \textcolor{blue}{(1,6)} \\
+			\textcolor{red}{(2,1)} & \textcolor{red}{(2,2)} & \textcolor{red}{(2,3)} & \textcolor{blue}{(2,4)} & \textcolor{blue}{(2,5)} & \textcolor{blue}{(2,6)} \\
+			\textcolor{red}{(3,1)} & \textcolor{red}{(3,2)} & \textcolor{red}{(3,3)} & \textcolor{blue}{(3,4)} & \textcolor{blue}{(3,5)} & \textcolor{blue}{(3,6)} \\\hline
+			\textcolor{green!60!black}{(4,1)} & \textcolor{green!60!black}{(4,2)} & \textcolor{green!60!black}{(4,3)} & \textcolor{cyan!80!black}{(4,4)} & \textcolor{cyan!80!black}{(4,5)} & \textcolor{cyan!80!black}{(4,6)} \\
+			\textcolor{green!60!black}{(5,1)} & \textcolor{green!60!black}{(5,2)} & \textcolor{green!60!black}{(5,3)} & \textcolor{cyan!80!black}{(5,4)} & \textcolor{cyan!80!black}{(5,5)} & \textcolor{cyan!80!black}{(5,6)} \\
+			\textcolor{green!60!black}{(6,1)} & \textcolor{green!60!black}{(6,2)} & \textcolor{green!60!black}{(6,3)} & \textcolor{cyan!80!black}{(6,4)} & \textcolor{cyan!80!black}{(6,5)} & \textcolor{cyan!80!black}{(6,6)} \\
+			\hline
+		\end{tabular}
+		\caption{
+			Example of a block structure of the $(NNL \times NCH) \times (NNL \times NCH)$ matrix for $NCH=2$, $NNL=3$.
+			Each entry is of the form $(\mathrm{index}_\mathrm{row}, \mathrm{index}_\mathrm{col})$.
+			Text color highlights the four $3\times3$ channel ($\alpha$, $\alpha'$) blocks: (1,1) in red, (1,2) in blue, (2,1) in green, (2,2) in cyan.
+		}
+		\label{tab:example}
+	\end{table}
+	
+	Since we have two indexes in our calculations $\alpha$ and $n$, $\alpha$ being the scattering channel quantum numbers and $n$ being the index $n$ of the modified Laguerre base function $f_n^{(2)}(r)$, we flatten these two indexes into one common index
+	\begin{verbatim}
+		INDEX = 0
+		DO I=1, NEQ
+			DO J=1, NNL
+				INDEX = INDEX + 1
+				COMMON_INDEX(I, J) = INDEX
+			ENDDO
+		ENDDO
+	\end{verbatim}
+	Thus flattening the two indexes into one.
+	From
+	\begin{center}
+		\begin{tabular}{c|ccc}	
+			 & 1 & 2 & 3 \\\hline
+			 1 & (1,1) & (1,2) & (1,3) \\
+			 2 & (2,1) & (2,2) & (2,3) \\
+			 \hline			 
+		\end{tabular}
+		\qquad
+		$\Rightarrow$
+		\qquad
+		\begin{tabular}{ccc|ccc}
+			1 & 2 & 3 & 4 & 5 & 6\\
+			\hline
+			(1,1) & (1,2) & (1,3) & (2,1) & (2,2) & (2,3)
+		\end{tabular}\,.
+	\end{center}
+	You can see an example for a \textbf{core-core matrix} with NEQ=2 and NNL=3 in Tab.~\ref{tab:example}.
+	The formula for the common index $k$ is
+	\begin{equation}
+		k = N_L \,(i-1) + j\,,
+		\label{fromNNLNCHtoINDEX}
+	\end{equation}
+	where $N_L=\mtm{NNL}$.
+	
+	
+	In the case of an \textbf{asymptotic-core matrix} the core has NEQ$\times$NNL elements while the asymptotic has NEQ elements and therefore we have something similar to Tab.~\ref{tab:example2}.
+	Finally in the case of an \textbf{asymptotic-asymptotic matrix} we have only NCH$\times$NCH elements as in Tab.~\ref{tab:example3}
+	 \begin{table}[t]
+	 	\centering
+	 	\renewcommand{\arraystretch}{1.3}
+	 	\setlength{\tabcolsep}{6pt}
+	 	\begin{tabular}{|ccc|ccc|}
+	 		\hline
+	 		\textcolor{red}{(F1,1)} & \textcolor{red}{(F1,2)} & \textcolor{red}{(F1,3)} & \textcolor{blue}{(F1,4)} & \textcolor{blue}{(F1,5)} & \textcolor{blue}{(F1,6)} \\\hline
+	 		\textcolor{green!60!black}{(F2,1)} & \textcolor{green!60!black}{(F2,2)} & \textcolor{green!60!black}{(F2,3)} & \textcolor{cyan!80!black}{(F2,4)} & \textcolor{cyan!80!black}{(F2,5)} & \textcolor{cyan!80!black}{(F2,6)} \\
+	 		\hline
+	 	\end{tabular}
+	 	\caption{
+	 		Example of a block structure of the $(NCH) \times (NNL \times NCH)$ matrix for $NCH=2$, $NNL=3$.
+	 		Each entry is of the form $(\mathrm{index}_\mathrm{row}, \mathrm{index}_\mathrm{col})$.
+	 		Text color highlights the four $3\times3$ channel ($\alpha$, $\alpha'$) blocks: (1,1) in red, (1,2) in blue, (2,1) in green, (2,2) in cyan.
+	 	}
+	 	\label{tab:example2}
+	 \end{table}
+	 \begin{table}[t]
+	 	\centering
+	 	\renewcommand{\arraystretch}{1.3}
+	 	\setlength{\tabcolsep}{6pt}
+	 	\begin{tabular}{|c|c|}
+	 		\hline
+	 		\textcolor{red}{(F1,F1)} & \textcolor{red}{(F1,F2)}  \\\hline
+	 		\textcolor{green!60!black}{(F2,F1)} & \textcolor{green!60!black}{(F2,F2)}\\
+	 		\hline
+	 	\end{tabular}
+	 	\caption{
+	 		Example of a block structure of the $(NCH) \times (NCH)$ matrix for $NCH=2$.
+	 		Each entry is of the form $(\mathrm{index}_\mathrm{row}, \mathrm{index}_\mathrm{col})$.
+	 		Text color highlights the four $3\times3$ channel ($\alpha$, $\alpha'$) blocks: (1,1) in red, (1,2) in blue, (2,1) in green, (2,2) in cyan.
+	 	}
+	 	\label{tab:example3}
+	 \end{table}
+	 
+	 \subsection*{Inverting the indexes}
+	 If we know the the value of NNL we can retrieve the channel and the Laguerre $n$ value.
+	 Reversing \eq{\eqref{fromNNLNCHtoINDEX}} we get
+	 \begin{equation}
+	 	\begin{cases}
+	 		i &= \left\lfloor\dfrac{k-1}{N_L}\right\rfloor+1\,,\\
+	 		j &= [(k-1)\mod N_L ]+1\,.
+	 	\end{cases}
+	 \end{equation}
+	 It is impossible though to do the same knowing only the column number NEQ.
+	 
+	 \section{Separating the potential integration and reassembling it}
+	 Here is a hopefully comprehensive description of the variational method used to fit a potential. Pre-evaluating a grid for all the radial functions of the potential and for all channels and then reassembling it changing the low-energy constants (LECs) of the potential.
+	 \\
+	 The potential is written as
+	 \begin{equation}
+	 	\hat{V}(r) = \sum_{o=\{\mtm{LO},\mtm{NLO},\mtm{N3LO}\}}\sum_{i=1}^{N_o},\
+	 	C_i^{(o)}\,\hat{O}_i\,
+	 	v_i^{(o)}(r)\,.
+	 	\label{potential_expanded}
+	 \end{equation}
+	 Where $N_o$ is the number of operators per potential order: 1 for LO, 8 for NLO and 14 for N3LO. 
+	 \begin{center}
+	 	\begin{tabular}{c|l}
+	 		\hline
+	 		order & terms\\\hline
+	 		LO & c \\
+	 		NLO & c, $\tau$, $\sigma$, $\sigma\tau$, 
+	 		$t$, $t\tau$, $b$, $T$\\
+	 		N3LO & c, $\tau$, $\sigma$, $\sigma\tau$, 
+	 		$t$, $t\tau$, $b$, $b\tau$, $bb$, $q$, $q\sigma$, $T$, $\sigma T$, $t T$, $b T$\\
+	 		\hline
+	 	\end{tabular}
+	 \end{center}
+	 Despite this number of operators, the number of radial functions is only 8, I call them $f_i(r)$ with $i=\{0,7\}$. Here
+	 \begin{equation}
+	 	f_0(r) \equiv C_R(r) = \frac{1}{\pi^{3/2}\,R^3}\,e^{-r^2/R^2}\,,
+	 \end{equation}
+	 where $R\equiv R_{ST}$ is the cutoff depending on the spin $S$ and isospin $T$. The other functions can be written as
+	 \begin{equation}
+	 	f_{i}(r) = g_i(r,R_{ST})\,f_0(r)\,,
+	 \end{equation}
+	 where $g_i(r,R)$ is a polynomial in $r$ and $g_0 = 1$.\\
+	 \newcommand{\LO}{\mtm{LO}}
+	 \newcommand{\NLO}{\mtm{NLO}}
+	 \newcommand{\NNNLO}{\mtm{N3LO}}
+	 \begin{table}[t]
+	 	\centering
+	 	\renewcommand{\arraystretch}{2.3} 
+	 	\begin{tabular}{|c|c|l|l|l|}
+	 		\hline
+	 		\rowcolor{yellow}
+	 		$f_i(r)$ & $g_i(r,R)$ & LO & NLO & N3LO \\\hline
+	 		$f_0(r)$ & 1 & $v_c$ & $v_T$ & \\
+	 		$f_1(r)$ & $\dfrac{6R^2-4r^2}{R^4}$ &  & $v_c$, $v_\tau$, $v_\sigma$, $v_{\sigma\tau}$ & $v_T$, $v_{\sigma T}$\\
+	 		$f_2(r)$ & $-\dfrac{4r^2}{R^4}$ & & $v_t$, $v_{t\tau}$ &  $v_{tT}$\\
+	 		$f_3(r)$ & $\dfrac{2}{R^2}$ &  & $v_b$ & $v_{bT}$\\
+	 		$f_4(r)$ & $4\,\dfrac{4R^4-20R^2r^2+15r^4}{R^8}$ &  & & $v_c$, $v_\tau$, $v_\sigma$, $v_{\sigma\tau}$\\
+	 		$f_5(r)$ & $8r^2\,\dfrac{2r^2-7R^2}{R^8}$ & & & $v_t$, $v_{t\tau}$\\
+	 		$f_6(r)$ & $4\,\dfrac{5R^2-2r^2}{R^6}$ & & & $v_b$, $v_{b\tau}$\\
+	 		$f_7(r)$ & $-\dfrac{4}{R^4}$ & & & $v_{bb}$, $v_q$, $v_{q\sigma}$,\\
+	 		\hline
+	 	\end{tabular}
+	 	\caption{The radial functions $v_i^{(o)}(r)$ associated with $f_i(r)$.}
+	 	\label{tab:functions}
+	 \end{table}
+	 A comprehensive connection between the $f_i$ and the $v_i^{(o)}$ as well as the value of each $g_i$ is given in Tab.~\ref{tab:functions}.
+	 
+	 
+	 \subsection{The potential matrix elements}
+	 In the program we need matrix elements of the type
+	 \begin{equation}
+	 	\matrixelement{\psi_\alpha}{\hat{V}(r)}{\psi_{\alpha'}}\,,
+	 \end{equation}
+	 where $\psi_\alpha$ can be a combination of core/asymptotic and regular/irregular. 
+	 The core functions for a specific channel are expanded as
+	 \begin{equation}
+	 	\psi_\alpha^c(r) = \sum_{n=0}^{N_L}\,\mathcal{L}_n(\gamma r)\ket{\alpha}\equiv \sum_n\,\ket{n\alpha}\,
+	 \end{equation}
+	 Where the $\mathcal{L}_n = A\,L_n^{(2)}(\gamma r)$ are normalized Laguerre functions. 
+	 The asymptotic functions are the modified Bessel functions 
+	 \begin{equation}
+	 	\psi_\alpha^{a, \mtm{R}} = \tilde{F}_L(kr)\,\ket{\alpha} \equiv \ket{F_\alpha}
+	 	\mand
+	 	\psi_\alpha^{a, \mtm{I}} = \tilde{G}_L(kr)\,\ket{\alpha}\equiv \ket{G_\alpha}\,,
+	 \end{equation}
+	 where R (I) stands for regular (irregular) and the modification is only for small values of $r$ and $k$, making them well behaved for these small values, but keeping them asymptotically indistinguishable (apart from a normalization constant) from $j_L(r)$ and $y_L(r)$.
+	 
+	 We have therefore 7 types of integrals to consider
+	 \begin{align}
+	 	\matrixelement{n'\alpha'}{\hat{V}(r)}{n\alpha} &= \int \de{r}r^2\,\mathcal{L}_{n'}(\gamma r)\,
+	 	\mathcal{L}_{n}(\gamma r)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{F_{\alpha'}}{\hat{V}(r)}{n\alpha} &= \int \de{r}r^2\,
+	 	F_{\alpha'}(kr)
+	 	\,\mathcal{L}_n(\gamma r)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{G_{\alpha'}}{\hat{V}(r)}{n\alpha} &= \int \de{r}r^2\,
+	 	G_{\alpha'}(kr)
+	 	\,\mathcal{L}_n(\gamma r)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{F_{\alpha'}}{\hat{V}(r)}{F_\alpha} &= \int \de{r}r^2\,F_{\alpha'}(kr)\,
+	 	F_{\alpha}(kr)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{F_{\alpha'}}{\hat{V}(r)}{G_\alpha} &= \int \de{r}r^2\,F_{\alpha'}(kr)\,
+	 	G_{\alpha}(kr)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{G_{\alpha'}}{\hat{V}(r)}{F_\alpha} &= \int \de{r}r^2\,G_{\alpha'}(kr)\,
+	 	F_{\alpha}(kr)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,,\\
+	 	\matrixelement{G_{\alpha'}}{\hat{V}(r)}{G_\alpha} &= \int \de{r}r^2\,G_{\alpha'}(kr)\,
+	 	G_{\alpha}(kr)\,
+	 	\matrixelement{\alpha'}{\hat{V}(r)}{\alpha}\,.
+	 \end{align}
+	 The first is an integral of the kind \textbf{core-core}, the second and the third are of the kind \textbf{asymptotic-core} and the last four of the kind \textbf{asymptotic-asymptotic}.\\
+	 Notice that, apart from the core-core ones, all the other integrals \textbf{depend on the scattering energy} through the momentum $k$.
+	 
+	 \subsection{Expansion of the potential in the integrals}
+	 We saw that the integrals have the form
+	 \begin{equation}
+	 	\matrixelement{A\alpha}{\hat{V}(r)}{B\beta}
+	 	=
+	 	\int \de{r}r^2\,A(r)\,
+	 	B(r)\,
+	 	\matrixelement{\alpha}{\hat{V}(r)}{\beta}\,.
+	 \end{equation}
+	 Since we need to do this kind of integrals thousands if not hundreds of thousands of times we want to store the most essential information we can.\\
+	 We start by expanding the potential as in \eq{\eqref{potential_expanded}}, obtaining
+	 \begin{equation}
+	 	\matrixelement{A\alpha}{\hat{V}(r)}{B\beta}
+	 	=
+	 	\sum_{o=\{\mtm{LO},\mtm{NLO},\mtm{N3LO}\}}\sum_{i=1}^{N_o}\
+	 	C_i^{(o)}\,
+	 	\matrixelement{\alpha}{\hat{O}_i}{\beta}
+	 	\int \de{r}r^2\,A_\alpha(r)\,
+	 	B_\beta(r)\,v_i^{(o)}(r)
+	 	\,.
+	 \end{equation}
+	 We know also that $v_i$ is one of the $f_i$ functions. Therefore the most basic integrals that we can perform once and store are of the kind
+	 \begin{equation}
+	 	\matrixelement{A_\alpha}{f_i}{B_\beta} =
+	 	\int_0^{r_\mtm{max}}\,
+	 	\de{r}r^2\,
+	 	A_\alpha(r)\,
+	 	f_i(r)\,
+	 	B_\beta(r)\,.
+	 	\label{generic_integrals}
+	 \end{equation}
+	 Apart from the core-core ones, these integrals depend on the scattering energy and on the channels $\alpha$ and $\beta$ and in general on the scattering channel, which defines what $\alpha$ and $\beta$ can be.
+	 
+	 \subsubsection{Example with $L=1$ and $S=1$ in $np$ scattering}
+	 In this case the possible channels for a $np$ scattering are three, $^3P_0$, $^3P_1$ and the coupled $^3P_2-{^3}F_2$ channels. For each channel we are interested in 20 energies, going up to 1 MeV. We want for each energy and for each channel to find the scattering phase shifts and mixing angles. \\
+	 We want to see how these change by changing the potential LECs, therefore we need to repeat this process $N=100$ times. Since the kinetic energy do not depend on the potential, we can evaluate it for each channel and energy once. 
+	 Same goes for the integrals in \eq{\eqref{generic_integrals}}.
+	 To store this information we need therefore several matrices. We declare them as 
+	 \begin{verbatim}
+	 	INTEGER, PARAMETER :: NCH = 3
+	 	INTEGER, PARAMETER :: NEQ = 2
+	 	INTEGER, PARAMETER :: NNL = 32
+	 	INTEGER, PARAMETER :: NALPHA = NNL*NEQ
+	 	DOUBLE PRECISION :: K_MINUS_E_CC   (NCH, NE, NALPHA, NALPHA)
+	 	DOUBLE PRECISION :: K_MINUS_E_AC_R (NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: K_MINUS_E_AC_I (NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: K_MINUS_E_AA_RR(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: K_MINUS_E_AA_RI(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: K_MINUS_E_AA_IR(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: K_MINUS_E_AA_II(NCH, NE, NEQ, NEQ)
+	 \end{verbatim}
+	 These integrals are
+	 \begin{align}
+	 	\texttt{K\_MINUS\_E\_CC(ich, ie, nalphap, nalpha)} &= \matrixelement{n'\alpha'}{\hat{K}-E}{n\alpha}\,,\\
+	 	\texttt{K\_MINUS\_E\_AC\_X(ich, ie, alphap, nalpha)} &= \matrixelement{X_{\alpha'}}{\hat{K}-E}{n\alpha}\,,\\
+	 	\texttt{K\_MINUS\_E\_AA\_XY(ich, ie, alphap, alpha)} &= \matrixelement{X_{\alpha'}}{\hat{K}-E}{Y_\alpha}\,,
+	 \end{align}
+	 where $X,\,Y$ could be $F$ or $G$.
+	 Here we have to evaluate
+	 \begin{align}
+	 	N_{ch} \,N_{E}\,\left(
+	 	N_\alpha^2 +2 N_{eq}\,N_\alpha + 4 N_{eq}^2
+	 	\right)
+	 	&=
+	 	N_{ch} \,N_{E}\,N_{eq}^2\left(
+	 	N_L^2 +2 N_L + 4
+	 	\right)\\
+	 	&=
+	 	3\times 20\times 2^2(32^2+2\times 32 +4)\\
+	 	&= 262\,080~\mtm{integrals}\,.
+	 \end{align}
+	 Each integral has a different number of points, depending 
+	 if it's a \textit{c-c}, an \textit{a-c} or an \textit{a-a }integral. The fact that we store them saves a factor $N=100$, because we won't do them every time we change potential.
+	 
+	 For the potential energy we can evaluate the integrals of $f_i$:
+	 \begin{verbatim}
+	 	DOUBLE PRECISION :: FMAT_CC   (0:7, NCH, NALPHA, NALPHA)
+	 	DOUBLE PRECISION :: FMAT_AC_R (0:7, NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: FMAT_AC_I (0:7, NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: FMAT_AA_RR(0:7, NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: FMAT_AA_RI(0:7, NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: FMAT_AA_IR(0:7, NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: FMAT_AA_II(0:7, NCH, NE, NEQ, NEQ)
+	 \end{verbatim}
+	 These integrals are
+	 \begin{align}
+	 \texttt{FMAT\_CC(i, ich, nalphap, nalpha)} &= \matrixelement{n'\alpha'}{f_i}{n\alpha}\,,\\
+	 \texttt{FMAT\_AC\_X(i, ich, ie, alphap, nalpha)} &= \matrixelement{X_{\alpha'}}{f_i}{n\alpha}\,,\\
+	 \texttt{FMAT\_AA\_XY(i, ich, ie, alphap, alpha)} &= \matrixelement{X_{\alpha'}}{f_i}{Y_\alpha}\,.
+	 \end{align}
+	 Once we have these integrands we can evaluate back the potential by combining them with the expectation value of the operators $\matrixelement{\alpha'}{\hat{O}_i}{\alpha}$ and the set of LECs we have chosen for that calculation and save them in 
+	 \begin{verbatim}
+	 	DOUBLE PRECISION :: VM_CC   (NCH, NE, NALPHA, NALPHA)
+	 	DOUBLE PRECISION :: VM_AC_R (NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: VM_AC_I (NCH, NE, NEQ, NALPHA)
+	 	DOUBLE PRECISION :: VM_AA_RR(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: VM_AA_RI(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: VM_AA_IR(NCH, NE, NEQ, NEQ)
+	 	DOUBLE PRECISION :: VM_AA_II(NCH, NE, NEQ, NEQ)
+	 \end{verbatim}
+	 
+	 
+	 
+\end{document}
