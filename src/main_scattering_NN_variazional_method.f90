@@ -100,7 +100,8 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   ENERGIES = (/ (I * HE, I = 1, NE) /)
 
   !> \brief Prepare the list of all physical channels.
-  CALL PREPARE_CHANNELS
+  CALL PREPARE_CHANNELS(2, 2, 0, CHANNELS)
+  NCH = SIZE(CHANNELS)
   CALL SET_ENERGIES(ENERGIES)
   CALL SET_CHANNELS(CHANNELS)
 
@@ -124,41 +125,5 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
       ENDDO
     ENDDO
   ENDDO
-
-CONTAINS
-  !> \brief Prepare the array of all physical scattering channels for the given quantum numbers.
-  !! Populates the CHANNELS array with all valid (L,S,J) combinations.
-  SUBROUTINE PREPARE_CHANNELS()
-    IMPLICIT NONE
-
-    INTEGER :: ICH
-
-    NCH = 0
-    DO L = 0, LMAX
-      DO S = 0, 1
-        DO J = ABS(L-S), MIN(L+S, JMAX)
-          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
-          IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
-          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
-          NCH = NCH + 1
-        ENDDO
-      ENDDO
-    ENDDO
-
-    ALLOCATE(CHANNELS(NCH))
-    ICH = 1
-    DO L = 0, LMAX
-      DO S = 0, 1
-        DO J = ABS(L-S), MIN(L+S, JMAX)
-          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
-          IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
-          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
-          CHANNELS(ICH) = CHANNEL
-          ICH = ICH + 1
-        ENDDO
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE PREPARE_CHANNELS
 
 END PROGRAM SCATTERING_NN_VARIATIONAL_METHOD

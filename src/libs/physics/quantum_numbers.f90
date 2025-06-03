@@ -39,7 +39,8 @@ MODULE QUANTUM_NUMBERS
     GET_CHANNEL_TZ, &
     IS_CHANNEL_COUPLED, &
     IS_PHYSICAL_CHANNEL, &
-    GET_CHANNEL_FROM_NAME
+    GET_CHANNEL_FROM_NAME, &
+    PREPARE_CHANNELS
 
 CONTAINS
   !> \brief Constructor for SCATTERING_CHANNEL.
@@ -484,6 +485,57 @@ CONTAINS
       CHANNEL%TZ = TZ
     ENDIF
   END FUNCTION GET_CHANNEL_FROM_NAME
+
+  !> @brief Prepares the list of physical scattering channels up to given quantum number limits.
+  !!
+  !! This subroutine generates all possible physical scattering channels for given maximum
+  !! orbital angular momentum (LMAX), total angular momentum (JMAX), and isospin projection (TZ).
+  !! It allocates and fills the output array CHANNELS with all valid channels, filtering out
+  !! unphysical combinations according to selection rules.
+  !!
+  !! @param[in]  LMAX      Maximum orbital angular momentum quantum number (L)
+  !! @param[in]  JMAX      Maximum total angular momentum quantum number (J)
+  !! @param[in]  TZ        Isospin projection quantum number
+  !! @param[out] CHANNELS  Allocated array of valid SCATTERING_CHANNEL objects
+  !!
+  !! The subroutine uses SET_CHANNEL to construct each channel and IS_PHYSICAL_CHANNEL to
+  !! filter out unphysical channels. Additional selection rules are applied to exclude
+  !! certain spin-triplet channels with L > J.
+  
+  SUBROUTINE PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: LMAX, JMAX, TZ
+    TYPE(SCATTERING_CHANNEL), ALLOCATABLE, INTENT(OUT) :: CHANNELS(:)
+    INTEGER :: ICH, NCH, L, S, J
+    TYPE(SCATTERING_CHANNEL) :: CHANNEL
+
+
+    NCH = 0
+    DO L = 0, LMAX
+      DO S = 0, 1
+        DO J = ABS(L-S), MIN(L+S, JMAX)
+          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+          IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
+          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
+          NCH = NCH + 1
+        ENDDO
+      ENDDO
+    ENDDO
+
+    ALLOCATE(CHANNELS(NCH))
+    ICH = 1
+    DO L = 0, LMAX
+      DO S = 0, 1
+        DO J = ABS(L-S), MIN(L+S, JMAX)
+          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+          IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
+          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
+          CHANNELS(ICH) = CHANNEL
+          ICH = ICH + 1
+        ENDDO
+      ENDDO
+    ENDDO
+  END SUBROUTINE PREPARE_CHANNELS
 
   ! FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(FILENAME) RESULT(CHANNELS)
   !   IMPLICIT NONE
