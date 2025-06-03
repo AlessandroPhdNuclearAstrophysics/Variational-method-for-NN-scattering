@@ -25,10 +25,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   
   TYPE(LECS_EFT_PLESS), EXTERNAL :: READ_LECS_EFT_PLESS
   LOGICAL, EXTERNAL :: FILE_EXISTS
-
-  stop
-
-
+stop
   !---------------------------------------------------------------------------
   ! Prepare the list of channels based on the specified maximum angular momentum
   ! (LMAX), maximum total angular momentum (JMAX), and isospin projection (TZ).
@@ -60,8 +57,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
 
   CALL SET_DYNAMIC(.TRUE.)
   CALL SET_CHANNELS(CHANNELS)
-  CALL SET_NEW_LECS(LEC_15)
-
+  
   PRINT *, REPEAT("=", 80)
   DO ICH = 1, NCHANNELS
     WRITE(*,*) 'Processing channel: ', TRIM(GET_CHANNEL_NAME(CHANNELS(ICH)))
@@ -74,6 +70,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       END DO
       CALL SET_ENERGIES(ENERGIES)
       ENERGIES_SET = .TRUE.
+      CALL SET_NEW_LECS(LEC_15)
     END IF
     DO I = 1, NE
       WRITE(*, '(F10.4, 3F10.4)') RESULTS(I)%E, RESULTS(I)%PHASES(1), RESULTS(I)%PHASES(2), RESULTS(I)%PHASES(3)
