@@ -1320,8 +1320,9 @@ CONTAINS
                 DO IPOT = 0, EFT_RADIAL_AC%ORDER
                   FUN (1) = ZERO
                   FUN1(1) = ZERO
-                  FUN(2:)  = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+                  FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
                   FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+                  
                   FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,FUN,1)
                   FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,FUN1,1)
                 ENDDO
@@ -1355,11 +1356,12 @@ CONTAINS
         
         IF (.NOT. USE_DYNAMIC) THEN ! DO NOT USE_DYNAMIC
           ! Store the matrix elements in the global arrays
-          H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM(1:NNN, 1:NEQ)
+          H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM (1:NNN, 1:NEQ)
           H_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AM1(1:NNN, 1:NEQ)
         ELSE ! USE_DYNAMIC
-          K_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AKEM1(1:NNN, 1:NEQ) / HTM
-          K_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AXXM1(1:NNN, 1:NEQ) / HTM
+          ! FOR THE REGULAR PART THE KINETIC ENERGY MINUS THE ENERGY IS ZERO
+          ! K_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = 0 
+          K_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) =( AKEM1(1:NNN, 1:NEQ) - AXXM1(1:NNN, 1:NEQ) ) / HTM
         ENDIF ! END USE_DYNAMIC
       ENDDO
     ENDDO
