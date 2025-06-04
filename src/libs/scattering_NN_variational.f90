@@ -78,7 +78,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   LOGICAL :: PRINT_I
 
   INTEGER :: LMAX=-1
-  LOGICAL :: TZ_SET = .FALSE., LMAX_SET = .FALSE.
+  LOGICAL :: TZ_SET = .FALSE., LMAX_SET = .FALSE., PREPARE = .TRUE.
 
   ! Channels analyzed
   TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: CHANNELS_(:)
@@ -421,7 +421,7 @@ CONTAINS
   LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS
   TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
 
-  LOGICAL :: PRINT_C, FIRST_CALL = .TRUE., PREPARE = .TRUE.
+  LOGICAL :: PRINT_C, FIRST_CALL = .TRUE.
 ! VARIABLES AND PARAMETERS FOR DGESV
   DOUBLE PRECISION, ALLOCATABLE, SAVE :: CAR(:,:), CAI(:,:)
   DOUBLE PRECISION, ALLOCATABLE, SAVE :: CARR(:), CAII(:)
@@ -445,6 +445,8 @@ CONTAINS
 
 ! S-MATRIX
   DOUBLE COMPLEX :: SMAT(NCH_MAX, NCH_MAX)
+
+  IF (NEW_LECS .AND. USE_DYNAMIC) FIRST_CALL = .TRUE.
 
   FIRST_CALL = FIRST_CALL .OR. IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP)
   IF (.NOT.POTENTIAL_SET) THEN
@@ -515,14 +517,12 @@ CONTAINS
   IE = FIND_ENERGY_INDEX(E)
 
   IF (USE_DYNAMIC .AND. NEW_LECS) THEN
+    WRITE(*,*) "Combining the CC potential"
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
+    WRITE(*,*) "Combining the AC potential (real part)"
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
+    WRITE(*,*) "Combining the AC potential (imaginary part)"
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
-    
     
     H_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN)   = K_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN) &
                                                 + VM_CC(CH_INDEX, IE, 1:NNN, 1:NNN)
@@ -530,16 +530,6 @@ CONTAINS
                                                 + VM_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)
     H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) = K_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) &
                                                 + VM_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)
-    H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RR(CH_INDEX, IE, :, :) &
-                                              + VM_AA_RR(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_RI(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RI(CH_INDEX, IE, :, :) &
-                                              + VM_AA_RI(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_IR(CH_INDEX, IE, :, :) &
-                                              + VM_AA_IR(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_II(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_II(CH_INDEX, IE, :, :) &
-                                              + VM_AA_II(CH_INDEX, IE, :, :)
-
-    NEW_LECS = .FALSE.
   ENDIF
 
   C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
@@ -581,6 +571,28 @@ CONTAINS
     CALL PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
     IF (PRINT_I) CALL PRINT_DIVIDER
     PREPARE = .FALSE.
+  ENDIF
+
+  IF (USE_DYNAMIC) THEN
+    WRITE(*,*) "Combining the AA potential (real part)"
+    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
+    WRITE(*,*) "Combining the AA potential (real-imaginary part)"
+    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
+    WRITE(*,*) "Combining the AA potential (imaginary-real part)"
+    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
+    WRITE(*,*) "Combining the AA potential (imaginary part)"
+    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
+    WRITE(*,*) "Finished combining potentials"    
+    H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RR(CH_INDEX, IE, :, :) &
+                                              + VM_AA_RR(CH_INDEX, IE, :, :)
+    H_MINUS_E_AA_RI(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RI(CH_INDEX, IE, :, :) &
+                                              + VM_AA_RI(CH_INDEX, IE, :, :)
+    H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_IR(CH_INDEX, IE, :, :) &
+                                              + VM_AA_IR(CH_INDEX, IE, :, :)
+    H_MINUS_E_AA_II(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_II(CH_INDEX, IE, :, :) &
+                                              + VM_AA_II(CH_INDEX, IE, :, :)
+
+    NEW_LECS = .FALSE.
   ENDIF
 
   ARR = H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)
@@ -1640,6 +1652,8 @@ CONTAINS
     CALL SET_M_T1Z_T2Z_HTM(VAR_P%TZ)
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
+    IF (BESSELS_SET) RETURN
+
     WRITE(*,*)'PREPARING BESSEL FUNCTIONS'
 
     KK = DSQRT(ENERGIES_/HTM)
@@ -1705,8 +1719,8 @@ CONTAINS
         ENDDO
         !$OMP END PARALLEL DO
       ENDDO
-      BESSELS_SET = .TRUE.
     ENDDO
+    BESSELS_SET = .TRUE.
 
     WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
@@ -2013,6 +2027,7 @@ CONTAINS
     ENDIF
     IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
       NEW_CUTOFFS = .TRUE.
+      IF (USE_DYNAMIC) PREPARE = .TRUE.
     ELSE
       NEW_CUTOFFS = .FALSE.
     ENDIF
@@ -2028,16 +2043,6 @@ CONTAINS
       CALL GET_EFT_RADIAL_FUNCTIONS(XX_AC, LECS%RC, EFT_RADIAL_AC, ORDER_POTENTIAL = LECS%ORDER)
       CALL GET_EFT_RADIAL_FUNCTIONS(XX_AA, LECS%RC, EFT_RADIAL_AA, ORDER_POTENTIAL = LECS%ORDER)
       POTENTIAL_SET = .TRUE.
-      IF (.NOT.BESSELS_SET) THEN
-        CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-      ENDIF
-      IF (.NOT.LAGUERRE_SET) THEN
-        CALL PREPARE_LAGUERRE
-      ENDIF
-      CALL PREPARE_CORE_CORE_MATRIX_ELEMENTS
-      CALL PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
-      CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-      WRITE(*,*) "NEW POTENTIAL FUNCTIONS AND THEIR INTEGRALS EVALUATED"
     ENDIF
     NEW_LECS = .TRUE.
   END SUBROUTINE SET_NEW_LECS
@@ -2127,6 +2132,7 @@ CONTAINS
     NEW_LECS        = .TRUE.
     TZ_SET          = .FALSE.
     LMAX_SET        = .FALSE.
+    PREPARE         = .TRUE. 
 
     ! Reset integer and real variables
     NCH         = 0

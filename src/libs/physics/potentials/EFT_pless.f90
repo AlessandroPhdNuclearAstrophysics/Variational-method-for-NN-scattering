@@ -740,23 +740,26 @@ CONTAINS
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     DOUBLE PRECISION, INTENT(IN) :: FR_MATRIX_EL(:,:,:,:,:)
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
-    DOUBLE PRECISION :: POTENTIAL_OUT(:,:,:,:)
+    DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: POTENTIAL_OUT(:,:,:,:)
     INTEGER :: ORDER_, IORDER, N_OPERATORS, NIT_OPERATORS, IOP
-    INTEGER :: S, T, LS1(2,2), LS2(2,2)
-    INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA, NALPHA, NEQ, NEQ_MAX, NNL
+    INTEGER :: S, T, LS1(2,2), LS2(2,2), L2(2,2), T12
+    DOUBLE PRECISION :: S12(2,2)
+    INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA, NALPHAL, NALPHAR, NEQ, NEQ_MAX, NNLL, NNLR
     INTEGER :: IL, IR, AR, AL, NL, NR
     INTEGER :: SL, SR, TL, TR
 
-    POTENTIAL_OUT(ICH,:,IL,IR) = 0.D0
     ORDER_ = LECS_IN%ORDER
     IF (ORDER_ /= 0 .AND. ORDER_ /= 1 .AND. ORDER_ /= 3) THEN
       STOP "ERROR IN COMBINE_POTENTIAL: ORDER must be 0, 1, or 3"
     END IF
+    CALL REALLOCATE_4D_1(POTENTIAL_OUT, SIZE(CHANNELS), SIZE(FR_MATRIX_EL, 3), SIZE(FR_MATRIX_EL, 4), SIZE(FR_MATRIX_EL, 5))
 
     NCHANNELS = SIZE(CHANNELS)
-    NALPHA = SIZE(FR_MATRIX_EL, 5)
+    NALPHAL = SIZE(FR_MATRIX_EL, 4)
+    NALPHAR = SIZE(FR_MATRIX_EL, 5)
     NEQ_MAX = 2
-    NNL = NALPHA / NEQ_MAX
+    NNLL = NALPHAL / NEQ_MAX
+    NNLR = NALPHAR / NEQ_MAX
     DO ICH = 1, NCHANNELS
       S12 = S12_OPERATOR(CHANNELS(ICH))
       LS1 = LS_OPERATOR(CHANNELS(ICH))
@@ -769,10 +772,11 @@ CONTAINS
       IL = 0
       DO AL = 1, NEQ
       DO AR = 1, NEQ
-      DO NL = 1, NNL
-      DO NR = 1, NNL
-        IR = IR + 1
-        IL = IL + 1
+      DO NL = 1, NNLL
+      DO NR = 1, NNLR
+        IL = (AL-1)*NNLL + NL
+        IR = (AR-1)*NNLR + NR
+        ! IF (ICH.EQ.1) WRITE(*,*) AL, NL, AR, NR,  "|", IR, IL
 
         SL = GET_CHANNEL_S(CHANNELS(ICH), AL)
         TL = GET_CHANNEL_T(CHANNELS(ICH), AL)
@@ -783,7 +787,7 @@ CONTAINS
         T = TL
 
         IF ( S==0 .AND. T==0 ) THEN
-          SELECT CASE (ORDER)
+          SELECT CASE (ORDER_)
           CASE (0)
             RETURN
           CASE (1)
@@ -794,12 +798,13 @@ CONTAINS
                       + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,ICH,:,IL,IR) * I2(AL,AR) &
                       + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ICH,:,IL,IR) * L2(AL,AR)
           CASE DEFAULT
-            STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
+            WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=0 AND T=0, ORDER: ", ORDER_
+            STOP
           END SELECT
         ENDIF
 
         IF ( S==1 .AND. T==0 ) THEN
-          SELECT CASE (ORDER)
+          SELECT CASE (ORDER_)
           CASE (0)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
           CASE (1)
@@ -821,12 +826,13 @@ CONTAINS
                       + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,ICH,:,IL,IR) * LS2(AL,AR) &
                       + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,ICH,:,IL,IR) * L2(AL,AR)
           CASE DEFAULT
-            STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
+            WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=1 AND T=0, ORDER: ", ORDER_
+            STOP
           END SELECT
         ENDIF
 
         IF ( S==0 .AND. T==1 ) THEN
-          SELECT CASE (ORDER)
+          SELECT CASE (ORDER_)
           CASE (0)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
           CASE (1)
@@ -844,12 +850,13 @@ CONTAINS
                       + LECS_IN%CN3LO(10)* FR_MATRIX_EL(8,ICH,:,IL,IR)     * L2(AL,AR) &
                       + LECS_IN%CIT(1)   * FR_MATRIX_EL(2,ICH,:,IL,IR)     * T12 * I2(AL,AR)
           CASE DEFAULT
-            STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
+            WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=0 AND T=1, ORDER: ", ORDER_
+            STOP
           END SELECT
         ENDIF
 
         IF ( S==1 .AND. T==1 ) THEN
-          SELECT CASE (ORDER)
+          SELECT CASE (ORDER_)
           CASE (0)
             RETURN
           CASE (1)
@@ -873,14 +880,15 @@ CONTAINS
                       LECS_IN%CIT(4) * FR_MATRIX_EL(4,ICH,:,IL,IR)    * LS1(AL,AR) &
                                                             ) * T12
           CASE DEFAULT
-            STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
+            WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=1 AND T=1, ORDER: ", ORDER_
+            STOP
           END SELECT
         ENDIF
       ENDDO ! IR
       ENDDO ! IL
       ENDDO ! AR
       ENDDO ! AL
-    ENDDO
+    ENDDO ! ICH
   END SUBROUTINE COMBINE_POTENTIAL
 
 END MODULE EFT_PLESS

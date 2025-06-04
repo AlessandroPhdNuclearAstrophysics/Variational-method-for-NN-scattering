@@ -35,6 +35,7 @@ SUBROUTINE REALLOCATE_1D_1(A1, N)
     DEALLOCATE(A1)
     ALLOCATE(A1(N))
   END IF
+  A1 = 0.0D0  ! Initialize the array to zero
 END SUBROUTINE
 
 !> \brief Allocate or reallocate a 1D INTEGER array.
@@ -234,6 +235,7 @@ SUBROUTINE REALLOCATE_2D_1(A1, N1, N2)
     IF (ALLOCATED(A1)) DEALLOCATE(A1)
     ALLOCATE(A1(N1, N2))
   END IF
+  A1 = 0.0D0  ! Initialize the array to zero
 END SUBROUTINE
 
 !> \brief Allocate or reallocate two 2D DOUBLE PRECISION arrays.
@@ -430,6 +432,7 @@ SUBROUTINE REALLOCATE_3D_1(A1, N1, N2, N3)
     IF (ALLOCATED(A1)) DEALLOCATE(A1)
     ALLOCATE(A1(N1, N2, N3))
   END IF
+  A1 = 0.0D0  ! Initialize the array to zero
 END SUBROUTINE
 
 ! -------- 4D --------
@@ -446,6 +449,7 @@ SUBROUTINE REALLOCATE_4D_1(A1, N1, N2, N3, N4)
     IF (ALLOCATED(A1)) DEALLOCATE(A1)
     ALLOCATE(A1(N1, N2, N3, N4))
   END IF
+  A1 = 0.0D0  ! Initialize the array to zero
 END SUBROUTINE
 
 END MODULE REALLOCATE_UTILS
