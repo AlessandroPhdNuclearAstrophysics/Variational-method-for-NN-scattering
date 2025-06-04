@@ -607,6 +607,17 @@ CONTAINS
   ENDDO
   ENDDO
 
+  CALL RANDOM_SEED()
+  CALL RANDOM_NUMBER(DELTA1)
+  IAB = 100 + INT(DELTA1 * 101)
+  WRITE(IAB, '(E25.15)') C
+  WRITE(IAB+1,'(E25.15)') CAR
+  WRITE(IAB+2,'(E25.15)') CAI
+  WRITE(IAB+3,'(E25.15)') ARR
+  WRITE(IAB+4,'(E25.15)') ARI
+  WRITE(IAB+5,'(E25.15)') AIR
+  WRITE(IAB+6,'(E25.15)') AII
+
 
 
   AMM = AM
@@ -1508,19 +1519,19 @@ CONTAINS
               FUN2(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
               FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
 
-              FMAT_AA_RR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN2,1)
               FMAT_AA_RI(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN,1)
               FMAT_AA_IR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN1,1)
+              FMAT_AA_RR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN2,1)
               FMAT_AA_II(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN3,1)
             ENDDO
           ENDIF
 
       ! SI CALCOLA HAMILTONIANA PER I VARI CASI:REGOLARE-IRREGOLARE(AM), IRREGOLARE-REGOLARE(AM1),
       !         REGOLARE-REGOLARE(AM2),IRREGOLARE-IRREGOLARE(AM3)
-          AM   (IAB,IAK) = (AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) / HTM
-          AM1  (IAB,IAK) =  APEM1(IAB,IAK) / HTM
-          AM2  (IAB,IAK) =  APEM2(IAB,IAK) / HTM
-          AM3  (IAB,IAK) = (AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK)) / HTM
+          AM   (IAB,IAK) = (AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) / HTM    ! RI
+          AM1  (IAB,IAK) =  APEM1(IAB,IAK) / HTM                                ! IR
+          AM2  (IAB,IAK) =  APEM2(IAB,IAK) / HTM                                ! RR              
+          AM3  (IAB,IAK) = (AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK)) / HTM ! II
 
           CHECK(IAB,IAK) = (AM1(IAB,IAK)-AM(IAB,IAK))
         ENDDO !IAB
@@ -1531,8 +1542,8 @@ CONTAINS
           H_MINUS_E_AA_IR(ICH, IE, :, :) = AM1
           H_MINUS_E_AA_II(ICH, IE, :, :) = AM3
         ELSE ! USE_DYNAMIC
-          K_MINUS_E_AA_RR(ICH, IE, :, :) = (AKEM - AXXM) / HTM
-          K_MINUS_E_AA_RI(ICH, IE, :, :) =  0.D0
+          K_MINUS_E_AA_RR(ICH, IE, :, :) =  0.D0
+          K_MINUS_E_AA_RI(ICH, IE, :, :) = (AKEM - AXXM) / HTM
           K_MINUS_E_AA_IR(ICH, IE, :, :) =  0.D0
           K_MINUS_E_AA_II(ICH, IE, :, :) = (AKEM3 - AXXM3) / HTM
         ENDIF ! ENDIF USE_DYNAMIC
