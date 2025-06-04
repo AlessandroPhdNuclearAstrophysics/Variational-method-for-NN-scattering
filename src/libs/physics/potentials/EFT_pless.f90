@@ -789,7 +789,7 @@ CONTAINS
         IF ( S==0 .AND. T==0 ) THEN
           SELECT CASE (ORDER_)
           CASE (0)
-            RETURN
+            POTENTIAL_OUT(ICH,:,IL,IR) = 0.D0
           CASE (1)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
           CASE (3)
@@ -858,7 +858,7 @@ CONTAINS
         IF ( S==1 .AND. T==1 ) THEN
           SELECT CASE (ORDER_)
           CASE (0)
-            RETURN
+            POTENTIAL_OUT(ICH,:,IL,IR) = 0.D0
           CASE (1)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,ICH,:,IL,IR) *  I2(AL,AR) &
                   + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12(AL,AR) &
