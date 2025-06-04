@@ -35,7 +35,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   ! Print the total number of channels to standard output for verification.
   !---------------------------------------------------------------------------
   IPOT = 19
-  ILB = 1
+  ILB = 6
 
   ! LMAX = 1  !if not 0, doesn't work
   LMAX = 2
@@ -77,8 +77,8 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
 
     S = GET_CHANNEL_S(CHANNELS(ICH),1)
     T = GET_CHANNEL_T(CHANNELS(ICH),1)
-    IF ( S==0 .AND. T==0 .OR. S==1 .AND. T==1 ) CYCLE
-    
+    IF ( (S==0 .AND. T==0 .OR. S==1 .AND. T==1) .AND. ILB < 6 ) CYCLE
+
     CALL PRINT_SCATTERING_CHANNEL(CHANNELS(ICH))
 
     DO I = 1, NE
@@ -97,7 +97,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
 
   !========================================================================================
 
-  LEC_15 = READ_LECS_EFT_PLESS(1)
+  LEC_15 = READ_LECS_EFT_PLESS(ILB)
   CALL PRINT_LECS(LEC_15)
 
   CALL SET_DYNAMIC(.TRUE.)
@@ -120,7 +120,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
 
     S = GET_CHANNEL_S(CHANNELS(ICH),1)
     T = GET_CHANNEL_T(CHANNELS(ICH),1)
-    IF ( S==0 .AND. T==0 .OR. S==1 .AND. T==1 ) CYCLE
+    IF ( (S==0 .AND. T==0 .OR. S==1 .AND. T==1) .AND. ILB < 6 ) CYCLE
     ! DO I = 1, NE
     !   WRITE(*, '(F10.4, 3F10.4)') RESULTS(I)%E, RESULTS(I)%PHASES(1), RESULTS(I)%PHASES(2), RESULTS(I)%PHASES(3)
     ! END DO

@@ -1136,7 +1136,7 @@ CONTAINS
             POT_MATRIX(ICH,IB,IK) = SUM/GAMMA
           ELSE
             ! FILL FOR CALCULATING DYNAMIC POTENTIAL ENERGY
-            DO IPOT=0, EFT_RADIAL_CC%ORDER
+            DO IPOT=0, ORDER_TO_NMAX(EFT_RADIAL_CC%ORDER)
               SUM = ZERO
               INTEGRAND = V0_CC(IL,:)*V0_CC(IR,:)*EFT_RADIAL_CC%FR_I(S,T,IPOT,:)
               DO I=1,NX
@@ -1302,7 +1302,7 @@ CONTAINS
                 APE1 = B5_SINGLE(NX,H5,FUN1,1)
                 APEM1(IB,IAK) = APE1
               ELSE
-                DO IPOT = 0, EFT_RADIAL_AC%ORDER
+                DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
                   FUN (1) = ZERO
                   FUN1(1) = ZERO
                   FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
@@ -1503,7 +1503,7 @@ CONTAINS
             ENDIF
           ELSE
             ! FILL HERE TO CALCULATE DYNAMIC POTENTIAL ENERGY
-            DO IPOT = 0, EFT_RADIAL_AA%ORDER
+            DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AA%ORDER)
               FUN (1) = ZERO
               FUN1(1) = ZERO
               FUN2(1) = ZERO
@@ -1557,6 +1557,24 @@ CONTAINS
     DEALLOCATE(AM, AM1, AM2, AM3)
 
   END SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
+ 
+  FUNCTION ORDER_TO_NMAX(ORDER) RESULT(N)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ORDER
+    INTEGER :: N
+
+    SELECT CASE (ORDER)
+      CASE (0)
+        N = 0
+      CASE (1)
+        N = 4
+      CASE (3)
+        N = 7
+      CASE DEFAULT
+        PRINT *, "Error: Invalid order for EFT radial function"
+        STOP
+    END SELECT
+  END FUNCTION ORDER_TO_NMAX
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Print a divider line to the output.

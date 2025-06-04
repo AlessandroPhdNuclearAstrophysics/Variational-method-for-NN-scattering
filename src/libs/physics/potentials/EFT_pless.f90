@@ -791,9 +791,9 @@ CONTAINS
           CASE (0)
             POTENTIAL_OUT(ICH,:,IL,IR) = 0.D0
           CASE (1)
-            POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
+            POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR)
           CASE (3)
-            POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
+            POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,ICH,:,IL,IR) * I2(AL,AR) &
                       + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ICH,:,IL,IR) * L2(AL,AR)
@@ -860,7 +860,8 @@ CONTAINS
           CASE (0)
             POTENTIAL_OUT(ICH,:,IL,IR) = 0.D0
           CASE (1)
-            POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,ICH,:,IL,IR) *  I2(AL,AR) &
+            POTENTIAL_OUT(ICH,:,IL,IR) = &
+                  + LECS_IN%CNLO(4)         * FR_MATRIX_EL(2,ICH,:,IL,IR) *  I2(AL,AR) &
                   + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12(AL,AR) &
                   + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,ICH,:,IL,IR) *  LS1(AL,AR) &
                   + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,ICH,:,IL,IR) *  T12 * I2(AL,AR)
