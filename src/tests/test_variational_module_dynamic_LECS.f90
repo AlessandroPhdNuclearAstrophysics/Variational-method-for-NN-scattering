@@ -20,7 +20,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   INTEGER :: ICH, IE, NE, IPOT = -1, ILB = -1, LEMP = 0
   DOUBLE PRECISION :: E
   TYPE(PHASE_SHIFT_RESULT) :: PHASE_SHIFTS
-  INTEGER :: J, L, S
+  INTEGER :: J, L, S, T
   LOGICAL :: PRINT_COEFFICIENTS = .FALSE., ENERGIES_SET = .FALSE.
   
   TYPE(LECS_EFT_PLESS), EXTERNAL :: READ_LECS_EFT_PLESS
@@ -34,14 +34,18 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   ! Allocate the FILE_NAMES array to store file names for each channel.
   ! Print the total number of channels to standard output for verification.
   !---------------------------------------------------------------------------
+  IPOT = 19
+  ILB = 1
+
+  ! LMAX = 1  !if not 0, doesn't work
   LMAX = 0
-  JMAX = 0
+  JMAX = 1
   CALL PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
   NCHANNELS = SIZE(CHANNELS)
   ALLOCATE(FILE_NAMES(NCHANNELS))
   PRINT *, 'Number of channels:', NCHANNELS 
 
-    !========================================================================================
+  !========================================================================================
 
 
   
@@ -70,24 +74,28 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       CALL SET_CHANNELS(CHANNELS)
       ENERGIES_SET = .TRUE.
     END IF
+
+    S = GET_CHANNEL_S(CHANNELS(ICH),1)
+    T = GET_CHANNEL_T(CHANNELS(ICH),1)
+    IF ( S==0 .AND. T==0 .OR. S==1 .AND. T==1 ) CYCLE
+    
     CALL PRINT_SCATTERING_CHANNEL(CHANNELS(ICH))
 
     DO I = 1, NE
-      IF (I /= 1) CYCLE
       E =  ENERGIES(I)
       J = GET_CHANNEL_J(CHANNELS(ICH))
       L = GET_CHANNEL_L(CHANNELS(ICH),1)
       S = GET_CHANNEL_S(CHANNELS(ICH),1)
       TZ = GET_CHANNEL_TZ(CHANNELS(ICH))
-      CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, 19, 1, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
-      WRITE(20, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+      CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
+      WRITE(20+ICH, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
     ENDDO
   ENDDO
 
-    call RESET_SCATTERING_NN_VARIATIONAL
-    ENERGIES_SET = .FALSE.
+  CALL RESET_SCATTERING_NN_VARIATIONAL
+  ENERGIES_SET = .FALSE.
 
-    !========================================================================================
+  !========================================================================================
 
   LEC_15 = READ_LECS_EFT_PLESS(1)
   CALL PRINT_LECS(LEC_15)
@@ -109,20 +117,23 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       CALL SET_NEW_LECS(LEC_15)
       CALL SET_CHANNELS(CHANNELS)
     END IF
+
+    S = GET_CHANNEL_S(CHANNELS(ICH),1)
+    T = GET_CHANNEL_T(CHANNELS(ICH),1)
+    IF ( S==0 .AND. T==0 .OR. S==1 .AND. T==1 ) CYCLE
     ! DO I = 1, NE
     !   WRITE(*, '(F10.4, 3F10.4)') RESULTS(I)%E, RESULTS(I)%PHASES(1), RESULTS(I)%PHASES(2), RESULTS(I)%PHASES(3)
     ! END DO
     CALL PRINT_SCATTERING_CHANNEL(CHANNELS(ICH))
 
     DO I = 1, NE
-      IF (I /= 1) CYCLE
       E =  ENERGIES(I)
       J = GET_CHANNEL_J(CHANNELS(ICH))
       L = GET_CHANNEL_L(CHANNELS(ICH),1)
       S = GET_CHANNEL_S(CHANNELS(ICH),1)
       TZ = GET_CHANNEL_TZ(CHANNELS(ICH))
-      CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
-      WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+      CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, -1, -1, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
+      WRITE(30+ICH, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
     ENDDO
   ENDDO
 

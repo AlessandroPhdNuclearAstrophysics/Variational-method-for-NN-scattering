@@ -527,17 +527,15 @@ CONTAINS
     VM_AC_R = VM_AC_R / HTM
     VM_AC_I = VM_AC_I / HTM
     
-    H_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN)   = K_MINUS_E_CC(CH_INDEX, IE, 1:NNN, 1:NNN) &
-                                                + VM_CC(CH_INDEX, IE, 1:NNN, 1:NNN)
-    H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH) = K_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH) &
-                                                + VM_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)
-    H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) = K_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH) &
-                                                + VM_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)
+    H_MINUS_E_CC   = K_MINUS_E_CC + VM_CC
+    H_MINUS_E_AC_R = K_MINUS_E_AC_R + VM_AC_R
+    H_MINUS_E_AC_I = K_MINUS_E_AC_I + VM_AC_I
   ENDIF
 
   C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
   CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
   CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
+  
   IF (PRINT_I) CALL PRINT_DIVIDER
 
   DO IAK=1, NCH
@@ -576,7 +574,7 @@ CONTAINS
     PREPARE = .FALSE.
   ENDIF
 
-  IF (USE_DYNAMIC) THEN
+  IF (USE_DYNAMIC .AND. NEW_LECS) THEN
     WRITE(*,*) "Combining the AA potential (real part)"
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
     WRITE(*,*) "Combining the AA potential (real-imaginary part)"
@@ -590,14 +588,10 @@ CONTAINS
     VM_AA_IR = VM_AA_IR / HTM
     VM_AA_II = VM_AA_II / HTM
     WRITE(*,*) "Finished combining potentials"    
-    H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RR(CH_INDEX, IE, :, :) &
-                                              + VM_AA_RR(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_RI(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_RI(CH_INDEX, IE, :, :) &
-                                              + VM_AA_RI(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_IR(CH_INDEX, IE, :, :) &
-                                              + VM_AA_IR(CH_INDEX, IE, :, :)
-    H_MINUS_E_AA_II(CH_INDEX, IE, :, :)       = K_MINUS_E_AA_II(CH_INDEX, IE, :, :) &
-                                              + VM_AA_II(CH_INDEX, IE, :, :)
+    H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
+    H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
+    H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
+    H_MINUS_E_AA_II = K_MINUS_E_AA_II + VM_AA_II
 
     NEW_LECS = .FALSE.
   ENDIF
@@ -613,19 +607,6 @@ CONTAINS
     AN(IAB,IAK)=BD2(IAK,IAB)+BD3(IAB,IAK)+2.D0*AIR(IAB,IAK)
   ENDDO
   ENDDO
-
-  CALL RANDOM_SEED()
-  CALL RANDOM_NUMBER(DELTA1)
-  IAB = 100 + INT(DELTA1 * 101)
-  WRITE(IAB, '(E25.15)') C
-  WRITE(IAB+1,'(E25.15)') CAR
-  WRITE(IAB+2,'(E25.15)') CAI
-  WRITE(IAB+3,'(E25.15)') ARR
-  WRITE(IAB+4,'(E25.15)') ARI
-  WRITE(IAB+5,'(E25.15)') AIR
-  WRITE(IAB+6,'(E25.15)') AII
-
-
 
   AMM = AM
   RMAT =-AN
@@ -934,6 +915,10 @@ CONTAINS
     !> \brief Calculate phase shifts and mixing angle in the Blatt-Biedenharn convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT()
       IMPLICIT NONE
+      IF (RMAT2(1,2) /= ZERO .AND. RMAT2(1,1) == RMAT2(2,2)) THEN
+        PRINT *, "Error: RMAT2 is singular in CALCULATE_PHASE_SHIFTS_BLATT"
+        STOP
+      ENDIF
       AMIXR=0.5D0*ATAN(2.*RMAT2(1,2)/(RMAT2(1,1)-RMAT2(2,2)))
       AMIXG=(AMIXR*180.D0)/PI
 
@@ -2142,7 +2127,7 @@ CONTAINS
     TZ_SET          = .FALSE.
     LMAX_SET        = .FALSE.
     PREPARE         = .TRUE. 
-    POTENTIAL_SET   = .FALSE.
+    NEW_LECS        = .FALSE.
 
     ! Reset integer and real variables
     NCH         = 0
