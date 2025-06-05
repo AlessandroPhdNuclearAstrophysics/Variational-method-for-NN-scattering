@@ -794,8 +794,8 @@ CONTAINS
           CASE (3)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
-                      + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ICH,:,IL,IR) * L2C(AL,AR)
+                      + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(5,ICH,:,IL,IR) * I2(AL,AR) &
+                      + LECS_IN%CN3LO(10) * FR_MATRIX_EL(8,ICH,:,IL,IR) * L2C(AL,AR)
           CASE DEFAULT
             WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=0 AND T=0, ORDER: ", ORDER_
             STOP
