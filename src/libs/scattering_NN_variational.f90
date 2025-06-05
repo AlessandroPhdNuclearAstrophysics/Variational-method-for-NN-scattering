@@ -1051,6 +1051,11 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND(:)
     INTEGER :: SL, SR, TL, TR, T, S
 
+    IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.LAGUERRE_SET) THEN
+      PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
+      STOP
+    ENDIF
+
     GAMMA = VAR_P%GAMMA
     NNL = VAR_P%NNL
 
@@ -1076,6 +1081,14 @@ CONTAINS
       ENDDO
     ENDDO
 
+    WRITE(*,*) "Preparing core-core matrix elements for channels: ", NCHANNELS
+
+    IF (USE_DYNAMIC) THEN
+      WRITE(*,*) "Using dynamic potential for core-core matrix elements"
+    ELSE
+      WRITE(*,*) "Using static potential for core-core matrix elements"
+    ENDIF
+    
     DO ICH = 1, NCHANNELS
       NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
 
@@ -1190,6 +1203,11 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:)
     INTEGER, SAVE :: COMMON_INDEX(NCH_MAX, NNE)
 
+    IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
+      PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
+      STOP
+    ENDIF
+
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_I, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_2D_1(AM, NNN_MAX, NCH_MAX)
@@ -1222,6 +1240,12 @@ CONTAINS
     CALL REALLOCATE_1D_2(FUN, FUN1, NX+1)
 
 
+    WRITE(*,*) "Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
+    IF (USE_DYNAMIC) THEN
+      WRITE(*,*) "Using dynamic potential for asymptotic-core matrix elements"
+    ELSE
+      WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
+    ENDIF
     ! Evaluate the matrix elements
     H_MINUS_E_AC_R = ZERO
     H_MINUS_E_AC_I = ZERO
@@ -1378,6 +1402,11 @@ CONTAINS
     INTEGER, SAVE :: NX
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:), FUN2(:), FUN3(:)
 
+    IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
+      PRINT *, "Error: Energies, grid or Bessel functions not set in PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS"
+      STOP
+    ENDIF
+
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_IR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_RI, NCHANNELS, NE, NCH_MAX, NCH_MAX)
@@ -1407,6 +1436,14 @@ CONTAINS
     CALL REALLOCATE_1D_4(FUN, FUN1, FUN2, FUN3, NX+1)
 
     IF (PRINT_I) WRITE(*,*)'FIRST AND LAST POINT =',XX_AA(1),XX_AA(NX)
+
+    WRITE(*,*) "Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
+
+    IF (USE_DYNAMIC) THEN
+      WRITE(*,*) "Using dynamic potential for asymptotic-asymptotic matrix elements"
+    ELSE
+      WRITE(*,*) "Using static potential for asymptotic-asymptotic matrix elements"
+    ENDIF
 
     !SI CALCOLANO ELEMENTI MATRICE
     DO ICH = 1, NCHANNELS
