@@ -35,8 +35,8 @@ MODULE EFT_PLESS
 
   !> \brief Structure for storing radial functions for a given cutoff and order.
   TYPE, PUBLIC :: EFT_RADIAL_FUNCTIONS
-    INTEGER :: ORDER
-    DOUBLE PRECISION :: RC(0:1,0:1)
+    INTEGER :: ORDER = -1
+    DOUBLE PRECISION :: RC(0:1,0:1) = 0.D0
     DOUBLE PRECISION, ALLOCATABLE :: FR_I(:,:,:,:)  ! FR_I(S, T, I, R)
   END TYPE EFT_RADIAL_FUNCTIONS
 
@@ -53,11 +53,11 @@ MODULE EFT_PLESS
   TYPE(SCATTERING_CHANNEL) :: CHANNEL
   INTEGER :: ORDER =-1
 
-  INTEGER          :: I2   (2,2)
-  INTEGER          :: LS   (2,2)
-  INTEGER          :: L2   (2,2)
-  DOUBLE PRECISION :: S12  (2,2)
-  INTEGER          :: T12
+  INTEGER, PARAMETER :: I2   (2,2) = RESHAPE([1,0,0,1], [2,2])
+  INTEGER            :: LS   (2,2)
+  INTEGER            :: L2   (2,2)
+  DOUBLE PRECISION   :: S12  (2,2)
+  INTEGER            :: T12
 
   PUBLIC :: EFT_PLESS_PW, LECS_TO_ST_LECS, ST_LECTS_TO_LECS
   PUBLIC :: SET_LECS, GET_LECS, PRINT_LECS
@@ -306,13 +306,7 @@ CONTAINS
   !> \brief Set up operator matrices for the current channel.
   SUBROUTINE SET_OPERATORS()
     IMPLICIT NONE
-    INTEGER :: I
-
-    I2 = 0
-    DO I=1, 2
-      I2(I,I) = 1
-    ENDDO
-
+    
     S12   = S12_OPERATOR(CHANNEL)
     LS    = LS_OPERATOR (CHANNEL)
     L2    = L2_OPERATOR (CHANNEL)

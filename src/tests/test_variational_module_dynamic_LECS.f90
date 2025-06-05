@@ -26,6 +26,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   TYPE(LECS_EFT_PLESS), EXTERNAL :: READ_LECS_EFT_PLESS
   LOGICAL, EXTERNAL :: FILE_EXISTS
 
+
   !---------------------------------------------------------------------------
   ! Prepare the list of channels based on the specified maximum angular momentum
   ! (LMAX), maximum total angular momentum (JMAX), and isospin projection (TZ).
@@ -36,7 +37,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   !---------------------------------------------------------------------------
   IPOT = 19
   ILB = 11
-
+  
   ! LMAX = 1  !if not 0, doesn't work
   LMAX = 2
   JMAX = 2
@@ -44,10 +45,11 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   NCHANNELS = SIZE(CHANNELS)
   ALLOCATE(FILE_NAMES(NCHANNELS))
   PRINT *, 'Number of channels:', NCHANNELS 
-
+  
   !========================================================================================
-
-
+  
+  
+  
   
   ! Loop over all scattering channels, construct file names, print info, and check file existence
   DO I=1, NCHANNELS
@@ -137,8 +139,6 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
     ENDDO
   ENDDO
 
-
-  
 
 CONTAINS
   SUBROUTINE READ_RESULTS_FROM_FILE(FILENAME, RES)

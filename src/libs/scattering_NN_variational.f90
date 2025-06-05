@@ -72,10 +72,10 @@ MODULE SCATTERING_NN_VARIATIONAL
   DOUBLE PRECISION, PARAMETER :: PI = 4*DATAN(ONE)
   DOUBLE COMPLEX,   PARAMETER :: IM = (ZERO, ONE)
 
-  DOUBLE PRECISION :: HTM, M
+  DOUBLE PRECISION :: HTM = 0, M = 0
   LOGICAL :: HTM_SET = .FALSE.
   INTEGER :: LC(NCH_MAX)
-  LOGICAL :: PRINT_I
+  LOGICAL :: PRINT_I = .FALSE.
 
   INTEGER :: LMAX=-1
   LOGICAL :: TZ_SET = .FALSE., LMAX_SET = .FALSE., PREPARE = .TRUE.
@@ -186,6 +186,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: SET_DYNAMIC
   PUBLIC :: SET_NEW_LECS
   PUBLIC :: RESET_SCATTERING_NN_VARIATIONAL
+  PUBLIC :: PRINT_ALL_DATA_IN_MODULE
 
   PRIVATE:: PRINT_DIVIDER
   PRIVATE:: SET_M_T1Z_T2Z_HTM
@@ -199,6 +200,158 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
+
+  SUBROUTINE PRINT_ALL_DATA_IN_MODULE(unit)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: unit
+    INTEGER :: i
+    CHARACTER(LEN=256) :: fname
+    
+    WRITE(fname, '(A,I0,A)') 'scattering_nn_variational_dump_unit', unit, '.txt'
+    OPEN(unit, FILE=TRIM(fname), STATUS='REPLACE', ACTION='WRITE')
+
+    WRITE(unit,*) '==== Module SCATTERING_NN_VARIATIONAL Dump ===='
+
+    ! Scalars
+    WRITE(unit,*) 'NCH =', NCH
+    WRITE(unit,*) 'NNN_MAX =', NNN_MAX
+    WRITE(unit,*) 'USE_DYNAMIC =', USE_DYNAMIC
+    WRITE(unit,*) 'HTM =', HTM
+    WRITE(unit,*) 'M =', M
+    WRITE(unit,*) 'HTM_SET =', HTM_SET
+    WRITE(unit,*) 'PRINT_I =', PRINT_I
+    WRITE(unit,*) 'LMAX =', LMAX
+    WRITE(unit,*) 'TZ_SET =', TZ_SET
+    WRITE(unit,*) 'LMAX_SET =', LMAX_SET
+    WRITE(unit,*) 'PREPARE =', PREPARE
+    WRITE(unit,*) 'NCHANNELS =', NCHANNELS
+    WRITE(unit,*) 'CHANNELS_SET =', CHANNELS_SET
+    WRITE(unit,*) 'GRID_SET =', GRID_SET
+    WRITE(unit,*) 'POTENTIAL_SET =', POTENTIAL_SET
+    WRITE(unit,*) 'IPOT_SET =', IPOT_SET
+    WRITE(unit,*) 'NE =', NE
+    WRITE(unit,*) 'ENERGIES_SET =', ENERGIES_SET
+    WRITE(unit,*) 'BESSELS_SET =', BESSELS_SET
+    WRITE(unit,*) 'LAGUERRE_SET =', LAGUERRE_SET
+    WRITE(unit,*) 'LECS_SET =', LECS_SET
+    WRITE(unit,*) 'NEW_LECS =', NEW_LECS
+    WRITE(unit,*) 'CH_INDEX =', CH_INDEX
+
+    ! Arrays and allocatables: print only sizes
+    WRITE(unit,*) 'LC: size =', SIZE(LC)
+
+    IF (ALLOCATED(CHANNELS_)) THEN
+      WRITE(unit,*) 'CHANNELS_ size =', SIZE(CHANNELS_)
+      DO i=1, SIZE(CHANNELS_)
+        WRITE(unit,*) '  CHANNELS_(',i,') = ', GET_CHANNEL_NAME(CHANNELS_(i))
+      END DO
+    END IF
+
+    WRITE(unit,*) 'CHANNEL: ', GET_CHANNEL_NAME(CHANNEL)
+
+    IF (ALLOCATED(XX_CC)) WRITE(unit,*) 'XX_CC size =', SIZE(XX_CC)
+    IF (ALLOCATED(YY_CC)) WRITE(unit,*) 'YY_CC size =', SIZE(YY_CC)
+    IF (ALLOCATED(XX_AC)) WRITE(unit,*) 'XX_AC size =', SIZE(XX_AC)
+    IF (ALLOCATED(XX_AA)) WRITE(unit,*) 'XX_AA size =', SIZE(XX_AA)
+    IF (ALLOCATED(A_CC))  WRITE(unit,*) 'A_CC size =', SIZE(A_CC)
+    IF (ALLOCATED(A_AC))  WRITE(unit,*) 'A_AC size =', SIZE(A_AC)
+    IF (ALLOCATED(A_AA))  WRITE(unit,*) 'A_AA size =', SIZE(A_AA)
+    IF (ALLOCATED(B_AA))  WRITE(unit,*) 'B_AA size =', SIZE(B_AA)
+    IF (ALLOCATED(AJ_AA)) WRITE(unit,*) 'AJ_AA size =', SIZE(AJ_AA)
+    IF (ALLOCATED(AJ_AC)) WRITE(unit,*) 'AJ_AC size =', SIZE(AJ_AC)
+    IF (ALLOCATED(YYL_AC))WRITE(unit,*) 'YYL_AC size =', SIZE(YYL_AC)
+
+    IF (ALLOCATED(V_CC))  WRITE(unit,*) 'V_CC size =', SHAPE(V_CC)
+    IF (ALLOCATED(V_AC))  WRITE(unit,*) 'V_AC size =', SHAPE(V_AC)
+    IF (ALLOCATED(V_AA))  WRITE(unit,*) 'V_AA size =', SHAPE(V_AA)
+
+    IF (ALLOCATED(ENERGIES_)) WRITE(unit,*) 'ENERGIES_ size =', SIZE(ENERGIES_)
+    IF (ALLOCATED(KK))       WRITE(unit,*) 'KK size =', SIZE(KK)
+    IF (ALLOCATED(K2))       WRITE(unit,*) 'K2 size =', SIZE(K2)
+
+    IF (ALLOCATED(FBES_AA))  WRITE(unit,*) 'FBES_AA size =', SHAPE(FBES_AA)
+    IF (ALLOCATED(FBES_AC))  WRITE(unit,*) 'FBES_AC size =', SHAPE(FBES_AC)
+    IF (ALLOCATED(GBES_AA))  WRITE(unit,*) 'GBES_AA size =', SHAPE(GBES_AA)
+    IF (ALLOCATED(GBES_AC))  WRITE(unit,*) 'GBES_AC size =', SHAPE(GBES_AC)
+    IF (ALLOCATED(GBES0_AA)) WRITE(unit,*) 'GBES0_AA size =', SHAPE(GBES0_AA)
+    IF (ALLOCATED(GBES1_AA)) WRITE(unit,*) 'GBES1_AA size =', SHAPE(GBES1_AA)
+    IF (ALLOCATED(GBES2_AA)) WRITE(unit,*) 'GBES2_AA size =', SHAPE(GBES2_AA)
+    IF (ALLOCATED(HNOR_AA))  WRITE(unit,*) 'HNOR_AA size =', SHAPE(HNOR_AA)
+
+    IF (ALLOCATED(V0_CC)) WRITE(unit,*) 'V0_CC size =', SHAPE(V0_CC)
+    IF (ALLOCATED(V1_CC)) WRITE(unit,*) 'V1_CC size =', SHAPE(V1_CC)
+    IF (ALLOCATED(V2_CC)) WRITE(unit,*) 'V2_CC size =', SHAPE(V2_CC)
+    IF (ALLOCATED(V0_AC)) WRITE(unit,*) 'V0_AC size =', SHAPE(V0_AC)
+    IF (ALLOCATED(V1_AC)) WRITE(unit,*) 'V1_AC size =', SHAPE(V1_AC)
+    IF (ALLOCATED(V2_AC)) WRITE(unit,*) 'V2_AC size =', SHAPE(V2_AC)
+
+    IF (ALLOCATED(H_MINUS_E_CC))    WRITE(unit,*) 'H_MINUS_E_CC size =', SHAPE(H_MINUS_E_CC)
+    IF (ALLOCATED(H_MINUS_E_AC_R))  WRITE(unit,*) 'H_MINUS_E_AC_R size =', SHAPE(H_MINUS_E_AC_R)
+    IF (ALLOCATED(H_MINUS_E_AC_I))  WRITE(unit,*) 'H_MINUS_E_AC_I size =', SHAPE(H_MINUS_E_AC_I)
+    IF (ALLOCATED(H_MINUS_E_AA_RR)) WRITE(unit,*) 'H_MINUS_E_AA_RR size =', SHAPE(H_MINUS_E_AA_RR)
+    IF (ALLOCATED(H_MINUS_E_AA_RI)) WRITE(unit,*) 'H_MINUS_E_AA_RI size =', SHAPE(H_MINUS_E_AA_RI)
+    IF (ALLOCATED(H_MINUS_E_AA_IR)) WRITE(unit,*) 'H_MINUS_E_AA_IR size =', SHAPE(H_MINUS_E_AA_IR)
+    IF (ALLOCATED(H_MINUS_E_AA_II)) WRITE(unit,*) 'H_MINUS_E_AA_II size =', SHAPE(H_MINUS_E_AA_II)
+
+    IF (ALLOCATED(K_MINUS_E_CC))    WRITE(unit,*) 'K_MINUS_E_CC size =', SHAPE(K_MINUS_E_CC)
+    IF (ALLOCATED(K_MINUS_E_AC_R))  WRITE(unit,*) 'K_MINUS_E_AC_R size =', SHAPE(K_MINUS_E_AC_R)
+    IF (ALLOCATED(K_MINUS_E_AC_I))  WRITE(unit,*) 'K_MINUS_E_AC_I size =', SHAPE(K_MINUS_E_AC_I)
+    IF (ALLOCATED(K_MINUS_E_AA_RR)) WRITE(unit,*) 'K_MINUS_E_AA_RR size =', SHAPE(K_MINUS_E_AA_RR)
+    IF (ALLOCATED(K_MINUS_E_AA_RI)) WRITE(unit,*) 'K_MINUS_E_AA_RI size =', SHAPE(K_MINUS_E_AA_RI)
+    IF (ALLOCATED(K_MINUS_E_AA_IR)) WRITE(unit,*) 'K_MINUS_E_AA_IR size =', SHAPE(K_MINUS_E_AA_IR)
+    IF (ALLOCATED(K_MINUS_E_AA_II)) WRITE(unit,*) 'K_MINUS_E_AA_II size =', SHAPE(K_MINUS_E_AA_II)
+
+    IF (ALLOCATED(VM_CC))    WRITE(unit,*) 'VM_CC size =', SHAPE(VM_CC)
+    IF (ALLOCATED(VM_AC_R))  WRITE(unit,*) 'VM_AC_R size =', SHAPE(VM_AC_R)
+    IF (ALLOCATED(VM_AC_I))  WRITE(unit,*) 'VM_AC_I size =', SHAPE(VM_AC_I)
+    IF (ALLOCATED(VM_AA_RR)) WRITE(unit,*) 'VM_AA_RR size =', SHAPE(VM_AA_RR)
+    IF (ALLOCATED(VM_AA_RI)) WRITE(unit,*) 'VM_AA_RI size =', SHAPE(VM_AA_RI)
+    IF (ALLOCATED(VM_AA_IR)) WRITE(unit,*) 'VM_AA_IR size =', SHAPE(VM_AA_IR)
+    IF (ALLOCATED(VM_AA_II)) WRITE(unit,*) 'VM_AA_II size =', SHAPE(VM_AA_II)
+
+    IF (ALLOCATED(FMAT_CC))    WRITE(unit,*) 'FMAT_CC size =', SHAPE(FMAT_CC)
+    IF (ALLOCATED(FMAT_AC_R))  WRITE(unit,*) 'FMAT_AC_R size =', SHAPE(FMAT_AC_R)
+    IF (ALLOCATED(FMAT_AC_I))  WRITE(unit,*) 'FMAT_AC_I size =', SHAPE(FMAT_AC_I)
+    IF (ALLOCATED(FMAT_AA_RR)) WRITE(unit,*) 'FMAT_AA_RR size =', SHAPE(FMAT_AA_RR)
+    IF (ALLOCATED(FMAT_AA_RI)) WRITE(unit,*) 'FMAT_AA_RI size =', SHAPE(FMAT_AA_RI)
+    IF (ALLOCATED(FMAT_AA_IR)) WRITE(unit,*) 'FMAT_AA_IR size =', SHAPE(FMAT_AA_IR)
+    IF (ALLOCATED(FMAT_AA_II)) WRITE(unit,*) 'FMAT_AA_II size =', SHAPE(FMAT_AA_II)
+
+    ! Dump types
+    WRITE(unit,*) 'VAR_P:'
+    WRITE(unit,*) '  J=', VAR_P%J, ' L=', VAR_P%L, ' S=', VAR_P%S, ' T=', VAR_P%T, ' TZ=', VAR_P%TZ
+    WRITE(unit,*) '  T1Z=', VAR_P%T1Z, ' T2Z=', VAR_P%T2Z, ' IPOT=', VAR_P%IPOT, ' ILB=', VAR_P%ILB, ' LEMP=', VAR_P%LEMP
+    WRITE(unit,*) '  E=', VAR_P%E, ' K=', VAR_P%K, ' HR1=', VAR_P%HR1, ' H=', VAR_P%H, ' RANGE=', VAR_P%RANGE
+    WRITE(unit,*) '  GAMMA=', VAR_P%GAMMA, ' EPS=', VAR_P%EPS, ' AF=', VAR_P%AF
+    WRITE(unit,*) '  NX_AA=', VAR_P%NX_AA, ' NX_AC=', VAR_P%NX_AC, ' NX_CC=', VAR_P%NX_CC, ' NNL=', VAR_P%NNL
+
+    WRITE(unit,*) 'LECS:'
+    WRITE(unit,*) '  ILB=', LECS%ILB, ' ORDER=', LECS%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    WRITE(unit,*) '  CLO(0:1)'
+    WRITE(unit,*) '  CNLO(7)'
+    WRITE(unit,*) '  CN3LO(11)'
+    WRITE(unit,*) '  CIT(0:4)'
+
+    WRITE(unit,*) 'EFT_RADIAL_CC:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_CC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_CC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_CC%FR_I)
+
+    WRITE(unit,*) 'EFT_RADIAL_AC:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_AC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AC%FR_I)
+
+    WRITE(unit,*) 'EFT_RADIAL_AA:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AA%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AA%FR_I)
+
+    CLOSE(unit)
+  END SUBROUTINE PRINT_ALL_DATA_IN_MODULE
+
+
 !> \ingroup scattering_nn_variational_mod
 !> \brief Set all variational parameters at once.
   !! \param[in] J    Total angular momentum
@@ -225,7 +378,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT
     INTEGER, OPTIONAL, INTENT(IN) :: T, NX_AA, NX_CC, NX_AC, NNL, ILB, LEMP
     DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
-
+    
     VAR_P%J     = J
     VAR_P%L     = L
     VAR_P%S     = S
@@ -265,7 +418,6 @@ CONTAINS
       VAR_P%T2Z =-1
     END SELECT
     CALL SET_M_T1Z_T2Z_HTM(TZ)
-
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS
 
   !> \ingroup scattering_nn_variational_mod
@@ -274,20 +426,20 @@ CONTAINS
   SUBROUTINE SET_ENERGIES(ENERGIES)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: ENERGIES(:)
-
+    
     NE = SIZE(ENERGIES)
     CALL REALLOCATE_1D_1(ENERGIES_, NE)
     ENERGIES_ = ENERGIES
     ENERGIES_SET = .TRUE.
     IF (CHANNELS_SET .AND. .NOT.BESSELS_SET .AND. HTM_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-  END SUBROUTINE SET_ENERGIES
+      END SUBROUTINE SET_ENERGIES
 
   SUBROUTINE SET_IPOT(IPOT)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: IPOT
-    VAR_P%IPOT = IPOT
+        VAR_P%IPOT = IPOT
     IPOT_SET = .TRUE.
-  END SUBROUTINE SET_IPOT
+      END SUBROUTINE SET_IPOT
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the scattering channels to be analyzed.
@@ -296,7 +448,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     INTEGER :: I1, I2
-
+    
     NCHANNELS = SIZE(CHANNELS)
     ALLOCATE(CHANNELS_(NCHANNELS))
     CHANNELS_ = CHANNELS
@@ -311,7 +463,7 @@ CONTAINS
     TZ_SET = .TRUE.
     LMAX_SET = .TRUE.
     IF (ENERGIES_SET .AND. .NOT.BESSELS_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-  END SUBROUTINE SET_CHANNELS
+      END SUBROUTINE SET_CHANNELS
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the number of Laguerre basis functions for the variational calculation.
@@ -319,8 +471,8 @@ CONTAINS
   SUBROUTINE SET_NNL(NNL)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NNL
-    VAR_P%NNL = NNL
-  END SUBROUTINE SET_NNL
+        VAR_P%NNL = NNL
+      END SUBROUTINE SET_NNL
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the exponential grid parameter AF.
@@ -328,8 +480,8 @@ CONTAINS
   SUBROUTINE SET_AF(AF)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: AF
-    VAR_P%AF = AF
-  END SUBROUTINE SET_AF
+        VAR_P%AF = AF
+      END SUBROUTINE SET_AF
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set all variational parameters for a single calculation (internal use).
@@ -338,7 +490,6 @@ CONTAINS
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: E
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
-
     WRITE(*,*) "Setting variational parameters..."
 
     VAR_P%J = J
@@ -389,7 +540,7 @@ CONTAINS
       NCH = 2
     ENDIF
     IF (PRINT_I) PRINT 5
-
+    
 
   5 FORMAT(30("-"))
  15 FORMAT(" ", A5, A5, A5, A5, A5, A5)
@@ -413,13 +564,13 @@ CONTAINS
   !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
   !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
   SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
-   PRINT_COEFFICIENTS, PRINT_INFORMATIONS)
+   PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET)
   IMPLICIT NONE
 ! INPUT PARAMETERS
   DOUBLE PRECISION, INTENT(IN) :: E
   INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
-  LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS
   TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
+  LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET
 
   LOGICAL :: PRINT_C, FIRST_CALL = .TRUE.
 ! VARIABLES AND PARAMETERS FOR DGESV
@@ -446,6 +597,27 @@ CONTAINS
 ! S-MATRIX
   DOUBLE COMPLEX :: SMAT(NCH_MAX, NCH_MAX)
 
+  IF (PRESENT(RESET)) THEN
+    IF (.NOT. RESET) RETURN
+    NNN = 0
+    IF (ALLOCATED(CAR)) DEALLOCATE(CAR)
+    IF (ALLOCATED(CAI)) DEALLOCATE(CAI)
+    IF (ALLOCATED(CARR)) DEALLOCATE(CARR)
+    IF (ALLOCATED(CAII)) DEALLOCATE(CAII)
+    IF (ALLOCATED(XRCOEFF)) DEALLOCATE(XRCOEFF)
+    IF (ALLOCATED(XICOEFF)) DEALLOCATE(XICOEFF)
+    IF (ALLOCATED(IPIV)) DEALLOCATE(IPIV)
+    IF (ALLOCATED(C)) DEALLOCATE(C)
+    IF (ALLOCATED(CC)) DEALLOCATE(CC)
+    IF (ALLOCATED(CCC)) DEALLOCATE(CCC)
+    IF (ALLOCATED(BD1)) DEALLOCATE(BD1)
+    IF (ALLOCATED(BD2)) DEALLOCATE(BD2)
+    IF (ALLOCATED(BD3)) DEALLOCATE(BD3)
+    IF (ALLOCATED(BD4)) DEALLOCATE(BD4)
+    CALL R_SECOND_ORDER
+    RETURN
+  ENDIF
+  
   IF (NEW_LECS .AND. USE_DYNAMIC) FIRST_CALL = .TRUE.
 
   FIRST_CALL = FIRST_CALL .OR. IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP)
@@ -693,7 +865,7 @@ CONTAINS
   PHASE_SHIFT%epsilon_S = AMIXGS
 
   IF (PRINT_I) WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
-
+  
   RETURN
 
   CONTAINS
@@ -738,6 +910,32 @@ CONTAINS
       DOUBLE PRECISION, ALLOCATABLE, SAVE :: RD0(:,:), RD2(:,:), RD3(:,:)
       DOUBLE PRECISION, ALLOCATABLE, SAVE :: ASS(:,:), RMAT2_ASYM(:,:)
 
+      IF (PRESENT(RESET)) THEN
+        IF (RESET) THEN
+          IF (ALLOCATED(XRCOEFV)) DEALLOCATE(XRCOEFV)
+          IF (ALLOCATED(XICOEFV)) DEALLOCATE(XICOEFV)
+          IF (ALLOCATED(BD5)) DEALLOCATE(BD5)
+          IF (ALLOCATED(BD6)) DEALLOCATE(BD6)
+          IF (ALLOCATED(RCI)) DEALLOCATE(RCI)
+          IF (ALLOCATED(RCIV)) DEALLOCATE(RCIV)
+          IF (ALLOCATED(CD0)) DEALLOCATE(CD0)
+          IF (ALLOCATED(CD1)) DEALLOCATE(CD1)
+          IF (ALLOCATED(CD2)) DEALLOCATE(CD2)
+          IF (ALLOCATED(CD3)) DEALLOCATE(CD3)
+          IF (ALLOCATED(CD4)) DEALLOCATE(CD4)
+          IF (ALLOCATED(CD5)) DEALLOCATE(CD5)
+          IF (ALLOCATED(CD6)) DEALLOCATE(CD6)
+          IF (ALLOCATED(CD7)) DEALLOCATE(CD7)
+          IF (ALLOCATED(CD8)) DEALLOCATE(CD8)
+          IF (ALLOCATED(RD0)) DEALLOCATE(RD0)
+          IF (ALLOCATED(RD2)) DEALLOCATE(RD2)
+          IF (ALLOCATED(RD3)) DEALLOCATE(RD3)
+          IF (ALLOCATED(ASS)) DEALLOCATE(ASS)
+          IF (ALLOCATED(RMAT2_ASYM)) DEALLOCATE(RMAT2_ASYM)
+          RETURN
+        ENDIF
+      ENDIF
+      
       IF (FIRST_CALL) THEN
         CALL REALLOCATE_2D_2(XRCOEFV, XICOEFV, NNN, NCH)
         CALL REALLOCATE_2D_2(BD5, BD6, NCH, NNN)
@@ -860,7 +1058,7 @@ CONTAINS
         RMAT2(IAB,IAK) =-0.5D0*( RMAT2_ASYM(IAB,IAK) + RMAT2_ASYM(IAK,IAB) )
       ENDDO
       ENDDO
-    END SUBROUTINE R_SECOND_ORDER
+          END SUBROUTINE R_SECOND_ORDER
 
     !> \brief Write coefficients to file to recreate the wave function.
     !! \param[in] FILE (optional) Output file name
@@ -915,7 +1113,7 @@ CONTAINS
     !> \brief Calculate phase shifts and mixing angle in the Blatt-Biedenharn convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT()
       IMPLICIT NONE
-      IF (RMAT2(1,2) /= ZERO .AND. RMAT2(1,1) == RMAT2(2,2)) THEN
+            IF (RMAT2(1,2) /= ZERO .AND. RMAT2(1,1) == RMAT2(2,2)) THEN
         PRINT *, "Error: RMAT2 is singular in CALCULATE_PHASE_SHIFTS_BLATT"
         STOP
       ENDIF
@@ -937,21 +1135,21 @@ CONTAINS
       IF (PRINT_I) WRITE(*,*)"SFASAMENTO1=",DELTA1G
       IF (PRINT_I) WRITE(*,*)"SFASAMENTO2=",DELTA2G
 
-    END SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT
+          END SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT
 
     !> \brief Calculate the S-matrix from the R-matrix.
     SUBROUTINE CALCULATE_S_MATRIX()
       IMPLICIT NONE
       DOUBLE PRECISION :: COS1, SIN1
       DOUBLE COMPLEX :: SM1, SM2
-      SM1  = CDEXP(2.D0*IM*DELTA1)
+            SM1  = CDEXP(2.D0*IM*DELTA1)
       SM2  = CDEXP(2.D0*IM*DELTA2)
       COS1 = COS(AMIXR)
       SIN1 = SIN(AMIXR)
       SMAT(1,1) = COS1*COS1*SM1 + SIN1*SIN1*SM2
       SMAT(2,2) = COS1*COS1*SM2 + SIN1*SIN1*SM1
       SMAT(1,2) = COS1*SIN1*(SM1 - SM2)
-    END SUBROUTINE CALCULATE_S_MATRIX
+          END SUBROUTINE CALCULATE_S_MATRIX
 
     !> \brief Calculate phase shifts and mixing angle in the Stapp convention.
     SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP()
@@ -1027,7 +1225,6 @@ CONTAINS
         ENDIF
       ENDIF
       AMIXGS = (0.5D0*DASIN(SI2E))*180.D0/PI
-
     END SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP
 
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
@@ -1055,7 +1252,7 @@ CONTAINS
       PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
-
+    
     GAMMA = VAR_P%GAMMA
     NNL = VAR_P%NNL
 
@@ -1180,7 +1377,7 @@ CONTAINS
     DEALLOCATE(INTEGRAND)
     DEALLOCATE(KIN_MATRIX, POT_MATRIX)
     DEALLOCATE(HCC, ENCC)
-  END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
+      END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-core matrix elements for the variational calculation.
@@ -1208,7 +1405,7 @@ CONTAINS
       STOP
     ENDIF
 
-    CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
+        CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_I, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_2D_1(AM, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_2D_1(AM1, NNN_MAX, NCH_MAX)
@@ -1372,13 +1569,13 @@ CONTAINS
           ! K_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = 0 
           K_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) =( AKEM1(1:NNN, 1:NEQ) - AXXM1(1:NNN, 1:NEQ) ) / HTM
         ENDIF ! END USE_DYNAMIC
-      ENDDO
-    ENDDO
+      ENDDO ! ICH
+    ENDDO ! IE
 
     DEALLOCATE(AM, AM1)
     DEALLOCATE(AXXM1, AKEM1, APEM, APEM1)
     DEALLOCATE(FUN, FUN1)
-    RETURN
+        RETURN
   END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
@@ -1407,7 +1604,7 @@ CONTAINS
       STOP
     ENDIF
 
-    CALL REALLOCATE_4D_1(H_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
+        CALL REALLOCATE_4D_1(H_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_IR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_RI, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_II, NCHANNELS, NE, NCH_MAX, NCH_MAX)
@@ -1593,7 +1790,6 @@ CONTAINS
 
     DEALLOCATE(FUN, FUN1, FUN2, FUN3)
     DEALLOCATE(AM, AM1, AM2, AM3)
-
   END SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
  
   FUNCTION ORDER_TO_NMAX(ORDER) RESULT(N)
@@ -1625,12 +1821,27 @@ CONTAINS
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
   !! \param[in] J, L, S, TZ, IPOT, ILB, LEMP
   !! \return .TRUE. if first call, .FALSE. otherwise
-  FUNCTION IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP) RESULT(FIRST_CALL)
+  FUNCTION IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP, RESET) RESULT(FIRST_CALL)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
+    LOGICAL, INTENT(IN), OPTIONAL :: RESET
     INTEGER :: JOLD = -1, LOLD = -1, SOLD = -1, TZOLD = -1, IPOTOLD = -1, ILBOLD = -1, LEMPOOLD = -1
     LOGICAL :: FIRST_CALL
 
+    IF (PRESENT(RESET)) THEN
+      IF (RESET) THEN
+        JOLD = -1
+        LOLD = -1
+        SOLD = -1
+        TZOLD = -1
+        IPOTOLD = -1
+        ILBOLD = -1
+        LEMPOOLD = -1
+        FIRST_CALL = .TRUE.
+        RETURN
+      ENDIF
+    ENDIF
+    
     ! Check if the current call is the first call based on the input parameters
     FIRST_CALL = ( J /= JOLD .OR. L /= LOLD .OR. S /= SOLD .OR. TZ /= TZOLD .OR. IPOT /= IPOTOLD .OR. &
                   ILB /= ILBOLD .OR. LEMP /= LEMPOOLD )
@@ -1643,7 +1854,7 @@ CONTAINS
       ILBOLD = ILB
       LEMPOOLD = LEMP
     ENDIF
-  END FUNCTION IS_FIRST_CALL
+      END FUNCTION IS_FIRST_CALL
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the radial grids for the calculation.
@@ -1654,7 +1865,7 @@ CONTAINS
     DOUBLE PRECISION :: RANGE, EPS, GAMMA
     DOUBLE PRECISION :: HR
 
-    ! A-A
+        ! A-A
     RANGE = VAR_P%RANGE
     CALL EXPONENTIALLY_GROWING_GRID(VAR_P%H, VAR_P%AF, RANGE, XX_AA, AJ_AA, NX)
     ALLOCATE(A_AA(NX), B_AA(NX))
@@ -1685,7 +1896,6 @@ CONTAINS
     GRID_SET = .TRUE.
 
     CALL PREPARE_LAGUERRE
-
   END SUBROUTINE PREPARE_GRID
 
   !> \ingroup scattering_nn_variational_mod
@@ -1709,7 +1919,7 @@ CONTAINS
       PRINT *, "Error: energies not set"
       STOP
     ENDIF
-
+    
     CALL SET_M_T1Z_T2Z_HTM(VAR_P%TZ)
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
@@ -1782,7 +1992,7 @@ CONTAINS
       ENDDO
     ENDDO
     BESSELS_SET = .TRUE.
-
+    
     WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
@@ -1851,7 +2061,7 @@ CONTAINS
       PRINT *, "Error: IPOT not set"
       RETURN
     ENDIF
-
+    
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     NC = SIZE(CHANNELS)
@@ -1941,7 +2151,7 @@ CONTAINS
 
     POTENTIAL_SET = .TRUE.
     ! stop
-
+    
   CONTAINS
     !> \brief Evaluate T1Z and T2Z from TZ.
     SUBROUTINE EVAL_T1Z_T2Z()
@@ -1971,7 +2181,7 @@ CONTAINS
     INTEGER :: I, J, NMX, NX
     DOUBLE PRECISION :: APF, GAMMA, XG, FEXP, ANJ
     DOUBLE PRECISION, ALLOCATABLE :: U0(:,:), U1(:,:), U2(:,:)
-
+    
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     NMX = VAR_P%NNL - 1
@@ -2086,7 +2296,7 @@ CONTAINS
       PRINT *, "Error: ENERGIES not set, first set them before calling SET_NEW_LECS"
       STOP
     ENDIF
-    IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
+        IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
       NEW_CUTOFFS = .TRUE.
       IF (USE_DYNAMIC) PREPARE = .TRUE.
     ELSE
@@ -2095,16 +2305,18 @@ CONTAINS
     LECS = LECS_NEW
     LECS_SET = .TRUE.
     NEW_LECS = .TRUE.
-  END SUBROUTINE SET_NEW_LECS
+      END SUBROUTINE SET_NEW_LECS
 
   !> \brief Reset the SCATTERING_NN_VARIATIONAL module to its initial state.
   !! This subroutine deallocates all allocatable arrays, resets logical flags,
   !! and restores all module variables to their default values.
   SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL()
     IMPLICIT NONE
+    TYPE(PHASE_SHIFT_RESULT) :: PSR
+    LOGICAL :: TMP
 
     WRITE(*,*) 'RESETTING SCATTERING_NN_VARIATIONAL MODULE'
-
+    
     ! Deallocate all allocatable arrays if allocated
     IF (ALLOCATED(CHANNELS_))      DEALLOCATE(CHANNELS_)
     IF (ALLOCATED(XX_CC))          DEALLOCATE(XX_CC)
@@ -2166,6 +2378,7 @@ CONTAINS
     IF (ALLOCATED(FMAT_AA_RI))     DEALLOCATE(FMAT_AA_RI)
     IF (ALLOCATED(FMAT_AA_IR))     DEALLOCATE(FMAT_AA_IR)
     IF (ALLOCATED(FMAT_AA_II))     DEALLOCATE(FMAT_AA_II)
+    CALL RESET_CHANNEL(CHANNEL)
 
     ! Reset logical flags
     USE_DYNAMIC     = .FALSE.
@@ -2183,7 +2396,7 @@ CONTAINS
     TZ_SET          = .FALSE.
     LMAX_SET        = .FALSE.
     PREPARE         = .TRUE. 
-    NEW_LECS        = .FALSE.
+    NEW_LECS        = .TRUE.
 
     ! Reset integer and real variables
     NCH         = 0
@@ -2211,8 +2424,11 @@ CONTAINS
     IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) DEALLOCATE(EFT_RADIAL_AA%FR_I)
     LECS = LECS_EFT_PLESS()
 
-    WRITE(*,*) 'SCATTERING_NN_VARIATIONAL MODULE RESET COMPLETED'
+    CALL NN_SCATTERING_VARIATIONAL(0.D0, 0, 0, 0, 0, 0, 0, 0, PSR, .FALSE., .FALSE., .TRUE.)
+    TMP = IS_FIRST_CALL(0,0,0,0,0,0,0,.TRUE.)
 
+    WRITE(*,*) 'SCATTERING_NN_VARIATIONAL MODULE RESET COMPLETED'
+        
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
 END MODULE SCATTERING_NN_VARIATIONAL
