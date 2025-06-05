@@ -776,7 +776,6 @@ CONTAINS
       DO NR = 1, NNLR
         IL = (AL-1)*NNLL + NL
         IR = (AR-1)*NNLR + NR
-        ! IF (ICH.EQ.1) WRITE(*,*) AL, NL, AR, NR,  "|", IR, IL
 
         SL = GET_CHANNEL_S(CHANNELS(ICH), AL)
         TL = GET_CHANNEL_T(CHANNELS(ICH), AL)

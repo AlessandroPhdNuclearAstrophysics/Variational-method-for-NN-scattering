@@ -35,7 +35,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   ! Print the total number of channels to standard output for verification.
   !---------------------------------------------------------------------------
   IPOT = 19
-  ILB = 15
+  ILB = 11
 
   ! LMAX = 1  !if not 0, doesn't work
   LMAX = 2
@@ -237,41 +237,10 @@ FUNCTION READ_LECS_EFT_PLESS(ID) RESULT(LECS)
   READ(UNIT, *, IOSTAT=IOS)
 
   DO
-    READ(UNIT, *, IOSTAT=IOS) (TMP(I), I=1, 30)
+    READ(UNIT, *, IOSTAT=IOS) LECS%ILB, LECS%RC(0,0), LECS%RC(1,0), LECS%RC(0,1), LECS%RC(1,1), LECS%CLO(1), LECS%CLO(0),&
+                 LECS%CNLO, LECS%CN3LO, LECS%CIT
     IF (IOS /= 0) EXIT
-    IF (INT(TMP(1)) == ID) THEN
-      LECS%ILB = INT(TMP(1))
-      LECS%RC(0,0) = TMP(2)
-      LECS%RC(1,0) = TMP(3)
-      LECS%RC(0,1) = TMP(4)
-      LECS%RC(1,1) = TMP(5)
-      LECS%CLO(1)  = TMP(6)
-      LECS%CLO(0)  = TMP(7)
-      LECS%CNLO(1) = TMP(8)
-      LECS%CNLO(2) = TMP(9)
-      LECS%CNLO(3) = TMP(10)
-      LECS%CNLO(4) = TMP(11)
-      LECS%CNLO(5) = TMP(12)
-      LECS%CNLO(6) = TMP(13)
-      LECS%CNLO(7) = TMP(14)
-      LECS%CN3LO(1) = TMP(15)
-      LECS%CN3LO(2) = TMP(16)
-      LECS%CN3LO(3) = TMP(17)
-      LECS%CN3LO(4) = TMP(18)
-      LECS%CN3LO(5) = TMP(19)
-      LECS%CN3LO(6) = TMP(20)
-      LECS%CN3LO(7) = TMP(21)
-      LECS%CN3LO(8) = TMP(22)
-      LECS%CN3LO(9) = TMP(23)
-      LECS%CN3LO(10) = TMP(24)
-      LECS%CN3LO(11) = TMP(25)
-      LECS%CIT(0) = TMP(26)
-      LECS%CIT(1) = TMP(27)
-      LECS%CIT(2) = TMP(28)
-      LECS%CIT(3) = TMP(29)
-      LECS%CIT(4) = TMP(30)
-      EXIT
-    END IF
+    IF (INT(LECS%ILB) == ID) EXIT
   END DO
   CLOSE(UNIT)
   IF (ID <= 5) LECS%ORDER = 0
