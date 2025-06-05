@@ -35,7 +35,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   ! Print the total number of channels to standard output for verification.
   !---------------------------------------------------------------------------
   IPOT = 19
-  ILB = 6
+  ILB = 15
 
   ! LMAX = 1  !if not 0, doesn't work
   LMAX = 2

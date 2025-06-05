@@ -742,8 +742,8 @@ CONTAINS
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
     DOUBLE PRECISION, ALLOCATABLE, INTENT(OUT) :: POTENTIAL_OUT(:,:,:,:)
     INTEGER :: ORDER_, IORDER, N_OPERATORS, NIT_OPERATORS, IOP
-    INTEGER :: S, T, LS1(2,2), LS2(2,2), L2(2,2), T12
-    DOUBLE PRECISION :: S12(2,2)
+    INTEGER :: S, T, LSC(2,2), LS2C(2,2), L2C(2,2), T12C
+    DOUBLE PRECISION :: S12C(2,2)
     INTEGER :: ICH, NCHANNELS, N, ALPHA, BETA, NALPHAL, NALPHAR, NEQ, NEQ_MAX, NNLL, NNLR
     INTEGER :: IL, IR, AR, AL, NL, NR
     INTEGER :: SL, SR, TL, TR
@@ -761,11 +761,11 @@ CONTAINS
     NNLL = NALPHAL / NEQ_MAX
     NNLR = NALPHAR / NEQ_MAX
     DO ICH = 1, NCHANNELS
-      S12 = S12_OPERATOR(CHANNELS(ICH))
-      LS1 = LS_OPERATOR(CHANNELS(ICH))
-      LS2 = MATMUL(LS1, LS1)
-      L2  = L2_OPERATOR(CHANNELS(ICH))
-      T12 = T12_OPERATOR(CHANNELS(ICH))
+      S12C = S12_OPERATOR(CHANNELS(ICH))
+      LSC = LS_OPERATOR(CHANNELS(ICH))
+      LS2C = MATMUL(LSC, LSC)
+      L2C  = L2_OPERATOR(CHANNELS(ICH))
+      T12C = T12_OPERATOR(CHANNELS(ICH))
       NEQ = GET_CHANNEL_NCH(CHANNELS(ICH))
 
       IR = 0
@@ -796,7 +796,7 @@ CONTAINS
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(1) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CN3LO(1)  * FR_MATRIX_EL(4,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ICH,:,IL,IR) * L2(AL,AR)
+                      + LECS_IN%CN3LO(10) * FR_MATRIX_EL(7,ICH,:,IL,IR) * L2C(AL,AR)
           CASE DEFAULT
             WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=0 AND T=0, ORDER: ", ORDER_
             STOP
@@ -811,20 +811,20 @@ CONTAINS
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,ICH,:,IL,IR) * S12(AL,AR) &
-                      + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,ICH,:,IL,IR) * LS1(AL,AR)
+                      + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,ICH,:,IL,IR) * S12C(AL,AR) &
+                      + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,ICH,:,IL,IR) * LSC(AL,AR)
           CASE (3)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CNLO(2) * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,ICH,:,IL,IR) * S12(AL,AR) &
-                      + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,ICH,:,IL,IR) * LS1(AL,AR)
+                      + LECS_IN%CNLO(5) * FR_MATRIX_EL(3,ICH,:,IL,IR) * S12C(AL,AR) &
+                      + LECS_IN%CNLO(7) * FR_MATRIX_EL(4,ICH,:,IL,IR) * LSC(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CN3LO(2) * FR_MATRIX_EL(5,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CN3LO(5) * FR_MATRIX_EL(6,ICH,:,IL,IR) * S12(AL,AR) &
-                      + LECS_IN%CN3LO(7) * FR_MATRIX_EL(7,ICH,:,IL,IR) * LS1(AL,AR) &
-                      + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,ICH,:,IL,IR) * LS2(AL,AR) &
-                      + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,ICH,:,IL,IR) * L2(AL,AR)
+                      + LECS_IN%CN3LO(5) * FR_MATRIX_EL(6,ICH,:,IL,IR) * S12C(AL,AR) &
+                      + LECS_IN%CN3LO(7) * FR_MATRIX_EL(7,ICH,:,IL,IR) * LSC(AL,AR) &
+                      + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,ICH,:,IL,IR) * LS2C(AL,AR) &
+                      + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,ICH,:,IL,IR) * L2C(AL,AR)
           CASE DEFAULT
             WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=1 AND T=0, ORDER: ", ORDER_
             STOP
@@ -839,16 +839,16 @@ CONTAINS
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CNLO(3)    * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CIT(0)     * FR_MATRIX_EL(1,ICH,:,IL,IR) * T12 * I2(AL,AR)
+                      + LECS_IN%CIT(0)     * FR_MATRIX_EL(1,ICH,:,IL,IR) * T12C * I2(AL,AR)
           CASE (3)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CLO(T) * FR_MATRIX_EL(1,ICH,:,IL,IR) * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CNLO(3)     * FR_MATRIX_EL(2,ICH,:,IL,IR) * I2(AL,AR) &
-                      + LECS_IN%CIT(0)      * FR_MATRIX_EL(1,ICH,:,IL,IR) * T12 * I2(AL,AR)
+                      + LECS_IN%CIT(0)      * FR_MATRIX_EL(1,ICH,:,IL,IR) * T12C * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) = POTENTIAL_OUT(ICH,:,IL,IR) &
                       + LECS_IN%CN3LO(3) * FR_MATRIX_EL(5,ICH,:,IL,IR)     * I2(AL,AR) &
-                      + LECS_IN%CN3LO(10)* FR_MATRIX_EL(8,ICH,:,IL,IR)     * L2(AL,AR) &
-                      + LECS_IN%CIT(1)   * FR_MATRIX_EL(2,ICH,:,IL,IR)     * T12 * I2(AL,AR)
+                      + LECS_IN%CN3LO(10)* FR_MATRIX_EL(8,ICH,:,IL,IR)     * L2C(AL,AR) &
+                      + LECS_IN%CIT(1)   * FR_MATRIX_EL(2,ICH,:,IL,IR)     * T12C * I2(AL,AR)
           CASE DEFAULT
             WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=0 AND T=1, ORDER: ", ORDER_
             STOP
@@ -862,24 +862,24 @@ CONTAINS
           CASE (1)
             POTENTIAL_OUT(ICH,:,IL,IR) = &
                   + LECS_IN%CNLO(4)         * FR_MATRIX_EL(2,ICH,:,IL,IR) *  I2(AL,AR) &
-                  + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12(AL,AR) &
-                  + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,ICH,:,IL,IR) *  LS1(AL,AR) &
-                  + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,ICH,:,IL,IR) *  T12 * I2(AL,AR)
+                  + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12C(AL,AR) &
+                  + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,ICH,:,IL,IR) *  LSC(AL,AR) &
+                  + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,ICH,:,IL,IR) *  T12C * I2(AL,AR)
           CASE (3)
             POTENTIAL_OUT(ICH,:,IL,IR) = LECS_IN%CNLO(4) * FR_MATRIX_EL(2,ICH,:,IL,IR) *  I2(AL,AR) &
-                  + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12(AL,AR) &
-                  + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,ICH,:,IL,IR) *  LS1(AL,AR) &
-                  + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,ICH,:,IL,IR) *  T12 * I2(AL,AR)
+                  + LECS_IN%CNLO(6)         * FR_MATRIX_EL(3,ICH,:,IL,IR) *  S12C(AL,AR) &
+                  + LECS_IN%CNLO(7)         * FR_MATRIX_EL(4,ICH,:,IL,IR) *  LSC(AL,AR) &
+                  + LECS_IN%CIT(0)          * FR_MATRIX_EL(1,ICH,:,IL,IR) *  T12C * I2(AL,AR)
             POTENTIAL_OUT(ICH,:,IL,IR) =   POTENTIAL_OUT(ICH,:,IL,IR) &
                   + LECS_IN%CN3LO(4) * FR_MATRIX_EL(5,ICH,:,IL,IR)    * I2(AL,AR) &
-                  + LECS_IN%CN3LO(6) * FR_MATRIX_EL(6,ICH,:,IL,IR)    * S12(AL,AR) &
-                  + LECS_IN%CN3LO(8) * FR_MATRIX_EL(7,ICH,:,IL,IR)    * LS1(AL,AR) &
-                  + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,ICH,:,IL,IR)    * LS2(AL,AR) &
-                  + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,ICH,:,IL,IR)    * L2(AL,AR) &
+                  + LECS_IN%CN3LO(6) * FR_MATRIX_EL(6,ICH,:,IL,IR)    * S12C(AL,AR) &
+                  + LECS_IN%CN3LO(8) * FR_MATRIX_EL(7,ICH,:,IL,IR)    * LSC(AL,AR) &
+                  + LECS_IN%CN3LO(9) * FR_MATRIX_EL(8,ICH,:,IL,IR)    * LS2C(AL,AR) &
+                  + LECS_IN%CN3LO(11)* FR_MATRIX_EL(8,ICH,:,IL,IR)    * L2C(AL,AR) &
                   +(  LECS_IN%CIT(2) * FR_MATRIX_EL(2,ICH,:,IL,IR)    * I2(AL,AR)  + &
-                      LECS_IN%CIT(3) * FR_MATRIX_EL(3,ICH,:,IL,IR)    * S12(AL,AR) + &
-                      LECS_IN%CIT(4) * FR_MATRIX_EL(4,ICH,:,IL,IR)    * LS1(AL,AR) &
-                                                            ) * T12
+                      LECS_IN%CIT(3) * FR_MATRIX_EL(3,ICH,:,IL,IR)    * S12C(AL,AR) + &
+                      LECS_IN%CIT(4) * FR_MATRIX_EL(4,ICH,:,IL,IR)    * LSC(AL,AR) &
+                                                            ) * T12C
           CASE DEFAULT
             WRITE(*,*) "ERROR IN EFT_PLESS_PW:: S=1 AND T=1, ORDER: ", ORDER_
             STOP
