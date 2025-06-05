@@ -36,7 +36,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   ! Print the total number of channels to standard output for verification.
   !---------------------------------------------------------------------------
   IPOT = 19
-  ILB = 11
+  ILB = 15
   
   ! LMAX = 1  !if not 0, doesn't work
   LMAX = 2
@@ -61,43 +61,6 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       WRITE(*,*) '            > File does not exist: ', TRIM(FILE_NAMES(I))
     END IF
   END DO
-
-  PRINT *, REPEAT("=", 80)
-  DO ICH = 1, NCHANNELS
-    WRITE(*,*) 'Processing channel: ', TRIM(GET_CHANNEL_NAME(CHANNELS(ICH)))
-    CALL READ_RESULTS_FROM_FILE(TRIM(FILE_NAMES(ICH)), RESULTS)
-    IF (.NOT.ENERGIES_SET) THEN
-      NE = SIZE(RESULTS)
-      CALL REALLOCATE_1D_1(ENERGIES, NE)
-      DO IE = 1, NE
-        ENERGIES(IE) = RESULTS(IE)%E
-      END DO
-      CALL SET_ENERGIES(ENERGIES)
-      CALL SET_CHANNELS(CHANNELS)
-      ENERGIES_SET = .TRUE.
-    END IF
-
-    S = GET_CHANNEL_S(CHANNELS(ICH),1)
-    T = GET_CHANNEL_T(CHANNELS(ICH),1)
-    IF ( (S==0 .AND. T==0 .OR. S==1 .AND. T==1) .AND. ILB < 6 ) CYCLE
-
-    CALL PRINT_SCATTERING_CHANNEL(CHANNELS(ICH))
-
-    DO I = 1, NE
-      E =  ENERGIES(I)
-      J = GET_CHANNEL_J(CHANNELS(ICH))
-      L = GET_CHANNEL_L(CHANNELS(ICH),1)
-      S = GET_CHANNEL_S(CHANNELS(ICH),1)
-      TZ = GET_CHANNEL_TZ(CHANNELS(ICH))
-      CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
-      WRITE(20+ICH, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
-    ENDDO
-  ENDDO
-
-  CALL RESET_SCATTERING_NN_VARIATIONAL
-  ENERGIES_SET = .FALSE.
-
-  !========================================================================================
 
   LEC_15 = READ_LECS_EFT_PLESS(ILB)
   CALL PRINT_LECS(LEC_15)
@@ -136,11 +99,45 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       TZ = GET_CHANNEL_TZ(CHANNELS(ICH))
       CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, -1, -1, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
       WRITE(30+ICH, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+      
+      ! Print energy and absolute percentage differences for all three on the same line
+      IF (I <= SIZE(RESULTS)) THEN
+        CALL print_diff_pct_line(E, PHASE_SHIFTS%delta1_S, RESULTS(I)%PHASES(1), &
+                                    PHASE_SHIFTS%delta2_S, RESULTS(I)%PHASES(2), &
+                                    PHASE_SHIFTS%epsilon_S, RESULTS(I)%PHASES(3))
+      END IF
+
     ENDDO
   ENDDO
 
 
 CONTAINS
+  SUBROUTINE print_diff_pct_line(E, val1, ref1, val2, ref2, val3, ref3)
+    IMPLICIT NONE
+    DOUBLE PRECISION, INTENT(IN) :: E, val1, ref1, val2, ref2, val3, ref3
+    DOUBLE PRECISION :: pct1, pct2, pct3
+    CHARACTER(LEN=*), PARAMETER :: RED = CHAR(27)//'[31m'
+    CHARACTER(LEN=*), PARAMETER :: RESET = CHAR(27)//'[0m'
+    pct1 = ABS(val1 - ref1) / MAX(1D-12, ABS(ref1)) * 100.0D0
+    pct2 = ABS(val2 - ref2) / MAX(1D-12, ABS(ref2)) * 100.0D0
+    pct3 = ABS(val3 - ref3) / MAX(1D-12, ABS(ref3)) * 100.0D0
+    IF (pct1 > 1.0D-2) THEN
+      WRITE(*,'(F10.3,1X,A,F20.12,A,1X)', ADVANCE='NO') E, RED, pct1, RESET
+    ELSE
+      WRITE(*,'(F10.3,1X,F20.12,1X)', ADVANCE='NO') E, pct1
+    END IF
+    IF (pct2 > 1.0D-2) THEN
+      WRITE(*,'(A,F20.12,A,1X)', ADVANCE='NO') RED, pct2, RESET
+    ELSE
+      WRITE(*,'(F20.12,1X)', ADVANCE='NO') pct2
+    END IF
+    IF (pct3 > 1.0D-2) THEN
+      WRITE(*,'(A,F20.12,A)') RED, pct3, RESET
+    ELSE
+      WRITE(*,'(F20.12)') pct3
+    END IF
+  END SUBROUTINE print_diff_pct_line
+
   SUBROUTINE READ_RESULTS_FROM_FILE(FILENAME, RES)
     IMPLICIT NONE
 

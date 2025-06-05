@@ -14,9 +14,9 @@ ifeq ($(DEBUG),1)
             -fdefault-real-8 -fdefault-double-8
 else
   FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
-           -Wall -g -O3 -march=native -funroll-loops -ftree-vectorize \
+           -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
            -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
-  LDFLAGS = -Wall -g -O3 -march=native -funroll-loops -ftree-vectorize \
+  LDFLAGS = -Wall -O3 -march=native -funroll-loops -ftree-vectorize \
             -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
 endif
 
