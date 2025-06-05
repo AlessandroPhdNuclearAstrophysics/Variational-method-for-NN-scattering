@@ -583,16 +583,6 @@ CONTAINS
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
     WRITE(*,*) "Combining the AA potential (imaginary part)"
     CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
-    if (USE_DYNAMIC) then
-      DO IAK = 1, NCHANNELS
-        WRITE(IAK*110 + 1,*) VM_AA_RI(IAK,1,:,:)
-        WRITE(IAK*110 + 2,*) VM_AA_IR(IAK,1,:,:)
-        WRITE(IAK*110 + 3,*) VM_AA_RR(IAK,1,:,:)
-        WRITE(IAK*110 + 4,*) VM_AA_II(IAK,1,:,:)
-      ENDDO
-    endif
-
-
     VM_AA_RR = VM_AA_RR / HTM
     VM_AA_RI = VM_AA_RI / HTM
     VM_AA_IR = VM_AA_IR / HTM
@@ -1541,12 +1531,6 @@ CONTAINS
           CHECK(IAB,IAK) = (AM1(IAB,IAK)-AM(IAB,IAK))
         ENDDO !IAB
         ENDDO !IAK
-        IF ( IE == 1 .and. .not. USE_DYNAMIC) THEN
-          WRITE(ICH*100 + 1,*) APEM 
-          WRITE(ICH*100 + 2,*) APEM1
-          WRITE(ICH*100 + 3,*) APEM2
-          WRITE(ICH*100 + 4,*) APEM3
-        END IF
         IF (.NOT.USE_DYNAMIC) THEN ! NOT USE_DYNAMIC
           H_MINUS_E_AA_RR(ICH, IE, :, :) = AM2
           H_MINUS_E_AA_RI(ICH, IE, :, :) = AM

@@ -306,23 +306,17 @@ CONTAINS
   !> \brief Set up operator matrices for the current channel.
   SUBROUTINE SET_OPERATORS()
     IMPLICIT NONE
-    INTEGER :: L, S, J, T, TZ, I
+    INTEGER :: I
 
     I2 = 0
     DO I=1, 2
       I2(I,I) = 1
     ENDDO
 
-    L = GET_CHANNEL_L (CHANNEL, 1)
-    S = GET_CHANNEL_S (CHANNEL, 1)
-    T = GET_CHANNEL_T (CHANNEL, 1)
-    TZ= GET_CHANNEL_TZ(CHANNEL)
-    J = GET_CHANNEL_J (CHANNEL)
-
-    S12   = S12_OPERATOR(L, S, J)
-    LS    = LS_OPERATOR (L, S, J)
-    L2    = L2_OPERATOR (L)
-    T12 = T12_OPERATOR       (T,TZ)
+    S12   = S12_OPERATOR(CHANNEL)
+    LS    = LS_OPERATOR (CHANNEL)
+    L2    = L2_OPERATOR (CHANNEL)
+    T12   = T12_OPERATOR(CHANNEL)
 
   END SUBROUTINE SET_OPERATORS
 
