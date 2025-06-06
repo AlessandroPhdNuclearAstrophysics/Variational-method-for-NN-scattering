@@ -107,7 +107,7 @@ CONTAINS
 
     CHANNEL%J = J
     DO ICH = 1, CHANNEL%NCH
-      CHANNEL%T(ICH) = EVALUATE_T(CHANNEL%L(ICH), CHANNEL%S(ICH), TZ)
+      CHANNEL%T(ICH) = EVALUATE_T(CHANNEL%L(ICH), CHANNEL%S(ICH))
     ENDDO
     CHANNEL%TZ = TZ
   END FUNCTION init_scattering_channel
@@ -117,8 +117,8 @@ CONTAINS
   !! \param[in] S Spin
   !! \param[in] TZ Isospin projection
   !! \return Isospin T
-  FUNCTION EVALUATE_T(L, S, TZ) RESULT(T)
-    INTEGER, INTENT(IN) :: L, S, TZ
+  FUNCTION EVALUATE_T(L, S) RESULT(T)
+    INTEGER, INTENT(IN) :: L, S
     INTEGER :: T
 
     ! Calculate T based on the values of J, L, S, and TZ
@@ -186,7 +186,7 @@ CONTAINS
       CALL REALLOCATE_1D_1_INT(CHANNEL%T, 1)
       CHANNEL%L(1) = L
       CHANNEL%S(1) = S
-      CHANNEL%T(1) = EVALUATE_T(L, S, TZ)
+      CHANNEL%T(1) = EVALUATE_T(L, S)
     ELSE
       IF ((L.EQ.(J-1) .OR. L.EQ.(J+1))) THEN
         CHANNEL%NCH = 2
@@ -197,8 +197,8 @@ CONTAINS
         CHANNEL%S(1) = S
         CHANNEL%L(2) = J+1
         CHANNEL%S(2) = S
-        CHANNEL%T(1) = EVALUATE_T(J-1, S, TZ)
-        CHANNEL%T(2) = EVALUATE_T(J+1, S, TZ)
+        CHANNEL%T(1) = EVALUATE_T(J-1, S)
+        CHANNEL%T(2) = EVALUATE_T(J+1, S)
         CHANNEL%COUPLED = .TRUE.
       ELSE
         CHANNEL%NCH = 1
@@ -207,7 +207,7 @@ CONTAINS
         CALL REALLOCATE_1D_1_INT(CHANNEL%T, 1)
         CHANNEL%L(1) = J
         CHANNEL%S(1) = S
-        CHANNEL%T(1) = EVALUATE_T(J, S, TZ)
+        CHANNEL%T(1) = EVALUATE_T(J, S)
       ENDIF
     ENDIF
   END SUBROUTINE SET_CHANNEL
@@ -480,10 +480,10 @@ CONTAINS
       CHANNEL%NCH = 2
       CHANNEL%L(1) = L(1)
       CHANNEL%S(1) = S(1)
-      CHANNEL%T(1) = EVALUATE_T(L(1), S(1), TZ)
+      CHANNEL%T(1) = EVALUATE_T(L(1), S(1))
       CHANNEL%L(2) = L(2)
       CHANNEL%S(2) = S(2)
-      CHANNEL%T(2) = EVALUATE_T(L(2), S(2), TZ)
+      CHANNEL%T(2) = EVALUATE_T(L(2), S(2))
       CHANNEL%COUPLED = .TRUE.
       CHANNEL%J = J
       CHANNEL%TZ = TZ

@@ -8,7 +8,6 @@ PROGRAM test_quantum_numbers_full
   CHARACTER(LEN=16) :: name, name2
   INTEGER :: L, S, J, T, TZ
   LOGICAL :: is_phys, is_coup, result
-  CHARACTER(LEN=64) :: msg
 
   ! For EXTRACT_CHANNELS_FROM_WHOLE_FILENAME tests
   CALL print_status("Comprehensive Test of QUANTUM_NUMBERS Module", .TRUE.)
@@ -265,7 +264,7 @@ CONTAINS
   SUBROUTINE test_l_combinations
     TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: channels(:)
     INTEGER, ALLOCATABLE :: lcomb(:,:)
-    INTEGER :: i, lmax, jmax, tz_ch, ncomb
+    INTEGER :: lmax, jmax, tz_ch, ncomb
 
     lmax = 2
     jmax = 2

@@ -1271,7 +1271,6 @@ CONTAINS
       ENDIF
     ENDIF
 
-    ENCC = ZERO
     DO IE =1, NE
       DO I = 1, NNN_MAX
         ENCC(IE,I,I) = ENERGIES_(IE)
@@ -1279,7 +1278,6 @@ CONTAINS
     ENDDO
 
     WRITE(*,*) "Preparing core-core matrix elements for channels: ", NCHANNELS
-
     IF (USE_DYNAMIC) THEN
       WRITE(*,*) "Using dynamic potential for core-core matrix elements"
     ELSE
@@ -1373,11 +1371,7 @@ CONTAINS
       ENDIF 
     ENDDO ! ICH
 
-    ! IF (PRINT_I) WRITE(*,*)'C-C MATRIX',HTM*AM(1,1)
-    DEALLOCATE(INTEGRAND)
-    DEALLOCATE(KIN_MATRIX, POT_MATRIX)
-    DEALLOCATE(HCC, ENCC)
-      END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
+  END SUBROUTINE PREPARE_CORE_CORE_MATRIX_ELEMENTS
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-core matrix elements for the variational calculation.
@@ -1392,23 +1386,21 @@ CONTAINS
     INTEGER :: IAB, IAK, LIK, IL, IB, LL, IPOT
     INTEGER :: SL, SR, TL, TR, S, T
     DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: AXXM1(:,:)
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: AKEM1(:,:)
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: APEM(:,:), APEM1(:,:)
 
-    DOUBLE PRECISION, ALLOCATABLE :: AM(:,:), AM1(:,:)
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: INTEGRAND(:)
     INTEGER, SAVE :: COMMON_INDEX(NCH_MAX, NNE)
+
+    INTEGER :: NCOMB
+    INTEGER, ALLOCATABLE :: LCOMBINATIONS(:,:)
+    DOUBLE PRECISION, ALLOCATABLE :: KIN_MIN_E(:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
       PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
 
-        CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
+    CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_I, NCHANNELS, NE, NNN_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM, NNN_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM1, NNN_MAX, NCH_MAX)
 
     IF (USE_DYNAMIC) THEN
       CALL REALLOCATE_4D_1(K_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
@@ -1428,14 +1420,32 @@ CONTAINS
       STOP
     ENDIF
 
-  ! Initialize grid with r values
-    IF (PRINT_I) WRITE(*,*)'NX =',NX
-    CALL REALLOCATE_2D_4(AXXM1, AKEM1, APEM, APEM1, NNN_MAX, NCH_MAX)
-    IF (PRINT_I) WRITE(*,*)'FIRST AND LAST POINT =',XX_AC(1),XX_AC(NX),NX
+    CALL REALLOCATE_1D_1(INTEGRAND, NX+1)
 
-      ! Prepare the indeces for the matrix elements
-    CALL REALLOCATE_1D_2(FUN, FUN1, NX+1)
 
+    ! NEW MATRIX ELEMENTS
+    CALL L_COMBINATIONS(CHANNELS_, LCOMBINATIONS)
+    NCOMB = SIZE(LCOMBINATIONS, DIM=1)
+    ALLOCATE(KIN_MIN_E(NE,VAR_P%NNL,0:LMAX))
+    KIN_MIN_E = ZERO
+
+    DO IE = 1, NE
+      DO IL = 1, VAR_P%NNL
+        DO LL = 0, LMAX
+          LIK = LL*(LL+1)
+          ! NORMALIZATIONS CORE-IRREGULAR
+          INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)
+          AXX1=  B5_SINGLE(NX,H5,INTEGRAND,1)
+
+          ! KINETIC ENERGY CORE-IRREGULAR
+          INTEGRAND(2:) = AJ_AC*GBES_AC(IE,LL,:)*( V2_AC(IL,:) + 2.D0*V1_AC(IL,:)/XX_AC &
+                                                      - LIK*V0_AC(IL,:)/XX_AC**2)
+          AKE1 = -HTM * B5_SINGLE(NX,H5,INTEGRAND,1)
+          ! KINETIC ENERGY - ENERGY CORE-IRREGULAR
+          KIN_MIN_E(IE,IL,LL) = AKE1 - ENERGIES_(IE) * AXX1
+        ENDDO
+      ENDDO
+    ENDDO
 
     WRITE(*,*) "Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
@@ -1443,9 +1453,8 @@ CONTAINS
     ELSE
       WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
     ENDIF
+    
     ! Evaluate the matrix elements
-    H_MINUS_E_AC_R = ZERO
-    H_MINUS_E_AC_I = ZERO
     DO IE = 1, NE
       DO ICH = 1, NCHANNELS
         NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
@@ -1478,104 +1487,41 @@ CONTAINS
             DO IL = 1, VAR_P%NNL
               IB = COMMON_INDEX(IAB, IL)
 
-            ! Evaluate the normalization core-irregular (axx1)
-              AXXM1(IB,IAK) = ZERO
-              IF(IAB.EQ.IAK)THEN
-                FUN1(1)  = ZERO
-                FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)
-
-                AXX1= ENERGIES_(IE) * B5_SINGLE(NX,H5,FUN1,1)
-                AXXM1(IB,IAK)=AXX1
-                ! write(111,*) iab, iak, il, IB, axx1
-              ENDIF
-
-            ! Evaluate the kinetic energy core-irregular (ake1)
-              AKE1 = ZERO
-              AKEM1(IB,IAK) = ZERO
-              IF(IAB.EQ.IAK)THEN
-                FUN1(1) = ZERO
-                FUN1(2:) = AJ_AC*GBES_AC(IE,LL,:)*( V2_AC(IL,:) + 2.D0*V1_AC(IL,:)/XX_AC &
-                                                            - LIK*V0_AC(IL,:)/XX_AC**2)
-
-                AKE1 = -HTM * B5_SINGLE(NX,H5,FUN1,1)
-                AKEM1(IB,IAK) = AKE1
-                ! write(112,*) iab, iak, il, IB, ake1
-              ENDIF
-              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-                WRITE(*,*)
-                WRITE(*,*)'C-A MATRIX'
-                WRITE(*,*)'IRREGULAR A'
-                WRITE(*,*)'NORM ',AXXM1(1,1)
-                WRITE(*,*)'KINETIC',AKEM1(1,1)
-              ENDIF
-
-
             ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
               IF (.NOT. USE_DYNAMIC) THEN
-                FUN (1) = ZERO
-                FUN1(1) = ZERO
-                FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
-                FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
-                
-                APE  = B5_SINGLE(NX,H5,FUN,1)
-                APEM(IB,IAK) = APE
+                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+                APE  = B5_SINGLE(NX,H5,INTEGRAND,1)
 
-                APE1 = B5_SINGLE(NX,H5,FUN1,1)
-                APEM1(IB,IAK) = APE1
+                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
+                APE1 = B5_SINGLE(NX,H5,INTEGRAND,1)
               ELSE
                 DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
-                  FUN (1) = ZERO
-                  FUN1(1) = ZERO
-                  FUN (2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-                  FUN1(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-                  
-                  FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,FUN,1)
-                  FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,FUN1,1)
+                  INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+                  FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
+
+                  INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+                  FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
                 ENDDO
               ENDIF
 
-              ! write(113,*) iab, iak, il, IB, ape, ape1
-              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-                WRITE(*,*)
-                WRITE(*,*)'C-A MATRIX'
-                WRITE(*,*)'IRREGULAR A'
-                WRITE(*,*)'POTENTIAL ',APEM1(1,1)
-                WRITE(*,*)'REGULAR A'
-                WRITE(*,*)'POTENTIAL ',APEM(1,1)
-              ENDIF
-
             ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
-
-              AM(IB,IAK) = APEM(IB,IAK) / HTM
-              AM1(IB,IAK)= (AKEM1(IB,IAK)+APEM1(IB,IAK)-AXXM1(IB,IAK)) / HTM
-
-              IF(PRINT_I .AND. IB.EQ.1.AND.IAK.EQ.1)THEN
-                WRITE(*,*)
-                WRITE(*,*)'C-A MATRIX'     ,IB,IAK
-                WRITE(*,*)"CORE-REGULAR=  ",AM(IB,IAK),IB,IAK
-                WRITE(*,*)"CORE-IRREGULAR=",AM1(IB,IAK),IB,IAK
+              IF (.NOT.USE_DYNAMIC) THEN
+                H_MINUS_E_AC_R(ICH, IE, IB, IAK) = APE / HTM
+                IF (IAK  == IAB) THEN
+                  H_MINUS_E_AC_I(ICH, IE, IB, IAK)= (KIN_MIN_E(IE,IL,LL)+APE1) / HTM
+                ELSE
+                  H_MINUS_E_AC_I(ICH, IE, IB, IAK)= APE1 / HTM
+                ENDIF
+              ELSE
+                  IF (IAK == IAB) K_MINUS_E_AC_I(ICH, IE, IB, IAK)= KIN_MIN_E(IE,IL,LL) / HTM
               ENDIF
-            ENDDO
-          ENDDO
-        ENDDO
+
+            ENDDO ! IL
+          ENDDO ! IAK
+        ENDDO ! IAB
         !$OMP END PARALLEL DO
-        
-        IF (.NOT. USE_DYNAMIC) THEN ! DO NOT USE_DYNAMIC
-          ! Store the matrix elements in the global arrays
-          H_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = AM (1:NNN, 1:NEQ)
-          H_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) = AM1(1:NNN, 1:NEQ)
-        ELSE ! USE_DYNAMIC
-          ! FOR THE REGULAR PART THE KINETIC ENERGY MINUS THE ENERGY IS ZERO
-          ! K_MINUS_E_AC_R(ICH, IE, 1:NNN, 1:NEQ) = 0 
-          K_MINUS_E_AC_I(ICH, IE, 1:NNN, 1:NEQ) =( AKEM1(1:NNN, 1:NEQ) - AXXM1(1:NNN, 1:NEQ) ) / HTM
-        ENDIF ! END USE_DYNAMIC
       ENDDO ! ICH
     ENDDO ! IE
-
-    DEALLOCATE(AM, AM1)
-    DEALLOCATE(AXXM1, AKEM1, APEM, APEM1)
-    DEALLOCATE(FUN, FUN1)
-        RETURN
   END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
@@ -1592,26 +1538,24 @@ CONTAINS
     DOUBLE PRECISION :: H, H5
     INTEGER :: IAB, IAK, IE, LL, LR, ICH, NEQ, IPOT
     DOUBLE PRECISION :: AXX, AXX3, AKE, AKE3, APE, APE1, APE2, APE3
-    DOUBLE PRECISION, ALLOCATABLE :: AM(:,:), AM1(:,:), AM2(:,:), AM3(:,:)
-    DOUBLE PRECISION, DIMENSION(NCH_MAX, NCH_MAX) :: AXXM, AXXM3, AKEM, AKEM3, APEM, APEM1, APEM2, APEM3, CHECK
 
     INTEGER :: SL, SR, TL, TR, S, T
-    INTEGER, SAVE :: NX
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: FUN(:), FUN1(:), FUN2(:), FUN3(:)
+    INTEGER :: NX
+    DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND(:)
+
+    INTEGER :: NCOMB
+    INTEGER, ALLOCATABLE :: LCOMBINATIONS(:,:)
+    DOUBLE PRECISION, ALLOCATABLE :: KIN_MIN_E_RI(:,:,:), KIN_MIN_E_II(:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
       PRINT *, "Error: Energies, grid or Bessel functions not set in PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS"
       STOP
     ENDIF
 
-        CALL REALLOCATE_4D_1(H_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
+    CALL REALLOCATE_4D_1(H_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_IR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_RI, NCHANNELS, NE, NCH_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AA_II, NCHANNELS, NE, NCH_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM , NCH_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM1, NCH_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM2, NCH_MAX, NCH_MAX)
-    CALL REALLOCATE_2D_1(AM3, NCH_MAX, NCH_MAX)
 
     IF (USE_DYNAMIC) THEN
       CALL REALLOCATE_4D_1(K_MINUS_E_AA_RR, NCHANNELS, NE, NCH_MAX, NCH_MAX)
@@ -1629,31 +1573,52 @@ CONTAINS
     H = VAR_P%H
     H5= H/22.5D0
     NX = VAR_P%NX_AA
+    CALL REALLOCATE_1D_1(INTEGRAND, NX+1)
 
-    CALL REALLOCATE_1D_4(FUN, FUN1, FUN2, FUN3, NX+1)
-
-    IF (PRINT_I) WRITE(*,*)'FIRST AND LAST POINT =',XX_AA(1),XX_AA(NX)
 
     WRITE(*,*) "Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
-
     IF (USE_DYNAMIC) THEN
       WRITE(*,*) "Using dynamic potential for asymptotic-asymptotic matrix elements"
     ELSE
       WRITE(*,*) "Using static potential for asymptotic-asymptotic matrix elements"
     ENDIF
 
-    !SI CALCOLANO ELEMENTI MATRICE
+    ! MATRIX ELEMENTS DEPENDING ONLY ON (LL, LR)
+    CALL L_COMBINATIONS(CHANNELS_, LCOMBINATIONS)
+    NCOMB = SIZE(LCOMBINATIONS, 1)
+    ALLOCATE(KIN_MIN_E_RI(NE, 0:LMAX, 0:LMAX))
+    ALLOCATE(KIN_MIN_E_II(NE, 0:LMAX, 0:LMAX))
+    KIN_MIN_E_RI = ZERO
+    KIN_MIN_E_II = ZERO
+
+    DO ICH =1, NCOMB
+      LL = LCOMBINATIONS(ICH,1)
+      LR = LCOMBINATIONS(ICH,2)
+      DO IE=1, NE
+        IF (LL.NE.LR) CYCLE ! Only diagonal elements are calculated
+        ! NORM REGULAR-IRREGULAR (AXX) AND IRREGULAR-IRREGULAR(AXX3)
+        INTEGRAND(2:) = AJ_AA*FBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
+        AXX=  B5_SINGLE(NX,H5,INTEGRAND,1)
+        
+        INTEGRAND(2:) = AJ_AA*GBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
+        AXX3= B5_SINGLE(NX,H5,INTEGRAND,1)
+
+        ! KINETIC ENERGY
+        INTEGRAND(2:) = AJ_AA*FBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
+        AKE=  HTM * B5_SINGLE(NX,H5,INTEGRAND,1)
+
+        INTEGRAND(2:) = AJ_AA*GBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
+        AKE3= HTM * B5_SINGLE(NX,H5,INTEGRAND,1)
+
+        KIN_MIN_E_RI(IE,LL,LR) = AKE  - ENERGIES_(IE) * AXX
+        KIN_MIN_E_II(IE,LL,LR) = AKE3 - ENERGIES_(IE) * AXX3
+      ENDDO
+    ENDDO
+    ! END PREPARATION OF MATRIX ELEMENTS DEPENDING ON (LL, LR)
+
+    ! EVALUATION OF HAMILTONIAN AND KINETIC MINUS ENERGY MATRIX ELEMENTS
     DO ICH = 1, NCHANNELS
       DO IE = 1, NE
-        AXXM  = ZERO
-        AXXM3 = ZERO
-        AKEM  = ZERO
-        AKEM3 = ZERO
-        APEM  = ZERO
-        APEM1 = ZERO
-        APEM2 = ZERO
-        APEM3 = ZERO
-
         NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
         DO IAB=1,NEQ
         DO IAK=1,NEQ
@@ -1669,127 +1634,57 @@ CONTAINS
 
           LL = GET_CHANNEL_L(CHANNELS_(ICH),IAB)
           LR = GET_CHANNEL_L(CHANNELS_(ICH),IAK)
-      ! SI CALCOLA NORMA DEL CASO REGOLARE-IRREGOLARE (AXX), CASO IRREGOLARE-IRREGOLARE (AXX3)
-          AXX = ZERO
-          AXX3= ZERO
-          IF(IAB.EQ.IAK)THEN
-            FUN (1) = ZERO
-            FUN3(1) = ZERO
-            FUN (2:) = AJ_AA*FBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
-            FUN3(2:) = AJ_AA*GBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
-
-            AXX=  ENERGIES_(IE) * B5_SINGLE(NX,H5,FUN,1)
-            AXXM(IAB,IAK)=AXX
-            AXX3= ENERGIES_(IE) * B5_SINGLE(NX,H5,FUN3,1)
-            AXXM3(IAB,IAK)=AXX3
-          ENDIF
-          IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
-            WRITE(*,*) 'NORM RI(1,1)', AXX
-            WRITE(*,*) 'NORM II(1,1)', AXX3
-          ENDIF
-
-      ! SI CALCOLA ENERGIA CINETICA DEL CASO REGOLARE-IRREGOLARE (AKE) E CASO IRREGOLARE-IRREGOLARE (AKE3)
-          AKE  = ZERO
-          AKE3 = ZERO
-          IF(IAB.EQ.IAK)THEN
-            FUN(1)  = ZERO
-            FUN3(1) = ZERO
-            FUN (2:) = AJ_AA*FBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
-            FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*HNOR_AA(IE,LR,:)*(GBES2_AA(IE,LR,:)+GBES1_AA(IE,LR,:)+GBES0_AA(IE,LR,:))
-
-            AKE=  HTM * B5_SINGLE(NX,H5,FUN,1)
-            AKEM(IAB,IAK)=AKE
-            AKE3= HTM * B5_SINGLE(NX,H5,FUN3,1)
-            AKEM3(IAB,IAK)=AKE3
-          ENDIF
-          IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
-            WRITE(*,*) 'KINETIC RI(1,1)', AKE
-            WRITE(*,*) 'KINETIC II(1,1)', AKE3
-          ENDIF
+      
 
       ! SI CALCOLA ENERGIA POTENZIALE DEL CASO REGOLARE-IRREGOLARE (APE),
       !      IRREGOLARE-REGOLARE (APE1), REGOLARE-REGOLARE (APE2), IRREGOLARE-IRREGOLARE (APE3)
           IF (.NOT.USE_DYNAMIC) THEN
-            FUN (1) = ZERO
-            FUN1(1) = ZERO
-            FUN2(1) = ZERO
-            FUN3(1) = ZERO
-            FUN (2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-            FUN1(2:) = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-            FUN2(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
-            FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            INTEGRAND(2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            APE=  B5_SINGLE(NX,H5,INTEGRAND,1)
 
-            APE=  B5_SINGLE(NX,H5,FUN,1)
-            APEM(IAB,IAK)=APE
+            INTEGRAND(2:)  = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            APE1= B5_SINGLE(NX,H5,INTEGRAND,1)
 
-            APE1= B5_SINGLE(NX,H5,FUN1,1)
-            APEM1(IAB,IAK)=APE1
+            INTEGRAND(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            APE2= B5_SINGLE(NX,H5,INTEGRAND,1)
 
-            APE2= B5_SINGLE(NX,H5,FUN2,1)
-            APEM2(IAB,IAK)=APE2
-
-            APE3= B5_SINGLE(NX,H5,FUN3,1)
-            APEM3(IAB,IAK)=APE3
-            IF (PRINT_I .AND. IAB==1 .AND. IAK==1) THEN
-              WRITE(*,*) 'POTENTIAL RR(1,1)', APE2
-              WRITE(*,*) 'POTENTIAL RI(1,1)', APE
-              WRITE(*,*) 'POTENTIAL IR(1,1)', APE1
-              WRITE(*,*) 'POTENTIAL II(1,1)', APE3
-            ENDIF
+            INTEGRAND(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*V_AA(ICH,:,IAB,IAK)
+            APE3= B5_SINGLE(NX,H5,INTEGRAND,1)
           ELSE
             ! FILL HERE TO CALCULATE DYNAMIC POTENTIAL ENERGY
             DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AA%ORDER)
-              FUN (1) = ZERO
-              FUN1(1) = ZERO
-              FUN2(1) = ZERO
-              FUN3(1) = ZERO
-              FUN (2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
-              FUN1(2:) = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
-              FUN2(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
-              FUN3(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
+              INTEGRAND(2:) = AJ_AA*FBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
+              FMAT_AA_RI(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
 
-              FMAT_AA_RI(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN,1)
-              FMAT_AA_IR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN1,1)
-              FMAT_AA_RR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN2,1)
-              FMAT_AA_II(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,FUN3,1)
+              INTEGRAND(2:) = AJ_AA*GBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
+              FMAT_AA_IR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
+
+              INTEGRAND(2:) = AJ_AA*FBES_AA(IE,LL,:)*FBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
+              FMAT_AA_RR(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
+
+              INTEGRAND(2:) = AJ_AA*GBES_AA(IE,LL,:)*GBES_AA(IE,LR,1:NX)*EFT_RADIAL_AA%FR_I(S,T,IPOT,:)
+              FMAT_AA_II(IPOT,ICH,IE,IAB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
             ENDDO
           ENDIF
 
       ! SI CALCOLA HAMILTONIANA PER I VARI CASI:REGOLARE-IRREGOLARE(AM), IRREGOLARE-REGOLARE(AM1),
       !         REGOLARE-REGOLARE(AM2),IRREGOLARE-IRREGOLARE(AM3)
-          AM   (IAB,IAK) = (AKEM(IAB,IAK)+APEM(IAB,IAK)-AXXM(IAB,IAK)) / HTM    ! RI
-          AM1  (IAB,IAK) =  APEM1(IAB,IAK) / HTM                                ! IR
-          AM2  (IAB,IAK) =  APEM2(IAB,IAK) / HTM                                ! RR              
-          AM3  (IAB,IAK) = (AKEM3(IAB,IAK)+APEM3(IAB,IAK)-AXXM3(IAB,IAK)) / HTM ! II
+          IF (.NOT.USE_DYNAMIC) THEN 
+            H_MINUS_E_AA_RI(ICH, IE, IAB, IAK) = (KIN_MIN_E_RI(IE,LL,LR)+APE) / HTM    ! RI
+            H_MINUS_E_AA_IR(ICH, IE, IAB, IAK) =  APE1 / HTM                           ! IR
+            H_MINUS_E_AA_RR(ICH, IE, IAB, IAK) =  APE2 / HTM                           ! RR
+            H_MINUS_E_AA_II(ICH, IE, IAB, IAK) = (KIN_MIN_E_II(IE,LL,LR)+APE3) / HTM   ! II
+          ELSE ! USE_DYNAMIC
+            K_MINUS_E_AA_RR(ICH, IE, IAB, IAK) =  0.D0
+            K_MINUS_E_AA_RI(ICH, IE, IAB, IAK) = KIN_MIN_E_RI(IE,LL,LR) / HTM
+            K_MINUS_E_AA_IR(ICH, IE, IAB, IAK) =  0.D0
+            K_MINUS_E_AA_II(ICH, IE, IAB, IAK) = KIN_MIN_E_II(IE,LL,LR) / HTM
+          ENDIF ! ENDIF USE_DYNAMIC
           
-          CHECK(IAB,IAK) = (AM1(IAB,IAK)-AM(IAB,IAK))
         ENDDO !IAB
         ENDDO !IAK
-        IF (.NOT.USE_DYNAMIC) THEN ! NOT USE_DYNAMIC
-          H_MINUS_E_AA_RR(ICH, IE, :, :) = AM2
-          H_MINUS_E_AA_RI(ICH, IE, :, :) = AM
-          H_MINUS_E_AA_IR(ICH, IE, :, :) = AM1
-          H_MINUS_E_AA_II(ICH, IE, :, :) = AM3
-        ELSE ! USE_DYNAMIC
-          K_MINUS_E_AA_RR(ICH, IE, :, :) =  0.D0
-          K_MINUS_E_AA_RI(ICH, IE, :, :) = (AKEM - AXXM) / HTM
-          K_MINUS_E_AA_IR(ICH, IE, :, :) =  0.D0
-          K_MINUS_E_AA_II(ICH, IE, :, :) = (AKEM3 - AXXM3) / HTM
-        ENDIF ! ENDIF USE_DYNAMIC
       ENDDO ! IE
     ENDDO ! ICH
-
-    IF (PRINT_I) WRITE(*,*)
-    IF (PRINT_I) WRITE(*,*)'A-A MATRIX'
-    DO IAB=1,NEQ
-    DO IAK=1,NEQ
-      IF (PRINT_I) WRITE(*,'(2I6,4D17.7)') IAB,IAK,AM2(IAB,IAK),AM(IAB,IAK),AM1(IAB,IAK),AM3(IAB,IAK)
-      IF (PRINT_I) WRITE(*,*)"1=",CHECK(IAB,IAK)
-    END DO
-    END DO
-
-    DEALLOCATE(FUN, FUN1, FUN2, FUN3)
-    DEALLOCATE(AM, AM1, AM2, AM3)
   END SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
  
   FUNCTION ORDER_TO_NMAX(ORDER) RESULT(N)
