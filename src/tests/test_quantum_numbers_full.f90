@@ -122,6 +122,16 @@ PROGRAM test_quantum_numbers_full
   name2 = GET_CHANNEL_NAME(ch)
   IF (TRIM(name) /= TRIM(name2)) STOP "FAIL: Round-trip name conversion failed"
 
+  ! Test 8: Prepare channels up to LMAX=3 and JMAX=3
+  WRITE(*,*) "Test 8: Testing PREPARE_CHANNELS with LMAX=3, JMAX=3"
+
+  CALL test_prepare_channels(0)
+  CALL test_prepare_channels(1)
+
+  ! Test 9: L combinations for TZ=0, LMAX=3, JMAX=3
+  WRITE(*,*) "Test 9: Testing L_COMBINATIONS for TZ=0, LMAX=3, JMAX=3"
+  CALL test_l_combinations
+
   ! ! Test 8: Testing EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
   ! WRITE(*,*) "Test 8: Testing EXTRACT_CHANNELS_FROM_WHOLE_FILENAME"
 
@@ -241,5 +251,51 @@ CONTAINS
 
     WRITE(*,*) "  Passed: ", TRIM(actual_name)
   END SUBROUTINE test_channel
+
+  SUBROUTINE test_prepare_channels(tz_ch)
+    TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: channels(:)
+    INTEGER, INTENT(IN) :: tz_ch
+    INTEGER :: i, lmax, jmax, n_coupled
+    CHARACTER(LEN=16) :: chname
+
+    lmax = 3
+    jmax = 3
+    CALL PREPARE_CHANNELS(lmax, jmax, tz_ch, channels)
+    WRITE(*,*) "  TZ = ", tz_ch, "  Number of channels generated: ", SIZE(channels)
+    n_coupled = 0
+    DO i = 1, SIZE(channels)
+      chname = GET_CHANNEL_NAME(channels(i))
+      IF (IS_CHANNEL_COUPLED(channels(i))) n_coupled = n_coupled + 1
+      WRITE(*,*) "    Channel ", i, ": ", TRIM(chname)
+    END DO
+    IF (tz_ch == 0) THEN
+      IF (SIZE(channels) /= 11) STOP "FAIL: Expected 11 channels for TZ=0"
+      IF (n_coupled /= 3) STOP "FAIL: Expected 3 coupled channels for TZ=0"
+    ELSEIF (tz_ch == 1) THEN
+      IF (SIZE(channels) /= 6) STOP "FAIL: Expected 6 channels for TZ=1"
+      IF (n_coupled /= 1) STOP "FAIL: Expected 1 coupled channel for TZ=1"
+    END IF
+    WRITE(*,*) "    Coupled channels: ", n_coupled
+  END SUBROUTINE test_prepare_channels
+
+  SUBROUTINE test_l_combinations
+    TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: channels(:)
+    INTEGER, ALLOCATABLE :: lcomb(:,:)
+    INTEGER :: i, lmax, jmax, tz_ch, ncomb
+
+    lmax = 2
+    jmax = 2
+    tz_ch = 0
+    CALL PREPARE_CHANNELS(lmax, jmax, tz_ch, channels)
+    WRITE(*,*) "  Testing L combinations for TZ = ", tz_ch, ", LMAX = ", lmax, ", JMAX = ", jmax
+    WRITE(*,*) "  Number of channels: ", SIZE(channels)
+    CALL L_COMBINATIONS(channels, lcomb)
+    ncomb = SIZE(lcomb, 1)
+    WRITE(*,*) "  Number of L combinations: ", ncomb
+    IF (ncomb /= 8) STOP "FAIL: Expected 8 L combinations for LMAX=2, JMAX=2, TZ=0"
+    DO i = 1, ncomb
+      WRITE(*,'(A,I2,A,I1,A,I1,A)') "    Combination ", i, ":        (", lcomb(i,1), ", ", lcomb(i,2), ")"
+    END DO
+  END SUBROUTINE test_l_combinations
 
 END PROGRAM test_quantum_numbers_full

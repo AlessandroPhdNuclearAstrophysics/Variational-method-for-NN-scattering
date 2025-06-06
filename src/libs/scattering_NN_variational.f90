@@ -2307,6 +2307,14 @@ CONTAINS
     NEW_LECS = .TRUE.
       END SUBROUTINE SET_NEW_LECS
 
+
+
+
+
+
+
+  
+
   !> \brief Reset the SCATTERING_NN_VARIATIONAL module to its initial state.
   !! This subroutine deallocates all allocatable arrays, resets logical flags,
   !! and restores all module variables to their default values.

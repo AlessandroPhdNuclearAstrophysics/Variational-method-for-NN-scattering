@@ -123,10 +123,6 @@ CONTAINS
 
     ! Calculate T based on the values of J, L, S, and TZ
     T = MOD( MOD(L+S, 2) + 1 , 2)
-    IF (ABS(TZ) > T) THEN
-      PRINT *, "Error: Invalid value for TZ. It must be less than or equal to T."
-      STOP
-    ENDIF
   END FUNCTION EVALUATE_T
 
   !> \brief Check if a channel is physical.
@@ -135,7 +131,7 @@ CONTAINS
   FUNCTION IS_PHYSICAL_CHANNEL(CHANNEL) RESULT(IS_PHYSICAL)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     LOGICAL :: IS_PHYSICAL
-    INTEGER :: L, S, J, T, ICH
+    INTEGER :: L, S, J, T, ICH, TZ
 
     J = CHANNEL%J
     IS_PHYSICAL = .TRUE.
@@ -144,6 +140,8 @@ CONTAINS
       L = CHANNEL%L(ICH)
       S = CHANNEL%S(ICH)
       T = CHANNEL%T(ICH)
+      TZ = CHANNEL%TZ
+      IF (ABS(TZ) > T) IS_PHYSICAL = .FALSE.
 
       ! CHECK IF THE SCATTERING CHANNEL IS PHYSICAL
       IS_PHYSICAL = IS_PHYSICAL .AND. (J >= 0 .AND. L >= 0 .AND. S >= 0 .AND. T >= 0)
@@ -628,5 +626,50 @@ CONTAINS
     IF (ALLOCATED(CHANNEL%S)) DEALLOCATE(CHANNEL%S)
     IF (ALLOCATED(CHANNEL%T)) DEALLOCATE(CHANNEL%T)
   END SUBROUTINE RESET_CHANNEL
+
+
+  SUBROUTINE L_COMBINATIONS(CHANNELS, LEFT_RIGHT_L_COMBINATIONS)
+    IMPLICIT NONE
+    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
+    INTEGER, ALLOCATABLE, INTENT(INOUT) :: LEFT_RIGHT_L_COMBINATIONS(:,:)
+    
+    INTEGER :: N_COMB
+    INTEGER, ALLOCATABLE :: TMP(:,:)
+    INTEGER :: ICH, I, J, NCH, L1, L2, K, NCHANNELS
+    LOGICAL :: FOUND
+
+    NCHANNELS = SIZE(CHANNELS)
+    ALLOCATE(TMP(4*NCHANNELS, 2))
+    TMP = -1  ! Initialize TMP to zero
+    N_COMB = 0
+
+    ! Loop over all channels
+    DO ICH = 1, NCHANNELS
+      NCH = CHANNELS(ICH)%NCH
+      ! Loop over all pairs (i, j) of L values
+      DO I = 1, NCH
+        L1 = CHANNELS(ICH)%L(I)
+        DO J = 1, NCH
+          L2 = CHANNELS(ICH)%L(J)
+          ! Check if this combination already exists
+          FOUND = .FALSE.
+          DO K = 1, N_COMB
+            IF (TMP(K,1) == L1 .AND. TMP(K,2) == L2) THEN
+              FOUND = .TRUE.
+              EXIT
+            ENDIF
+          ENDDO
+          IF (FOUND) CYCLE  ! Skip if found
+          ! If not found, add it
+          N_COMB = N_COMB + 1
+          TMP(N_COMB,1) = L1
+          TMP(N_COMB,2) = L2
+        ENDDO
+      ENDDO
+    ENDDO
+    IF (ALLOCATED(LEFT_RIGHT_L_COMBINATIONS)) DEALLOCATE(LEFT_RIGHT_L_COMBINATIONS)
+    ALLOCATE(LEFT_RIGHT_L_COMBINATIONS(N_COMB, 2))
+    LEFT_RIGHT_L_COMBINATIONS = TMP(1:N_COMB, :)
+  END SUBROUTINE L_COMBINATIONS
 
 END MODULE QUANTUM_NUMBERS
