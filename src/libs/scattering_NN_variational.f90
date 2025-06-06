@@ -534,7 +534,7 @@ CONTAINS
     LC(1) = L
     NCH = 1
     IF (PRINT_I) PRINT 20, LC(1), S, VAR_P%T, VAR_P%TZ, J
-    IF (J-L.EQ.1) THEN
+    IF (J-L==1) THEN
       LC(2) = L + 2
       IF (PRINT_I) PRINT 20, LC(2), S, VAR_P%T, VAR_P%TZ, J
       NCH = 2
@@ -872,7 +872,7 @@ CONTAINS
     !> \brief Handle LAPACK DGESV INFO error.
     SUBROUTINE HANDLE_INFO_ERROR()
       IMPLICIT NONE
-      IF (INFO.NE.0) THEN
+      IF (INFO/=0) THEN
         PRINT *, "Error in LAPACK dgesv: INFO = ", INFO
         STOP
       ENDIF
@@ -887,7 +887,7 @@ CONTAINS
       PRINT 10, "J:     ",                VAR_P%J
       PRINT 10, "NCH:   ",                NCH
       PRINT 10, "L0:    ",                LC(1)
-      IF (NCH.EQ.2) PRINT 10, "L1:    ",  LC(2)
+      IF (NCH==2) PRINT 10, "L1:    ",  LC(2)
       PRINT 10, "S:     ",                VAR_P%S
       PRINT 10, "T:     ",                VAR_P%T
       PRINT 10, "TZ:    ",                VAR_P%TZ
@@ -1300,10 +1300,10 @@ CONTAINS
       DO IAK=1, NEQ
         SL = GET_CHANNEL_S(CHANNELS_(ICH), IAB)
         SR = GET_CHANNEL_S(CHANNELS_(ICH), IAK)
-        IF (SL.NE.SR) CYCLE ! Only diagonal elements are calculated
+        IF (SL/=SR) CYCLE ! Only diagonal elements are calculated
         TL = GET_CHANNEL_T(CHANNELS_(ICH), IAB)
         TR = GET_CHANNEL_T(CHANNELS_(ICH), IAK)
-        IF (TL.NE.TR) CYCLE ! Only diagonal elements are calculated
+        IF (TL/=TR) CYCLE ! Only diagonal elements are calculated
         T = TL
         S = SL
 
@@ -1318,7 +1318,7 @@ CONTAINS
 
     ! CALCULATING KINETIC ENERGY
           KIN_MATRIX(IB,IK) = ZERO
-          IF(IAB.EQ.IAK)THEN
+          IF(IAB==IAK)THEN
             INTEGRAND = V0_CC(IL,:)*( V2_CC(IR,:) + 2.D0*V1_CC(IR,:)/XX_CC &
                   -LIK*V0_CC(IR,:)/XX_CC**2 )
             SUM = ZERO
@@ -1328,7 +1328,7 @@ CONTAINS
             KIN_MATRIX(IB,IK)=-HTM*SUM/GAMMA
           ENDIF
 
-          IF (PRINT_I .AND. IB.EQ.1.AND.IK.EQ.1)THEN
+          IF (PRINT_I .AND. IB==1.AND.IK==1)THEN
             WRITE(*,*)
             WRITE(*,*)'C-C MATRIX'
             WRITE(*,*)'KINETIC',KIN_MATRIX(1,1)
@@ -1356,9 +1356,9 @@ CONTAINS
 
         ENDDO ! IR
         ENDDO ! IL
-
       ENDDO ! IAK
       ENDDO ! IAB
+      
       IF (.NOT. USE_DYNAMIC) THEN
         HCC(ICH,1:NNN,1:NNN) = ( KIN_MATRIX(1:NNN,1:NNN) + POT_MATRIX(ICH,1:NNN,1:NNN) )
         DO IE = 1, NE
@@ -1473,10 +1473,10 @@ CONTAINS
           DO IAK = 1, NEQ
             SL = GET_CHANNEL_S(CHANNELS_(ICH), IAK)
             SR = GET_CHANNEL_S(CHANNELS_(ICH), IAB)
-            IF (SL.NE.SR) CYCLE ! Only diagonal elements are calculated
+            IF (SL/=SR) CYCLE ! Only diagonal elements are calculated
             TL = GET_CHANNEL_T(CHANNELS_(ICH), IAK)
             TR = GET_CHANNEL_T(CHANNELS_(ICH), IAB)
-            IF (TL.NE.TR) CYCLE ! Only diagonal elements are calculated
+            IF (TL/=TR) CYCLE ! Only diagonal elements are calculated
             S = SL
             T = TL
 
@@ -1595,7 +1595,7 @@ CONTAINS
       LL = LCOMBINATIONS(ICH,1)
       LR = LCOMBINATIONS(ICH,2)
       DO IE=1, NE
-        IF (LL.NE.LR) CYCLE ! Only diagonal elements are calculated
+        IF (LL/=LR) CYCLE ! Only diagonal elements are calculated
         ! NORM REGULAR-IRREGULAR (AXX) AND IRREGULAR-IRREGULAR(AXX3)
         INTEGRAND(2:) = AJ_AA*FBES_AA(IE, LL,:)*GBES_AA(IE, LR,:)
         AXX=  B5_SINGLE(NX,H5,INTEGRAND,1)
@@ -1625,10 +1625,10 @@ CONTAINS
 
           SL = GET_CHANNEL_S(CHANNELS_(ICH), IAB)
           SR = GET_CHANNEL_S(CHANNELS_(ICH), IAK)
-          IF (SL.NE.SR) CYCLE ! Only diagonal elements are calculated
+          IF (SL/=SR) CYCLE ! Only diagonal elements are calculated
           TL = GET_CHANNEL_T(CHANNELS_(ICH), IAB)
           TR = GET_CHANNEL_T(CHANNELS_(ICH), IAK)
-          IF (TL.NE.TR) CYCLE ! Only diagonal elements are calculated
+          IF (TL/=TR) CYCLE ! Only diagonal elements are calculated
           S = SL
           T = TL
 
@@ -1952,7 +1952,7 @@ CONTAINS
     LOGICAL :: COUPLED
     DOUBLE PRECISION :: R, V2(2,2)
 
-    IF (VAR_P%IPOT.EQ.0) THEN
+    IF (VAR_P%IPOT==0) THEN
       PRINT *, "Error: IPOT not set"
       RETURN
     ENDIF
