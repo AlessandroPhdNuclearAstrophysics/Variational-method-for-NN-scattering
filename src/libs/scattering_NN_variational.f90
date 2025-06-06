@@ -1287,6 +1287,7 @@ CONTAINS
     DO ICH = 1, NCHANNELS
       NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
 
+      COMMON_INDEX = ZERO
       II = 0
       DO I=1, NEQ
         DO JJ=1, VAR_P%NNL
@@ -1387,8 +1388,8 @@ CONTAINS
     INTEGER :: SL, SR, TL, TR, S, T
     DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
 
-    DOUBLE PRECISION, ALLOCATABLE, SAVE :: INTEGRAND(:)
-    INTEGER, SAVE :: COMMON_INDEX(NCH_MAX, NNE)
+    DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND(:)
+    INTEGER :: COMMON_INDEX(NCH_MAX, NNE)
 
     INTEGER :: NCOMB
     INTEGER, ALLOCATABLE :: LCOMBINATIONS(:,:)
@@ -1460,6 +1461,7 @@ CONTAINS
         NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
         NNN = NEQ * VAR_P%NNL
 
+        COMMON_INDEX = 0
         II = 0
         DO I=1, NEQ
           DO JJ=1, VAR_P%NNL
@@ -1749,7 +1751,7 @@ CONTAINS
       ILBOLD = ILB
       LEMPOOLD = LEMP
     ENDIF
-      END FUNCTION IS_FIRST_CALL
+  END FUNCTION IS_FIRST_CALL
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the radial grids for the calculation.
@@ -2200,14 +2202,7 @@ CONTAINS
     LECS = LECS_NEW
     LECS_SET = .TRUE.
     NEW_LECS = .TRUE.
-      END SUBROUTINE SET_NEW_LECS
-
-
-
-
-
-
-
+  END SUBROUTINE SET_NEW_LECS
   
 
   !> \brief Reset the SCATTERING_NN_VARIATIONAL module to its initial state.
