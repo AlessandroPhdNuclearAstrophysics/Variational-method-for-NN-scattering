@@ -188,7 +188,7 @@ CONTAINS
       CHANNEL%S(1) = S
       CHANNEL%T(1) = EVALUATE_T(L, S)
     ELSE
-      IF ((L.EQ.(J-1) .OR. L.EQ.(J+1))) THEN
+      IF ((L==(J-1) .OR. L==(J+1))) THEN
         CHANNEL%NCH = 2
         CALL REALLOCATE_1D_1_INT(CHANNEL%L, 2)
         CALL REALLOCATE_1D_1_INT(CHANNEL%S, 2)
@@ -520,7 +520,7 @@ CONTAINS
         DO J = ABS(L-S), MIN(L+S, JMAX)
           CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
           IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
-          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
+          IF ( J /= 0 .AND. L > J .AND. S == 1) CYCLE
           NCH = NCH + 1
         ENDDO
       ENDDO
@@ -533,7 +533,7 @@ CONTAINS
         DO J = ABS(L-S), MIN(L+S, JMAX)
           CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
           IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
-          IF ( J .NE. 0 .AND. L > J .AND. S == 1) CYCLE
+          IF ( J /= 0 .AND. L > J .AND. S == 1) CYCLE
           CHANNELS(ICH) = CHANNEL
           ICH = ICH + 1
         ENDDO
