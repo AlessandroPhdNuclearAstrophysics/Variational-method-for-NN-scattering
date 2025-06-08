@@ -1,0 +1,335 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amsfonts, amssymb, mathtools, amsthm, bm}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{appendix}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xfrac}
+\usepackage{empheq}
+\usepackage{bibref}
+\usepackage[most]{tcolorbox}
+\geometry{left=2cm, right=2cm, top=3cm, bottom=3cm}
+
+\author{Alessandro Grassi}
+\title{Nucleon--Nucleon Scattering: \textit{R}- and \textit{S}-Matrix Formalism}
+
+% --- Custom Boxes for Math Highlighting ---
+\newtcbox{\mymathUtil}[1][]{nobeforeafter, math upper, tcbox raise base, enhanced,
+	colframe=blue!30!black, colback=white!10, boxrule=1pt, #1}
+\newtcbox{\mymath}[1][]{nobeforeafter, math upper, tcbox raise base, enhanced,
+	colframe=blue!30!black, colback=blue!10, boxrule=1pt, #1}
+\newtcbox{\mymathUsed}[1][]{nobeforeafter, math upper, tcbox raise base, enhanced,
+	colframe=blue!30!black, colback=yellow!30, boxrule=1pt, #1}
+
+% --- Bra-Ket notation ---
+\DeclarePairedDelimiter\Bra{\langle}{\rvert}
+\DeclarePairedDelimiter\Ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\Braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+\DeclarePairedDelimiter\wBra{\bigg\langle}{\bigg\rvert}
+\DeclarePairedDelimiter\wKet{\bigg\lvert}{\bigg\rangle}
+\DeclarePairedDelimiterX\wBraket[2]{\bigg\langle}{\bigg\rangle}{#1 \delimsize\vert #2}
+\newcommand{\wbra}[1]{\wBra{#1}}
+\newcommand{\wket}[1]{\wKet{#1}}
+\newcommand{\wbraket}[2]{\wBraket{#1}{#2}}
+
+% --- Shortcuts ---
+\newcommand{\wmatrixelement}[3]{\wbra{#1}\,#2\,\wket{#3}}
+\newcommand{\matrixelementred}[3]{\langle #1 \Vert #2 \Vert #3\rangle}
+\newcommand{\CG}[3]{\braket{#1\,#2\,}{#3}}
+\newcommand{\eq}[1]{Eq.~#1}
+\newcommand{\de}[1]{\mathrm{d}#1\,}
+\newcommand{\ve}[1]{\mathbf{#1}}
+\newcommand{\onehalf}{\sfrac{1}{2}\,}
+\newcommand{\ylm}[3]{Y_{#1}^{#2}(#3)}
+\newcommand{\versor}[1]{\ve{\hat{#1}}}
+\newcommand{\mand}{\qquad\text{and}\qquad}
+\newcommand{\pd}[2]{\frac{\partial^{#1}}{\partial{#2}^{#1}}}
+\newcommand{\mtm}[1]{\mathrm{#1}}
+
+% --- Angular momentum symbols ---
+\newcommand{\threejsymbol}[6]{
+	\begin{pmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{pmatrix}
+}
+\newcommand{\sixjsymbol}[6]{
+	\begin{Bmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{Bmatrix}
+}
+
+\mathtoolsset{showonlyrefs,showmanualtags}
+
+\begin{document}
+	\maketitle
+	
+	\tableofcontents
+	
+	\section{Introduction}
+	
+	In quantum scattering theory, the evolution of an interacting two-body system is elegantly encoded in the \textit{S}-matrix, while the \textit{R}-matrix offers a numerically convenient alternative based on boundary matching. This document reviews the definitions, physical interpretations, and mathematical derivations of both quantities, particularly within the context of nucleon--nucleon scattering.
+	
+	\section{The \textit{S}-Matrix and \textit{R}-Matrix: Definitions and Interpretations}
+	
+	\subsection{The Scattering Matrix (\textit{S}-Matrix)}
+	
+	\paragraph{Definition:}
+	The \textit{S}-matrix connects asymptotic incoming and outgoing states:
+	\[
+	\Ket{\text{out}} = S \Ket{\text{in}}
+	\]
+	
+	\paragraph{Physical Role:}
+	\begin{itemize}
+		\item Encodes all observable aspects of scattering: phase shifts, cross sections, and mixing.
+		\item Ensures conservation of probability via unitarity: \( S^\dagger S = I \).
+		\item For uncoupled channels: \( S_\ell = e^{2i\delta_\ell} \), where \( \delta_\ell \) is the phase shift.
+	\end{itemize}
+	
+	\subsection{The Reactance Matrix (\textit{R}-Matrix)}
+	
+	\paragraph{Definition:}
+	Defined via the logarithmic derivative of the wavefunction at the boundary of the interaction region:
+	\[
+	R_\ell(E) = \left. \frac{a\, u'_\ell(a)}{u_\ell(a)} \right|_{\text{internal}}
+	\]
+	
+	\paragraph{Physical Role:}
+	\begin{itemize}
+		\item Arises from dividing configuration space into internal (\( r < a \)) and external (\( r > a \)) regions.
+		\item Useful for resonance physics and numerical stability.
+		\item Related to the \textit{S}-matrix via:
+		\[
+		S = \frac{1 + iR}{1 - iR}
+		\]
+	\end{itemize}
+	
+	\section{From Schr\"odinger Equation to Scattering Matrices}
+	
+	\subsection{Radial Schr\"odinger Equation}
+	
+	Consider two nucleons interacting via a central potential \( V(r) \). The time-independent Schr�dinger equation reads:
+	\[
+	\left[ -\frac{\hbar^2}{2\mu} \nabla^2 + V(r) \right] \psi(\ve{r}) = E \psi(\ve{r})
+	\]
+	
+	\paragraph{Partial Wave Expansion:}
+	Using spherical symmetry:
+	\[
+	\psi(\ve{r}) = \sum_{\ell m} \frac{u_\ell(r)}{r} Y_{\ell m}(\hat{r})
+	\]
+	The radial equation becomes:
+	\[
+	\left[-\frac{\hbar^2}{2\mu} \dv[2]{r} + \frac{\hbar^2 \ell(\ell+1)}{2\mu r^2} + V(r) \right] u_\ell(r) = E u_\ell(r)
+	\]
+	
+	\paragraph{Asymptotic Behavior:}
+	For \( r \to \infty \) (free motion), define the wave number \( k = \sqrt{2\mu E}/\hbar \). Then:
+	\[
+	u_\ell(r) \xrightarrow{r \to \infty} \sin\left(kr - \frac{\ell\pi}{2} + \delta_\ell\right)
+	\]
+	
+	\subsection{Definition of the \textit{S}-Matrix}
+	
+	Rewriting the asymptotic form as a combination of incoming and outgoing spherical waves:
+	\[
+	u_\ell(r) \sim \frac{1}{2i} \left[ e^{-i(kr - \ell\pi/2)} - S_\ell \, e^{i(kr - \ell\pi/2)} \right]
+	\]
+	This identifies \( S_\ell = e^{2i\delta_\ell} \).
+	
+	\subsection{Definition of the \textit{R}-Matrix}
+	
+	In the R-matrix framework:
+	\begin{itemize}
+		\item \textbf{Internal region}: \( r < a \), where interactions occur.
+		\item \textbf{External region}: \( r > a \), free-particle motion.
+	\end{itemize}
+	
+	In the external region, the general solution is:
+	\[
+	u_\ell(r) = A_\ell \left[ F_\ell(kr) \cos\delta_\ell + G_\ell(kr) \sin\delta_\ell \right]
+	\]
+	Matching this with the internal solution at \( r = a \), one derives \cite{advances}:
+	\[
+	S_\ell = \frac{1 + iR_\ell}{1 - iR_\ell}
+	\]
+	
+	\section{Matrix Structure: Uncoupled and Coupled Channels}
+	
+	\subsection{Summary Table: Key Characteristics}
+	
+	\begin{table}[h!]
+		\centering
+		\renewcommand{\arraystretch}{1.5}
+		\begin{tabular}{| >{\centering\arraybackslash}m{2.5cm} | >{\centering\arraybackslash}m{2cm} | >{\centering\arraybackslash}m{5cm} | >{\centering\arraybackslash}m{5cm} |}
+			\hline
+			\textbf{Quantity} & \textbf{Uncoupled} & \textbf{Coupled (Stapp)} & \textbf{Coupled (BB)} \\
+			\hline
+			$S$ & 
+			$e^{2i\delta}$ &  $\mathrm{diag}(e^{2i\delta_i})\,O(\epsilon) \,\mathrm{diag}(e^{2i\delta_i}) $ & 
+			$O^T(\epsilon) \, \mathrm{diag}(e^{2i\delta_i}) \, O(\epsilon)$ \\
+			\hline
+			$R$ & 
+			$\tan\delta$ & 
+			$\mathrm{diag}(\tan\delta_i)\,
+			O(\epsilon) \, \mathrm{diag}(\tan\delta_i)$ & 
+			$O^T(\epsilon) \, \mathrm{diag}(\tan\delta_i) \, O(\epsilon)$ \\
+			\hline
+			$O$ & 
+			-- & 
+			\( O(\epsilon) = \begin{pmatrix} \cos2\epsilon & i\sin2\epsilon \\ i\sin2\epsilon & \cos2\epsilon \end{pmatrix} \) & 
+			\( O(\epsilon) = \begin{pmatrix} \cos \epsilon & \sin \epsilon \\ -\sin \epsilon & \cos \epsilon \end{pmatrix} \) \\
+			\hline
+		\end{tabular}
+		\caption{Summary of \textit{S}- and \textit{R}-matrix structures in uncoupled and coupled cases, using Stapp \cite{Stapp} and Blatt--Biedenharn \cite{BB} conventions.}
+		\label{tab:s_r_matrices}
+	\end{table}
+	
+	\subsection{Remarks}
+	
+	\begin{itemize}
+		\item In coupled channels, the phase shifts \( \delta_i \) and mixing angles \( \epsilon \) fully characterize the scattering process.
+		\item The two conventions differ in the placement of rotation matrices but yield the same observables.
+	\end{itemize}
+	
+	
+	\section{Variational code}
+	In the variational code the $R$-matrix is evaluated using Ko\"on principle to second order. Then through the following steps one recovers the phase-shifts and mixing angles for both the Stapp and BB conventions.
+	
+	\subsection{BB phase shifts and mixing angle}
+	Using Tab.~\ref{tab:s_r_matrices} the $R$ matrix can be written as
+	\begin{equation}
+		R= \left(
+		\begin{array}{cc}
+			\tan \delta_1 \cos ^2 \epsilon +\tan \delta_2 \sin ^2 \epsilon  & 
+			\left(\tan\delta_1 -\tan\delta_2)\right) \sin\epsilon\, \cos  \epsilon \\
+			\left(\tan\delta_1 -\tan\delta_2)\right) \sin\epsilon\, \cos  \epsilon & 
+			\tan \delta_1 \sin ^2
+			\epsilon +\tan \delta_2 \cos ^2\epsilon \\
+		\end{array}
+		\right)\,.
+	\end{equation}
+	The combination $R_{11}-R_{22}$ is
+	\begin{equation}
+		R_{11}-R_{22} = 
+		\cos(2\epsilon) 
+		\left(\tan \delta_1 - \tan \delta_2\right)\,.
+	\end{equation}
+	Therefore
+	\begin{equation}
+		\tan(4\epsilon) = \frac{2\,R_{12}}{R_{11}-R_{22}}
+		\qquad
+		\rightarrow
+		\qquad
+		\epsilon =
+		\frac{1}{2} \atan\left(\frac{2\,R_{12}}{R_{11}-R_{22}}\right)\,.
+	\end{equation}
+	Once $\epsilon$ is known, one can evaluate 
+	\begin{equation}
+		\tan\delta_1
+		=
+		\cos^2 \epsilon \,\,R_{11}
+		+\sin^2 \epsilon \,\,R_{22}
+		+2 \cos\epsilon \,\sin\epsilon\, R_{12}
+	\end{equation}
+	and
+	\begin{equation}
+		\tan\delta_2
+		=
+		\sin^2 \epsilon\,\,R_{11}
+		+\cos^2 \epsilon \,\,R_{22}
+		-2 \cos\epsilon\, \sin\epsilon\, R_{12}\,.
+	\end{equation}
+	
+	\subsection{Stapp phase shifts and mixing angle}
+	One can then use $\delta_1$, $\delta_2$ and $\epsilon$ to evaluate  the $S$-matrix, which is independent from the parametrization,
+	\begin{equation}
+		S = S_\mtm{BB} = 
+		\left(
+		\begin{array}{cc}
+			e^{2 i \delta _1} \cos ^2\epsilon + e^{2 i \delta _2} \sin ^2\epsilon & 
+			\left(e^{2 i \delta _1} -e^{2 i \delta _2}\right) \sin \epsilon  \cos\epsilon \\
+			\left(e^{2 i \delta _1} -e^{2 i \delta _2}\right) \sin \epsilon  \cos\epsilon &
+			e^{2 i \delta _1} \sin ^2\epsilon+e^{2 i \delta _2} \cos
+			^2\epsilon \\
+		\end{array}
+		\right)\,.
+	\end{equation}
+	It is possible now to extract the phase shifts and mixing angle in the Stapp parametrization.
+	In this parametrization 
+	\begin{equation}
+		S = S_\mtm{Stapp} = 
+		\left(
+		\begin{array}{cc}
+			e^{2 i \delta _1} \,\cos (2 \epsilon ) & i \,e^{i (\delta _1+\delta _2)}\, \sin (2 \epsilon ) \\
+			i\, e^{i (\delta _1+\delta _2)}\, \sin (2 \epsilon ) & e^{2 i \delta _2} \cos (2 \epsilon ) \\
+		\end{array}
+		\right)\,.
+	\end{equation}
+	The determinant in this case is 
+	\begin{equation}
+		\det S_\mtm{Stapp} = e^{2 i \left(\delta _1+\delta _2\right)}
+	\end{equation}
+	and therefore
+	\begin{equation}
+		\sin(2\epsilon) = \sqrt{-\frac{S_{12}^2}{\det S}}
+	\end{equation}
+	and 
+	\begin{equation}
+		\cos(2\epsilon) = \sqrt{1-\sin^2(2\epsilon)}\,.
+	\end{equation}
+	It is possible to evaluate
+	\begin{equation}
+		e^{i\delta_k} = \sqrt{\frac{S_{kk}}{\cos(2\epsilon)}}
+		=
+		\sqrt{e^{2i\delta_k}}\,.
+	\end{equation}
+	Therefore
+	\begin{equation}
+		\delta_1 =
+		\,\acos\left[\Re\left(\sqrt{\frac{S_{11}}{\cos(2\epsilon)}}\right)\right]
+		\times
+		\begin{cases}
+			1 & \mathrm{if~}\Im\left(\sqrt{\frac{S_{11}}{\cos(2\epsilon)}}\right) \ge 0 \\
+			-1 & \mathrm{if~}\Im\left(\sqrt{\frac{S_{11}}{\cos(2\epsilon)}}\right) < 0
+		\end{cases}
+	\end{equation}
+	and 
+	\begin{equation}
+		\delta_2 =
+		\acos\left[\Re\left(\frac{S_{22}}{\cos(2\epsilon)}\right)\right]
+		\times
+		\begin{cases}
+			1 & \mathrm{if~}\Im\left(\frac{S_{22}}{\cos(2\epsilon)}\right) \ge 0 \\
+			-1 & \mathrm{if~}\Im\left(\frac{S_{22}}{\cos(2\epsilon)}\right) < 0
+		\end{cases}\,.
+	\end{equation}
+	
+	
+	
+	\section{Conclusion}
+	
+	The \textit{S}-matrix and \textit{R}-matrix are central tools in analyzing nucleon--nucleon scattering. While the \textit{S}-matrix encapsulates the observable content of the interaction, the \textit{R}-matrix provides a convenient and often more numerically robust intermediate object, especially in resonance or coupled-channel analyses. Their connection through a M\"obius transformation reflects deep structural links in scattering theory.
+	
+	
+	\begin{thebibliography}{9}
+		\bibitem{advances}
+		L.M. Delves, Advances in Nuclear Physics, vol.~5 (1972), Eds. M. Baranger, E. V\"ogt (Plenum Press, London, New York).
+		
+		\bibitem{Stapp}
+		H.P. Stapp, T. Ypsilantis and N. Metropolis, Phys. Rev. \textbf{105}, 302 (1957).
+		
+		\bibitem{BB}
+		J. M. Blatt and L. C. Biedenharn, Phys. Rev. \textbf{86}, 399 (1952).
+		
+		
+	\end{thebibliography}
+	
+\end{document}
