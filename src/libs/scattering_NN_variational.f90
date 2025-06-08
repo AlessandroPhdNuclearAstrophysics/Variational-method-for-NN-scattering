@@ -1065,7 +1065,7 @@ CONTAINS
         RMAT2(IAB,IAK) =-0.5D0*( RMAT2_ASYM(IAB,IAK) + RMAT2_ASYM(IAK,IAB) )
       ENDDO
       ENDDO
-          END SUBROUTINE R_SECOND_ORDER
+    END SUBROUTINE R_SECOND_ORDER
 
     !> \brief Write coefficients to file to recreate the wave function.
     !! \param[in] FILE (optional) Output file name
