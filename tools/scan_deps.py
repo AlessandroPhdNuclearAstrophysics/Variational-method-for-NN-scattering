@@ -13,6 +13,9 @@ build_root = Path("build")
 # Dictionary to map module name → path where it is defined
 module_to_path = {}
 
+# List of known system modules to ignore
+system_modules = ["omp_lib", "iso_c_binding", "iso_fortran_env"]
+
 # Search every Fortran file in src/ to find module definitions
 for path in src_root.rglob("*.f90"):
     with open(path, "r", encoding="utf-8") as f:
@@ -44,13 +47,16 @@ obj_file = build_root / src_file.relative_to(src_root).with_suffix(".o")
 with open(dep_file, "w") as f:
     f.write(f"{obj_file}:")
     for mod in used_modules:
-        if mod in module_to_path:
+        if mod in system_modules:
+            # Skip system modules - don't add them as dependencies
+            continue
+        elif mod in module_to_path:
             # Where is that module defined?
             mod_path = module_to_path[mod]
             # Where is its object file?
             mod_obj = build_root / mod_path.relative_to(src_root).with_suffix(".o")
             f.write(f" {mod_obj}")
         else:
-            # If the module isn't found, comment that in the file
-            f.write(f" # Missing module: {mod}")
+            # If the module isn't found, add as a separate comment line, not inline
+            f.write(f"\n# Missing module: {mod}")
     f.write("\n")
