@@ -59,7 +59,8 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   
   ! Loop over all scattering channels, construct file names, print info, and check file existence
   DO I=1, NCHANNELS
-    FILE_NAMES(I) = "output/EFT_pless_15/delta_"//TRIM(GET_CHANNEL_NAME(CHANNELS(I))) // ".dat"
+    FILE_NAMES(I) = "bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/delta_"&
+                        //TRIM(GET_CHANNEL_NAME(CHANNELS(I))) // ".dat"
     WRITE(*,*) 'Channel ', I, ':', TRIM(GET_CHANNEL_NAME(CHANNELS(I)))
     IF (FILE_EXISTS(TRIM(FILE_NAMES(I)))) THEN
       WRITE(*,*) '            > File exists : ', TRIM(FILE_NAMES(I))
