@@ -95,6 +95,11 @@ $(DEP_DIR):
 run:
 	./bin/runner.sh
 
+# Generate dependency graphs using Graphviz
+generate_dependency_graphs: $(DEP_FILES)
+	@echo "Generating dependency graphs..."
+	@mkdir -p dependency_graphs
+	@python3.12 tools/dependency_tree.py $(DEP_DIR) -d dependency_graphs --auto-adjust -l circular -f -g -p 3 -s 50 --remove-transitive
 
 SRC_XMGRACE := $(shell find . -name "*.agr")
 OUT_XMGRACE := $(patsubst %.agr, %.pdf, $(SRC_XMGRACE))
@@ -109,7 +114,7 @@ $(OUT_XMGRACE): %.pdf: %.agr
 
 # Clean rule to delete all build artifacts
 clean:
-	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps")
+	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps") dependency_graphs/*
 
 # Delete output files
 delete_out:

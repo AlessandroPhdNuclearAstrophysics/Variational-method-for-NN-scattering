@@ -34,6 +34,22 @@ The code handles all physical nucleon-nucleon channels, including both uncoupled
 - xmgrace (for plotting results)
 - Doxygen (for generating documentation)
 
+### Developer Tools
+- `tools/scan_deps.py`: Scans Fortran source files to map module dependencies and main programs. Used in the build system for automatic dependency tracking.
+- `tools/dependency_tree.py`: Visualizes module dependencies as tree diagrams (text and graphical output). Consumes outputs from `scan_deps.py` and can generate PNG diagrams in the `dependency_graphs/` directory.
+
+#### Example Usage (from the Makefile)
+To generate dependency files for a Fortran source file:
+```bash
+python3 tools/scan_deps.py src/main_scattering_NN_variazional_method.f90
+```
+
+To generate dependency graphs (as used in the Makefile's `generate_dependency_graphs` target):
+```bash
+python3 tools/dependency_tree.py build/dep -d dependency_graphs --auto-adjust -l circular -f -g -p 3 -s 50 --remove-transitive
+```
+This will analyze all dependency files in `build/dep/` and generate diagrams in `dependency_graphs/`.
+
 ### Installation on Debian/Ubuntu Systems
 ```bash
 sudo apt-get install gfortran libgsl-dev liblapack-dev libblas-dev python3 grace doxygen
@@ -125,7 +141,6 @@ make test
 ./build/main_transform_to_k2_kcotd.x output/AV18_50MeV/
 ```
 
-
 ## Output Files
 
 ### Phase Shift Files
@@ -165,7 +180,6 @@ For uncoupled channels, the effective range expansion is implemented as:
 ```
 k^(2L+1)cot(δ) = Σ c_i k^(2i)
 ```
-
 From this expansion, we extract:
 - Scattering length: a = -1/c₀
 - Effective range: r_e = 2c₁
@@ -183,7 +197,7 @@ The code uses several numerical integration methods:
 - Exponentially growing grids for high resolution near the origin
 
 ## To-Do List
-- [x]  Solve the problems with `OMP` parallelization
+- [x] Solve the problems with `OMP` parallelization
 - [ ] Implement possibility to fit new potential models using calculating the potential radial functions once
 - [ ] Implement "nn" and "pp" cases in the same way as "np" (currently only np is implemented)
 - [ ] Implement the `lemp=1` option to include the electromagnetic potential in the calculations and the correct asymptotic behavior of the wave function
