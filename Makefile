@@ -6,25 +6,21 @@ FC = gfortran
 DEBUG ?= 0
 GMON ?= 0
 
+# Common flags
+FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
+LDFLAGS = -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
+
 ifeq ($(DEBUG),1)
-  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
-           -Wall -g -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-real=snan -finit-local-zero \
-           -fbacktrace -fdefault-real-8 -fdefault-double-8
-  LDFLAGS = -Wall -g -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-real=snan -finit-local-zero \
-            -fdefault-real-8 -fdefault-double-8
+	FFLAGS  += -g -fcheck=all -finit-local-zero -fbacktrace
+	LDFLAGS += -g -fcheck=all
 else
-  FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) \
-           -Wall -O3 -g -march=native -funroll-loops -ftree-vectorize \
-           -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
-  LDFLAGS = -Wall -O3 -g -march=native -funroll-loops -ftree-vectorize \
-            -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
+	FFLAGS  += -O3 -march=native -funroll-loops -ftree-vectorize
+	LDFLAGS += -O3 -march=native -funroll-loops -ftree-vectorize
 endif
 
-OMP ?= 0
-ifeq ($(OMP),1)	
-	FFLAGS += -fopenmp
-	LDFLAGS += -fopenmp
-endif
+# Enable OpenMP
+FFLAGS += -fopenmp
+LDFLAGS += -fopenmp
 
 ifeq ($(GMON),1)
 	FFLAGS += -pg

@@ -1410,17 +1410,20 @@ CONTAINS
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-core matrix elements for the variational calculation.
+  ! filepath: /home/alessandro/Dropbox/Variazionale_mine/src/libs/scattering_NN_variational.f90
   SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
     USE INTEGRATION_MOD
+    USE OMP_LIB
     IMPLICIT NONE
 
     DOUBLE PRECISION :: H5, HR ! Step size in r
     INTEGER :: NX, NEQ, NNN
-    INTEGER :: IE, ICH, LR, II, JJ, I
-    INTEGER :: IAB, IAK, LIK, IL, IB, LL, IPOT
+    INTEGER :: IE, ICH, LR, II, JJ, I, LIK
+    INTEGER :: IAB, IAK, IL, IB, LL, IPOT
     INTEGER :: SL, SR, TL, TR, S, T
-    DOUBLE PRECISION :: AXX1, AKE1, APE, APE1
+    INTEGER :: NUM_THREADS
+    LOGICAL :: PARALLEL_ENABLED = .TRUE.
 
     DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND(:)
     INTEGER, ALLOCATABLE :: COMMON_INDEX(:,:)
@@ -1430,6 +1433,7 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: KIN_MIN_E(:,:,:)
     DOUBLE PRECISION, ALLOCATABLE :: POT_AC_R(:,:,:,:,:,:), POT_AC_I(:,:,:,:,:,:)
 
+    ! Check if prerequisites are set
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
       PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
@@ -1442,6 +1446,7 @@ CONTAINS
       WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
     ENDIF
 
+    ! Allocate output arrays
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_I, NCHANNELS, NE, NNN_MAX, NCH_MAX)
 
@@ -1463,69 +1468,62 @@ CONTAINS
       STOP
     ENDIF
 
+    ! Initialize integration array with padding for index 1
     CALL REALLOCATE_1D_1(INTEGRAND, NX+1)
 
-
-    ! NEW MATRIX ELEMENTS
+    ! Calculate channel combinations
     CALL L_COMBINATIONS(CHANNELS_, LCOMBINATIONS)
     NCOMB = SIZE(LCOMBINATIONS, DIM=1)
-    ALLOCATE(KIN_MIN_E(NE,VAR_P%NNL,0:LMAX))
+    
+    ! Initialize kinetic energy matrix and potential matrices if dynamic
+    ALLOCATE(KIN_MIN_E(NE, VAR_P%NNL, 0:LMAX))
     KIN_MIN_E = ZERO
+    
     IF (USE_DYNAMIC) THEN
-      ALLOCATE(POT_AC_R(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER),NE,0:1,0:1,VAR_P%NNL,0:LMAX))
-      ALLOCATE(POT_AC_I(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER),NE,0:1,0:1,VAR_P%NNL,0:LMAX))
+      ALLOCATE(POT_AC_R(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER), NE, 0:1, 0:1, VAR_P%NNL, 0:LMAX))
+      ALLOCATE(POT_AC_I(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER), NE, 0:1, 0:1, VAR_P%NNL, 0:LMAX))
       POT_AC_R = ZERO
       POT_AC_I = ZERO
     ENDIF
 
+    ! Set OpenMP parameters - determine number of threads to use
+    NUM_THREADS = 1
+    !$OMP PARALLEL
+    !$OMP MASTER
+    IF (PARALLEL_ENABLED) NUM_THREADS = OMP_GET_NUM_THREADS()
+    !$OMP END MASTER
+    !$OMP END PARALLEL
+    
+    WRITE(*,*) "Computing matrix elements using", NUM_THREADS, "threads"
+
+    ! Compute kinetic energy matrix elements and potential terms - this is the computationally intensive part
+    !$OMP PARALLEL DO COLLAPSE(3) PRIVATE(IE, IL, LL, LIK, INTEGRAND, S, T, IPOT) &
+    !$OMP SHARED(KIN_MIN_E, POT_AC_R, POT_AC_I, NE, LMAX, NX, H5) &
+    !$OMP SCHEDULE(dynamic) IF(PARALLEL_ENABLED)
     DO IE = 1, NE
       DO IL = 1, VAR_P%NNL
         DO LL = 0, LMAX
           LIK = LL*(LL+1)
-          ! NORMALIZATIONS CORE-IRREGULAR
-          INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)
-          AXX1=  B5_SINGLE(NX,H5,INTEGRAND,1)
-
-          ! KINETIC ENERGY CORE-IRREGULAR
-          INTEGRAND(2:) = AJ_AC*GBES_AC(IE,LL,:)*( V2_AC(IL,:) + 2.D0*V1_AC(IL,:)/XX_AC &
-                                                      - LIK*V0_AC(IL,:)/XX_AC**2)
-          AKE1 = -HTM * B5_SINGLE(NX,H5,INTEGRAND,1)
-          ! KINETIC ENERGY - ENERGY CORE-IRREGULAR
-          KIN_MIN_E(IE,IL,LL) = AKE1 - ENERGIES_(IE) * AXX1
-
-          ! POTENTIAL ENERGY DYNAMIC CASE
+          
+          ! Compute kinetic energy terms - extracted to a helper routine
+          CALL COMPUTE_KIN_MIN_E(IE, IL, LL, LIK, NX, H5, KIN_MIN_E(IE,IL,LL))
+          
+          ! Compute potential terms if using dynamic potential
           IF (USE_DYNAMIC) THEN
-            DO T = 0, 1
-            DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
-              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(0,T,IPOT,:)
-              POT_AC_R(IPOT,IE,0,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
-
-              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(0,T,IPOT,:)
-              POT_AC_I(IPOT,IE,0,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
-              
-              IF (DABS(LECS%RC(0,T)-LECS%RC(1,T)) > 1.D-10) THEN
-                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(1,T,IPOT,:)
-                POT_AC_R(IPOT,IE,1,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
-
-                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(1,T,IPOT,:)
-                POT_AC_I(IPOT,IE,1,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
-              ELSE
-                POT_AC_R(IPOT,IE,1,T,IL,LL) = POT_AC_R(IPOT,IE,0,T,IL,LL)
-                POT_AC_I(IPOT,IE,1,T,IL,LL) = POT_AC_I(IPOT,IE,0,T,IL,LL)
-              ENDIF
-            ENDDO
-            ENDDO
+            CALL COMPUTE_POTENTIAL_TERMS(IE, IL, LL, NX, H5, POT_AC_R, POT_AC_I)
           ENDIF
         ENDDO
       ENDDO
     ENDDO
-    
-    ! Evaluate the matrix elements
+    !$OMP END PARALLEL DO
+
+    ! Evaluate the matrix elements for each channel and energy
     DO IE = 1, NE
       DO ICH = 1, NCHANNELS
         NEQ = GET_CHANNEL_NCH(CHANNELS_(ICH))
         NNN = NEQ * VAR_P%NNL
 
+        ! Create a mapping from (channel, basis function) to linear index
         IF (ALLOCATED(COMMON_INDEX)) DEALLOCATE(COMMON_INDEX)
         ALLOCATE(COMMON_INDEX(NEQ, VAR_P%NNL))
         COMMON_INDEX = 0
@@ -1537,57 +1535,186 @@ CONTAINS
           ENDDO
         ENDDO
 
-        !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(IAB,IAK,IL,IB,LL,LR,LIK,FUN,FUN1) SCHEDULE(static)
+        !$OMP PARALLEL DO COLLAPSE(2) &
+        !$OMP PRIVATE(IAB, IAK, IL, IB, LL, SL, SR, TL, TR, S, T, IPOT, INTEGRAND) &
+        !$OMP SHARED(H_MINUS_E_AC_R, H_MINUS_E_AC_I, K_MINUS_E_AC_I, FMAT_AC_R, FMAT_AC_I) &
+        !$OMP SCHEDULE(dynamic) IF(PARALLEL_ENABLED)
         DO IAB = 1, NEQ
           DO IAK = 1, NEQ
+            ! Get quantum numbers for current pair of channels
             SL = GET_CHANNEL_S(CHANNELS_(ICH), IAK)
             SR = GET_CHANNEL_S(CHANNELS_(ICH), IAB)
             IF (SL/=SR) CYCLE ! Only diagonal elements are calculated
+            
             TL = GET_CHANNEL_T(CHANNELS_(ICH), IAK)
             TR = GET_CHANNEL_T(CHANNELS_(ICH), IAB)
             IF (TL/=TR) CYCLE ! Only diagonal elements are calculated
+            
             S = SL
             T = TL
 
             LL = GET_CHANNEL_L(CHANNELS_(ICH), IAK)
-            LR = GET_CHANNEL_L(CHANNELS_(ICH), IAB)
-            LIK = LR*(LR+1)
 
             DO IL = 1, VAR_P%NNL
               IB = COMMON_INDEX(IAB, IL)
 
-            ! Evaluate the potential energy core-regular (ape), core-irregular (ape1)
-              IF (.NOT. USE_DYNAMIC) THEN
-                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
-                APE  = B5_SINGLE(NX,H5,INTEGRAND,1)
-
-                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*V_AC(ICH,:,IAB,IAK)
-                APE1 = B5_SINGLE(NX,H5,INTEGRAND,1)
-              ELSE
+              ! Handle dynamic and static potential differently
+              IF (USE_DYNAMIC) THEN
+                ! Copy precomputed matrix elements to output arrays
                 DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
                   FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = POT_AC_R(IPOT,IE,S,T,IL,LL)
                   FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = POT_AC_I(IPOT,IE,S,T,IL,LL)
                 ENDDO
-              ENDIF
-
-            ! Evaluate the Hamiltonian: core-regular (am), core-irregular (am1)
-              IF (.NOT.USE_DYNAMIC) THEN
-                H_MINUS_E_AC_R(ICH, IE, IB, IAK) = APE / HTM
-                IF (IAK  == IAB) THEN
-                  H_MINUS_E_AC_I(ICH, IE, IB, IAK)= (KIN_MIN_E(IE,IL,LL)+APE1) / HTM
-                ELSE
-                  H_MINUS_E_AC_I(ICH, IE, IB, IAK)= APE1 / HTM
+                
+                ! Set kinetic matrix elements for matching diagonal IAK==IAB elements
+                IF (IAK == IAB) THEN
+                  K_MINUS_E_AC_I(ICH, IE, IB, IAK) = KIN_MIN_E(IE,IL,LL) / HTM
                 ENDIF
               ELSE
-                  IF (IAK == IAB) K_MINUS_E_AC_I(ICH, IE, IB, IAK)= KIN_MIN_E(IE,IL,LL) / HTM
+                ! Handle static potential case
+                CALL COMPUTE_STATIC_POTENTIAL_MATRIX_ELEMENTS(ICH, IE, IB, IAK, IL, LL, NX, H5)
               ENDIF
-
             ENDDO ! IL
           ENDDO ! IAK
         ENDDO ! IAB
         !$OMP END PARALLEL DO
       ENDDO ! ICH
     ENDDO ! IE
+    
+    ! Clean up temporary arrays
+    IF (ALLOCATED(KIN_MIN_E)) DEALLOCATE(KIN_MIN_E)
+    IF (ALLOCATED(POT_AC_R)) DEALLOCATE(POT_AC_R)
+    IF (ALLOCATED(POT_AC_I)) DEALLOCATE(POT_AC_I)
+    IF (ALLOCATED(LCOMBINATIONS)) DEALLOCATE(LCOMBINATIONS)
+    
+  CONTAINS
+
+    !> \brief Compute kinetic energy minus potential energy matrix elements
+    SUBROUTINE COMPUTE_KIN_MIN_E(IE_LOCAL, IL_LOCAL, LL_LOCAL, LIK_LOCAL, NX_LOCAL, H5_LOCAL, RESULT)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: IE_LOCAL, IL_LOCAL, LL_LOCAL, NX_LOCAL
+      INTEGER, INTENT(IN) :: LIK_LOCAL
+      DOUBLE PRECISION, INTENT(IN) :: H5_LOCAL
+      DOUBLE PRECISION, INTENT(OUT) :: RESULT
+      DOUBLE PRECISION :: AXX1_LOCAL, AKE1_LOCAL
+      DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND_LOCAL(:)
+      
+      ALLOCATE(INTEGRAND_LOCAL(NX_LOCAL+1))
+      
+      ! NORMALIZATIONS CORE-IRREGULAR
+      INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+      INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*GBES_AC(IE_LOCAL,LL_LOCAL,:)
+      AXX1_LOCAL = B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+
+      ! KINETIC ENERGY CORE-IRREGULAR
+      INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+      INTEGRAND_LOCAL(2:) = AJ_AC*GBES_AC(IE_LOCAL,LL_LOCAL,:)*( &
+                      V2_AC(IL_LOCAL,:) + 2.D0*V1_AC(IL_LOCAL,:)/XX_AC &
+                      - LIK_LOCAL*V0_AC(IL_LOCAL,:)/XX_AC**2)
+      AKE1_LOCAL = -HTM * B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+      
+      ! KINETIC ENERGY - ENERGY CORE-IRREGULAR
+      RESULT = AKE1_LOCAL - ENERGIES_(IE_LOCAL) * AXX1_LOCAL
+      
+      DEALLOCATE(INTEGRAND_LOCAL)
+    END SUBROUTINE COMPUTE_KIN_MIN_E
+
+    !> \brief Compute potential terms for dynamic case
+    SUBROUTINE COMPUTE_POTENTIAL_TERMS(IE_LOCAL, IL_LOCAL, LL_LOCAL, NX_LOCAL, H5_LOCAL, &
+                                      POT_R_LOCAL, POT_I_LOCAL)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: IE_LOCAL, IL_LOCAL, LL_LOCAL, NX_LOCAL
+      DOUBLE PRECISION, INTENT(IN) :: H5_LOCAL
+      DOUBLE PRECISION, INTENT(INOUT) :: POT_R_LOCAL(0:,:,0:,0:,:,0:), POT_I_LOCAL(0:,:,0:,0:,:,0:)
+      INTEGER :: T_LOCAL, IPOT_LOCAL
+      DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND_LOCAL(:)
+      
+      ALLOCATE(INTEGRAND_LOCAL(NX_LOCAL+1))
+      
+      DO T_LOCAL = 0, 1
+        DO IPOT_LOCAL = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
+          ! Regular component
+          INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+          INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*FBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                                EFT_RADIAL_AC%FR_I(0,T_LOCAL,IPOT_LOCAL,:)
+          POT_R_LOCAL(IPOT_LOCAL,IE_LOCAL,0,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                      B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+
+          ! Irregular component
+          INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+          INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*GBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                                EFT_RADIAL_AC%FR_I(0,T_LOCAL,IPOT_LOCAL,:)
+          POT_I_LOCAL(IPOT_LOCAL,IE_LOCAL,0,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                      B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+          
+          ! Handle spin=1 case, check if cutoffs differ
+          IF (DABS(LECS%RC(0,T_LOCAL)-LECS%RC(1,T_LOCAL)) > 1.D-10) THEN
+            ! Regular component S=1
+            INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+            INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*FBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                                  EFT_RADIAL_AC%FR_I(1,T_LOCAL,IPOT_LOCAL,:)
+            POT_R_LOCAL(IPOT_LOCAL,IE_LOCAL,1,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                        B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+
+            ! Irregular component S=1
+            INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+            INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*GBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                                  EFT_RADIAL_AC%FR_I(1,T_LOCAL,IPOT_LOCAL,:)
+            POT_I_LOCAL(IPOT_LOCAL,IE_LOCAL,1,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                        B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+          ELSE
+            ! Use same values as S=0 case if cutoffs are identical
+            POT_R_LOCAL(IPOT_LOCAL,IE_LOCAL,1,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                        POT_R_LOCAL(IPOT_LOCAL,IE_LOCAL,0,T_LOCAL,IL_LOCAL,LL_LOCAL)
+            POT_I_LOCAL(IPOT_LOCAL,IE_LOCAL,1,T_LOCAL,IL_LOCAL,LL_LOCAL) = &
+                        POT_I_LOCAL(IPOT_LOCAL,IE_LOCAL,0,T_LOCAL,IL_LOCAL,LL_LOCAL)
+          ENDIF
+        ENDDO ! IPOT_LOCAL
+      ENDDO ! T_LOCAL
+      
+      DEALLOCATE(INTEGRAND_LOCAL)
+    END SUBROUTINE COMPUTE_POTENTIAL_TERMS
+
+    !> \brief Compute static potential matrix elements
+    SUBROUTINE COMPUTE_STATIC_POTENTIAL_MATRIX_ELEMENTS(ICH_LOCAL, IE_LOCAL, IB_LOCAL, IAK_LOCAL, &
+                                                      IL_LOCAL, LL_LOCAL, NX_LOCAL, H5_LOCAL)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: ICH_LOCAL, IE_LOCAL, IB_LOCAL, IAK_LOCAL, IL_LOCAL, LL_LOCAL, NX_LOCAL
+      DOUBLE PRECISION, INTENT(IN) :: H5_LOCAL
+      DOUBLE PRECISION :: APE_LOCAL, APE1_LOCAL
+      DOUBLE PRECISION, ALLOCATABLE :: INTEGRAND_LOCAL(:)
+      INTEGER :: IAB_LOCAL
+
+      ALLOCATE(INTEGRAND_LOCAL(NX_LOCAL+1))
+      
+      ! Get IAB value from IB
+      IAB_LOCAL = (IB_LOCAL-1) / VAR_P%NNL + 1
+      
+      ! Evaluate the potential energy core-regular (ape_local)
+      INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+      INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*FBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                          V_AC(ICH_LOCAL,:,IAB_LOCAL,IAK_LOCAL)
+      APE_LOCAL = B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+
+      ! Evaluate the potential energy core-irregular (ape1_local)
+      INTEGRAND_LOCAL(1) = ZERO  ! Pad first element
+      INTEGRAND_LOCAL(2:) = AJ_AC*V0_AC(IL_LOCAL,:)*GBES_AC(IE_LOCAL,LL_LOCAL,:)* &
+                          V_AC(ICH_LOCAL,:,IAB_LOCAL,IAK_LOCAL)
+      APE1_LOCAL = B5_SINGLE(NX_LOCAL, H5_LOCAL, INTEGRAND_LOCAL, 1)
+
+      ! Store results in output arrays
+      H_MINUS_E_AC_R(ICH_LOCAL, IE_LOCAL, IB_LOCAL, IAK_LOCAL) = APE_LOCAL / HTM
+      
+      IF (IAK_LOCAL == IAB_LOCAL) THEN
+        H_MINUS_E_AC_I(ICH_LOCAL, IE_LOCAL, IB_LOCAL, IAK_LOCAL) = &
+                        (KIN_MIN_E(IE_LOCAL,IL_LOCAL,LL_LOCAL) + APE1_LOCAL) / HTM
+      ELSE
+        H_MINUS_E_AC_I(ICH_LOCAL, IE_LOCAL, IB_LOCAL, IAK_LOCAL) = APE1_LOCAL / HTM
+      ENDIF
+      
+      DEALLOCATE(INTEGRAND_LOCAL)
+    END SUBROUTINE COMPUTE_STATIC_POTENTIAL_MATRIX_ELEMENTS
+
   END SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
 
 
