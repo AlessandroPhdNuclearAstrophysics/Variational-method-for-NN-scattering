@@ -141,8 +141,6 @@ CONTAINS
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: ENERGY, val1, ref1, val2, ref2, val3, ref3
     DOUBLE PRECISION :: pct1, pct2, pct3
-    CHARACTER(LEN=*), PARAMETER :: RED = CHAR(27)//'[31m'
-    CHARACTER(LEN=*), PARAMETER :: RESET = CHAR(27)//'[0m'
     DOUBLE PRECISION, PARAMETER :: SMALL = 1.D-5
     DOUBLE PRECISION, PARAMETER :: THRESH = 1.D-2  ! Threshold for percentage difference
     DOUBLE PRECISION, PARAMETER :: THRESH2= 1.D-1  ! Threshold for percentage difference
