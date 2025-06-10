@@ -21,10 +21,16 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   TYPE(PHASE_SHIFT_RESULT) :: PHASE_SHIFTS
   INTEGER :: J, L, S, T
   LOGICAL :: ENERGIES_SET = .FALSE.
+
+
+  CHARACTER(LEN=*), PARAMETER :: RED = CHAR(27)//'[31m'
+  CHARACTER(LEN=*), PARAMETER :: RESET = CHAR(27)//'[0m'
+  CHARACTER(LEN=*), PARAMETER :: GREEN = CHAR(27)//'[32m'
   
   TYPE(LECS_EFT_PLESS), EXTERNAL :: READ_LECS_EFT_PLESS
   LOGICAL, EXTERNAL :: FILE_EXISTS
 
+  INTEGER, ALLOCATABLE :: NLINES(:)
 
   !---------------------------------------------------------------------------
   ! Prepare the list of channels based on the specified maximum angular momentum
@@ -43,6 +49,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
   CALL PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
   NCHANNELS = SIZE(CHANNELS)
   ALLOCATE(FILE_NAMES(NCHANNELS))
+  ALLOCATE(NLINES(NCHANNELS))
   PRINT *, 'Number of channels:', NCHANNELS 
   
   !========================================================================================
@@ -99,14 +106,25 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, -1, -1, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
       ! Print energy and absolute percentage differences for all three on the same line
       IF (I <= SIZE(RESULTS)) THEN
-        CALL print_diff_pct_line(E, PHASE_SHIFTS%delta1_S, RESULTS(I)%PHASES(1), &
+        IF (print_diff_pct_line(E, PHASE_SHIFTS%delta1_S, RESULTS(I)%PHASES(1), &
                                     PHASE_SHIFTS%delta2_S, RESULTS(I)%PHASES(2), &
-                                    PHASE_SHIFTS%epsilon_S, RESULTS(I)%PHASES(3))
+                                    PHASE_SHIFTS%epsilon_S, RESULTS(I)%PHASES(3))) THEN
+          NLINES(ICH) = NLINES(ICH) + 1
+        ENDIF
       END IF
-
     ENDDO
   ENDDO
 
+  DO ICH = 1, NCHANNELS
+    IF (NLINES(ICH) == 0) THEN
+      WRITE(*,*) GREEN, 'Channel ', GET_CHANNEL_NAME_FROM_OBJECT(CHANNELS(ICH)), ': ', "PASSED.", RESET
+    ELSE
+      WRITE(*,*) RED, 'Channel ', GET_CHANNEL_NAME_FROM_OBJECT(CHANNELS(ICH)), ': ', "FAILED. ", &
+          RESET, TRIM(GET_CHANNEL_NAME(CHANNELS(ICH))), ' has no significant differences.', RESET
+    ENDIF
+  ENDDO
+
+  DEALLOCATE(NLINES)
   DEALLOCATE(ENERGIES)
   DO I = 1, NCHANNELS
     CALL RESET_CHANNEL(CHANNELS(I))
@@ -118,31 +136,53 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
 
 
 CONTAINS
-  SUBROUTINE print_diff_pct_line(ENERGY, val1, ref1, val2, ref2, val3, ref3)
+  FUNCTION print_diff_pct_line(ENERGY, val1, ref1, val2, ref2, val3, ref3) RESULT(DIFFERENT_LINES)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: ENERGY, val1, ref1, val2, ref2, val3, ref3
     DOUBLE PRECISION :: pct1, pct2, pct3
     CHARACTER(LEN=*), PARAMETER :: RED = CHAR(27)//'[31m'
     CHARACTER(LEN=*), PARAMETER :: RESET = CHAR(27)//'[0m'
-    pct1 = ABS(val1 - ref1) / MAX(1D-12, ABS(ref1)) * 100.0D0
-    pct2 = ABS(val2 - ref2) / MAX(1D-12, ABS(ref2)) * 100.0D0
-    pct3 = ABS(val3 - ref3) / MAX(1D-12, ABS(ref3)) * 100.0D0
-    IF (pct1 > 1.0D-2) THEN
-      WRITE(*,'(F10.3,1X,A,F20.12,A,1X)', ADVANCE='NO') ENERGY, RED, pct1, RESET
+    DOUBLE PRECISION, PARAMETER :: SMALL = 1.D-5
+    DOUBLE PRECISION, PARAMETER :: THRESH = 1.D-2  ! Threshold for percentage difference
+    DOUBLE PRECISION, PARAMETER :: THRESH2= 1.D-1  ! Threshold for percentage difference
+    LOGICAL :: DIFFERENT_LINES
+
+    IF (ABS(val1) < SMALL .AND. ABS(ref1) < SMALL) THEN
+      pct1 = 0.0D0
     ELSE
-      WRITE(*,'(F10.3,1X,F20.12,1X)', ADVANCE='NO') ENERGY, pct1
+      pct1 = ABS(val1 - ref1) / MAX(1D-12, ABS(ref1)) * 100.0D0
     END IF
-    IF (pct2 > 1.0D-2) THEN
-      WRITE(*,'(A,F20.12,A,1X)', ADVANCE='NO') RED, pct2, RESET
+    IF (ABS(val2) < SMALL .AND. ABS(ref2) < SMALL) THEN
+      pct2 = 0.0D0
     ELSE
-      WRITE(*,'(F20.12,1X)', ADVANCE='NO') pct2
+      pct2 = ABS(val2 - ref2) / MAX(1D-12, ABS(ref2)) * 100.0D0
     END IF
-    IF (pct3 > 1.0D-2) THEN
-      WRITE(*,'(A,F20.12,A)') RED, pct3, RESET
+    IF (ABS(val3) < SMALL .AND. ABS(ref3) < SMALL) THEN
+      pct3 = 0.0D0
     ELSE
-      WRITE(*,'(F20.12)') pct3
+      pct3 = ABS(val3 - ref3) / MAX(1D-12, ABS(ref3)) * 100.0D0
     END IF
-  END SUBROUTINE print_diff_pct_line
+
+    DIFFERENT_LINES = .FALSE.
+    IF (pct1 > THRESH .OR. pct2 > THRESH2 .OR. pct3 > THRESH) THEN
+      DIFFERENT_LINES = .TRUE.
+      IF (pct1 > THRESH) THEN
+        WRITE(*,'(F10.3,1X,A,F20.12,A,1X)', ADVANCE='NO') ENERGY, RED, pct1, RESET
+      ELSE
+        WRITE(*,'(F10.3,1X,F20.12,1X)', ADVANCE='NO') ENERGY, pct1
+      END IF
+      IF (pct2 > THRESH) THEN
+        WRITE(*,'(A,F20.12,A,1X)', ADVANCE='NO') RED, pct2, RESET
+      ELSE
+        WRITE(*,'(F20.12,1X)', ADVANCE='NO') pct2
+      END IF
+      IF (pct3 > THRESH) THEN
+        WRITE(*,'(A,F20.12,A)') RED, pct3, RESET
+      ELSE
+        WRITE(*,'(F20.12)') pct3
+      END IF
+    END IF
+  END FUNCTION print_diff_pct_line
 
   SUBROUTINE READ_RESULTS_FROM_FILE(FILENAME, RES)
     IMPLICIT NONE
