@@ -89,11 +89,6 @@ make
 make DEBUG=1
 ```
 
-### With OpenMP Parallelization
-```bash
-make OMP=1
-```
-
 ### With Profiling Information
 ```bash
 make GMON=1
@@ -198,13 +193,13 @@ The code uses several numerical integration methods:
 
 ## To-Do List
 - [x] Solve the problems with `OMP` parallelization
-- [ ] Implement possibility to fit new potential models using calculating the potential radial functions once
+- [x] Implement possibility to fit new potential models using calculating the potential radial functions once
+- [x] Optimize performance for large-scale calculations
 - [ ] Implement "nn" and "pp" cases in the same way as "np" (currently only np is implemented)
 - [ ] Implement the `lemp=1` option to include the electromagnetic potential in the calculations and the correct asymptotic behavior of the wave function
 - [ ] Implement additional potential models (e.g., EFT_pionfull)
 - [ ] Add more test cases for robustness
 - [ ] Improve documentation and examples
-- [ ] Optimize performance for large-scale calculations
 
 ## License
 
