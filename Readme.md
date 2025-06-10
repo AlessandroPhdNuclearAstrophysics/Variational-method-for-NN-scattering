@@ -77,7 +77,7 @@ sudo apt-get install gfortran libgsl-dev liblapack-dev libblas-dev python3 grace
 
 ## Building the Project
 
-The project uses a Makefile with several options:
+The project uses a Makefile with several options and automation features:
 
 ### Standard Build (Optimized)
 ```bash
@@ -103,6 +103,45 @@ make doc
 ```bash
 make test
 ```
+
+### Cleaning Build Artifacts
+```bash
+make clean
+```
+Removes all build files, logs, and generated graphs.
+
+### Deleting Output Files
+```bash
+make delete_out
+```
+Removes all files in the output directory.
+
+### Generating Dependency Graphs
+```bash
+make generate_dependency_graphs
+```
+Creates graphical representations of module dependencies in the `dependency_graphs/` directory.
+
+### Library Management and Export
+
+The Makefile can build a static library (`libvariational.a`) from all modules:
+```bash
+make build/libvariational.a
+```
+
+To export the static library **together with all module files** (required for use in other Fortran projects), you can create a zip archive:
+```bash
+make build/libvariational.zip
+```
+This will package `libvariational.a` and all `.mod` files from the build directory into `build/libvariational.zip` for easy distribution and reuse.
+
+### Additional Features
+- Automatic dependency tracking and correct compilation order using generated `.d` files.
+- Support for static library creation and export.
+- Automated test execution and logging.
+- Automated documentation generation with Doxygen.
+- Profiling support with gprof.
+- **OpenMP parallelization is always enabled by default.**
 
 ## Usage
 

@@ -114,7 +114,7 @@ $(OUT_XMGRACE): %.pdf: %.agr
 
 # Clean rule to delete all build artifacts
 clean:
-	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps") dependency_graphs/*
+	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps") dependency_graphs/* libvariational.a
 
 # Delete output files
 delete_out:
@@ -179,6 +179,22 @@ test: $(TEST_EXECUTABLES)
 		$$t || exit 1; \
 	done
 	@./bin/tests/test_variational_module.sh
+
+
+# Make static library from all the modules
+LIBRARY_FILE := libvariational.a
+$(BUILD_DIR)/$(LIBRARY_FILE): $(NON_MAIN_OBJECTS)
+	@echo "\033[0;32mCreating static library $(LIBRARY_FILE)\033[0m"
+	@mkdir -p $(BUILD_DIR)
+	ar rcs $(BUILD_DIR)/$(LIBRARY_FILE) $^
+
+# Rule to create a zip archive with the static library and module files
+EXPORT_ZIP := libvariational.zip
+
+$(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
+	@echo "\033[0;32mCreating zip archive with static library and module files...\033[0m"
+	@zip -j $(BUILD_DIR)/$(EXPORT_ZIP) $(BUILD_DIR)/$(LIBRARY_FILE) $(BUILD_DIR)/*.mod
+	@echo "Created $(BUILD_DIR)/$(EXPORT_ZIP)"
 
 # Include all dependency files if they exist
 -include $(DEPFILES) $(TEST_DEPFILES)
