@@ -148,6 +148,25 @@ doc:
 	@echo "Open doc/html/index.html in a web browser to view the documentation."
 	@echo "Doxygen documentation generation complete."
 
+GPROF_DIR := $(LOG_DIR)/gprof
+analyze_gprof_dynamic_LECS:
+	@echo "Analyzing gprof data for build/tests/test_variational_module_dynamic_LECS.x..."
+	@make clean
+	@echo "Rebuilding executable with profiling enabled..."
+	@$(MAKE) GMON=1 DEBUG=$(DEBUG) -j
+	@echo
+	@echo "\033[0;32mRunning gprof analysis on build/tests/test_variational_module_dynamic_LECS.x...\033[0m"
+	@mkdir -p $(GPROF_DIR)
+	@if [ -f build/tests/test_variational_module_dynamic_LECS.x ]; then \
+		echo "Analyzing build/tests/test_variational_module_dynamic_LECS.x"; \
+		time ./build/tests/test_variational_module_dynamic_LECS.x > /dev/null ; \
+		gprof build/tests/test_variational_module_dynamic_LECS.x gmon.out > $(GPROF_DIR)/test_variational_module_dynamic_LECS.gprof.log; \
+		rm -vf gmon.out; \
+	else \
+		echo "Executable build/tests/test_variational_module_dynamic_LECS.x not found, skipping."; \
+	fi
+	@echo "Gprof analysis complete. Output saved to $(GPROF_DIR)/test_variational_module_dynamic_LECS.gprof.log"
+
 
 delete_doc:
 	@rm -rvf doc
