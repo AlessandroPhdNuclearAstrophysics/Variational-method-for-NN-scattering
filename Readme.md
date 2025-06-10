@@ -20,7 +20,7 @@ The code handles all physical nucleon-nucleon channels, including both uncoupled
 
 ### Compiler Requirements
 - Fortran compiler (gfortran ≥ 8.0 recommended)
-- OpenMP support (optional, for parallel execution)
+- OpenMP support
 
 ### Required Libraries
 - GSL (GNU Scientific Library) for special functions
