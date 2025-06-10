@@ -958,112 +958,98 @@ CONTAINS
         CALL REALLOCATE_2D_1(RCIV, NNN, NCH)
         FIRST_CALL = .FALSE.
       ENDIF
-      XRCOEFV = TRANSPOSE(XRCOEFF)
-      XICOEFV = TRANSPOSE(XICOEFF)
+      ! Transpose coefficient matrices for more efficient matrix operations
+      ! XRCOEFF/XICOEFF = coefficients for regular/irregular solutions
+      XRCOEFV = TRANSPOSE(XRCOEFF)  ! Transpose real coefficients matrix
+      XICOEFV = TRANSPOSE(XICOEFF)  ! Transpose imaginary coefficients matrix
+
+      ! Calculate BD5 = XRCOEFF * C (matrix product of real coefficients with core Hamiltonian matrix)
+      ! Parameters: (matrix_order, transpose_A, transpose_B, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc)
+      CALL DGEMM('N', 'N', NCH, NNN, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), C, SIZE(C,1), 0.0D0, BD5, SIZE(BD5,1))
+      ! Calculate BD6 = XICOEFF * C (matrix product of imaginary coefficients with core Hamiltonian matrix)
+      CALL DGEMM('N', 'N', NCH, NNN, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), C, SIZE(C,1), 0.0D0, BD6, SIZE(BD6,1))
 
 
-      DO IAB=1,NCH
-        DO IK=1,NNN
-          SOMMA  = ZERO
-          SOMMA1 = ZERO
-          DO IB=1,NNN
-            SOMMA  = SOMMA  + XRCOEFF(IAB,IB)*C(IB,IK)
-            SOMMA1 = SOMMA1 + XICOEFF(IAB,IB)*C(IB,IK)
-          ENDDO
-          BD5(IAB,IK) = SOMMA
-          BD6(IAB,IK) = SOMMA1
-        ENDDO
-      ENDDO
+      ! First block: Calculate product of R-matrix with imaginary coefficients
+      ! RCI = RMAT * XICOEFF (NCH×NCH matrix multiplied by NCH×NNN matrix)
+      CALL DGEMM('N', 'N', NCH, NNN, NCH, 1.0D0, RMAT, SIZE(RMAT,1), XICOEFF, SIZE(XICOEFF,1), 0.0D0, RCI, SIZE(RCI,1))
 
-
+      ! Transpose RCI to RCIV for subsequent calculations
+      ! This changes from (channel×basis) format to (basis×channel) format
       DO IAB=1,NCH
         DO IB=1,NNN
-          SOMMA = ZERO
-          DO IAK=1,NCH
-            SOMMA = SOMMA + RMAT(IAB,IAK)*XICOEFF(IAK,IB)
-          ENDDO
-          RCI (IAB,IB) = SOMMA
           RCIV(IB,IAB) = RCI(IAB,IB)
         ENDDO
       ENDDO
 
+      ! Second block: Calculate three matrix products needed for second-order terms
+      ! CD0 = BD5 * XRCOEFV (matrix product giving channel-channel interactions)
+      CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, BD5, SIZE(BD5,1), XRCOEFV, SIZE(XRCOEFV,1), 0.0D0, CD0, SIZE(CD0,1))
 
-      DO IAB=1,NCH
-      DO IAK=1,NCH
-        SOMMA  = ZERO
-        SOMMA1 = ZERO
-        SOMMA2 = ZERO
-        DO IK=1,NNN
-          SOMMA  = SOMMA  + BD5(IAB,IK)*XRCOEFV(IK,IAK)
-          SOMMA1 = SOMMA1 + BD5(IAB,IK)*RCIV(IK,IAK)
-          SOMMA2 = SOMMA2 + BD6(IAB,IK)*XRCOEFV(IK,IAK)
-        ENDDO
-        CD0(IAB,IAK) = SOMMA
-        CD1(IAB,IAK) = SOMMA1
-        RD0(IAB,IAK) = SOMMA2
-      ENDDO
-      ENDDO
+      ! CD1 = BD5 * RCIV (combines real coefficients with transposed R-matrix product)
+      CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, BD5, SIZE(BD5,1), RCIV, SIZE(RCIV,1), 0.0D0, CD1, SIZE(CD1,1))
 
-      DO I=1,NCH
-      DO IAB=1,NCH
-        SOMMA  = ZERO
-        SOMMA1 = ZERO
-        SOMMA2 = ZERO
-        SOMMA3 = ZERO
-        SOMMA4 = ZERO
-        SOMMA5 = ZERO
-        SOMMA6 = ZERO
-        DO IAK=1,NCH
-          SOMMA  = SOMMA  + BD2(I,IAK) * RMAT(IAK,IAB)
-          SOMMA1 = SOMMA1 + RD0(I,IAK) * RMAT(IAK,IAB)
-          SOMMA2 = SOMMA2 + BD3(I,IAK) * RMAT(IAK,IAB)
-          SOMMA3 = SOMMA3 + ARI(I,IAK) * RMAT(IAK,IAB)
-          SOMMA4 = SOMMA4 + AIR(I,IAK) * RMAT(IAK,IAB)
-          SOMMA5 = SOMMA5 + BD1(I,IAK) * RMAT(IAK,IAB)
-          SOMMA6 = SOMMA6 + AII(I,IAK) * RMAT(IAK,IAB)
-        ENDDO
-        CD2(I,IAB) = SOMMA
-        CD3(I,IAB) = SOMMA1
-        CD4(I,IAB) = SOMMA2
-        CD5(I,IAB) = SOMMA3
-        CD6(I,IAB) = SOMMA4
-        RD2(I,IAB) = SOMMA5
-        RD3(I,IAB) = SOMMA6
-      ENDDO
-      ENDDO
+      ! RD0 = BD6 * XRCOEFV (combines imaginary coefficients with real coefficients)
+      CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, BD6, SIZE(BD6,1), XRCOEFV, SIZE(XRCOEFV,1), 0.0D0, RD0, SIZE(RD0,1))
 
-      DO I=1,NCH
-      DO IAB=1,NCH
-        SOMMA  = ZERO
-        SOMMA1 = ZERO
-        DO IAK=1,NCH
-          SOMMA  = SOMMA  + RD2(I,IAK) * RMAT(IAK,IAB)
-          SOMMA1 = SOMMA1 + RD3(I,IAK) * RMAT(IAK,IAB)
-        ENDDO
-        CD7(I,IAB) = SOMMA
-        CD8(I,IAB) = SOMMA1
-      ENDDO
-      ENDDO
+      ! Third block: Calculate seven matrix products with the R-matrix (RMAT)
+      ! Each product represents different components of the second-order correction
+      ! CD2 = BD2 * RMAT (BD2 contains core-asymptotic coupling terms)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, BD2, SIZE(BD2,1), RMAT, SIZE(RMAT,1), 0.0D0, CD2, SIZE(CD2,1))
 
+      ! CD3 = RD0 * RMAT (combines previously calculated RD0 with R-matrix)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, RD0, SIZE(RD0,1), RMAT, SIZE(RMAT,1), 0.0D0, CD3, SIZE(CD3,1))
+
+      ! CD4 = BD3 * RMAT (BD3 contains additional core-asymptotic terms)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, BD3, SIZE(BD3,1), RMAT, SIZE(RMAT,1), 0.0D0, CD4, SIZE(CD4,1))
+
+      ! CD5 = ARI * RMAT (ARI contains asymptotic regular-irregular matrix elements)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, ARI, SIZE(ARI,1), RMAT, SIZE(RMAT,1), 0.0D0, CD5, SIZE(CD5,1))
+
+      ! CD6 = AIR * RMAT (AIR contains asymptotic irregular-regular matrix elements)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, AIR, SIZE(AIR,1), RMAT, SIZE(RMAT,1), 0.0D0, CD6, SIZE(CD6,1))
+
+      ! RD2 = BD1 * RMAT (BD1 contains another set of coupling terms)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, BD1, SIZE(BD1,1), RMAT, SIZE(RMAT,1), 0.0D0, RD2, SIZE(RD2,1))
+
+      ! RD3 = AII * RMAT (AII contains asymptotic irregular-irregular matrix elements)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, AII, SIZE(AII,1), RMAT, SIZE(RMAT,1), 0.0D0, RD3, SIZE(RD3,1))
+
+      ! Fourth block: Calculate two more second-order matrix products
+      ! CD7 = RD2 * RMAT (Squares the effect of RD2 by multiplying it with R-matrix)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, RD2, SIZE(RD2,1), RMAT, SIZE(RMAT,1), 0.0D0, CD7, SIZE(CD7,1))
+
+      ! CD8 = RD3 * RMAT (Squares the effect of RD3 by multiplying it with R-matrix)
+      CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, RD3, SIZE(RD3,1), RMAT, SIZE(RMAT,1), 0.0D0, CD8, SIZE(CD8,1))
+
+      ! Print a blank line before R-matrix output if debug printing is enabled
       IF (PRINT_I) WRITE(*,*)
-      DO IAB=1,NCH
-      DO IAK=1,NCH
-        ASS(IAB,IAK)=CD0(IAB,IAK)+2*BD4(IAB,IAK)+CD4(IAB,IAK)    &
-                    +ARR(IAB,IAK)+CD5(IAB,IAK)+CD2(IAB,IAK)    &
-                    +CD7(IAB,IAK)+CD6(IAB,IAK)    &
-                    +CD8(IAB,IAK)
 
-        RMAT2_ASYM(IAB,IAK) = RMAT(IAB,IAK) + ASS(IAB,IAK)
-        IF (PRINT_I) WRITE(*,*)"COEFF RMAT2",RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
-      ENDDO
+      ! Combine all matrix products to form the second-order correction to the R-matrix
+      DO IAB=1,NCH
+        DO IAK=1,NCH
+          ! Calculate the second-order correction ASS by summing all contributing terms
+          ASS(IAB,IAK)=CD0(IAB,IAK)+2*BD4(IAB,IAK)+CD4(IAB,IAK)    &  ! Terms involving real solutions
+                      +ARR(IAB,IAK)+CD5(IAB,IAK)+CD2(IAB,IAK)    &    ! Mixed coupling terms
+                      +CD7(IAB,IAK)+CD6(IAB,IAK)    &                 ! Second-order terms
+                      +CD8(IAB,IAK)                                   ! Final contribution
+
+          ! Add correction to the original R-matrix to get the asymmetric second-order R-matrix
+          RMAT2_ASYM(IAB,IAK) = RMAT(IAB,IAK) + ASS(IAB,IAK)
+          
+          ! Print R-matrix components if debug mode is enabled
+          IF (PRINT_I) WRITE(*,*)"COEFF RMAT2",RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
+        ENDDO
       ENDDO
 
-      !SYMMETRIZATION
-      RMAT2 = ZERO
+      ! Symmetrize the R-matrix (make it symmetric) for physical consistency
+      ! The negative factor relates to the convention used in the Kohn variational principle
+      RMAT2 = ZERO  ! Initialize the symmetric R-matrix to zero
       DO IAB=1,NCH
-      DO IAK=1,NCH
-        RMAT2(IAB,IAK) =-0.5D0*( RMAT2_ASYM(IAB,IAK) + RMAT2_ASYM(IAK,IAB) )
-      ENDDO
+        DO IAK=1,NCH
+          ! Average the asymmetric R-matrix with its transpose and multiply by -0.5
+          RMAT2(IAB,IAK) =-0.5D0*( RMAT2_ASYM(IAB,IAK) + RMAT2_ASYM(IAK,IAB) )
+        ENDDO
       ENDDO
     END SUBROUTINE R_SECOND_ORDER
 

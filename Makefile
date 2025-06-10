@@ -145,7 +145,6 @@ doc:
 	@echo "Doxygen documentation generation complete."
 
 GPROF_DIR := $(LOG_DIR)/gprof
-export OMP_DISPLAY_ENV=TRUE
 analyze_gprof_dynamic_LECS:
 	@echo "Analyzing gprof data for build/tests/test_variational_module_dynamic_LECS.x..."
 	@make clean
