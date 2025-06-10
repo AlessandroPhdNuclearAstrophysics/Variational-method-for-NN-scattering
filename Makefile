@@ -76,7 +76,7 @@ $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.f90
 	@mkdir -p $(dir $@)
 	@echo "\033[0;32mCompiling $<\033[0m"
-	$(FC) $(FFLAGS) -o $@ $< > $(LOG_DIR)/$(subst /,_,$(notdir $<)).log 2>&1
+	$(FC) $(FFLAGS) -o $@ $< > $(LOG_DIR)/$(subst /,_,$(notdir $<)).log 2>&1 || (cat $(LOG_DIR)/$(subst /,_,$(notdir $<)).log && false)
 
 # Rule to generate dependency files using the Python script
 $(DEP_DIR)/%.d: $(SRC_DIR)/%.f90
