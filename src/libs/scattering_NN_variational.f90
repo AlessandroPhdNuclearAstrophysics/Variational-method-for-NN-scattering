@@ -1496,14 +1496,23 @@ CONTAINS
           ! POTENTIAL ENERGY DYNAMIC CASE
           IF (USE_DYNAMIC) THEN
             DO T = 0, 1
-            DO S = 0, 1
             DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
-              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-              POT_AC_R(IPOT,IE,S,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(0,T,IPOT,:)
+              POT_AC_R(IPOT,IE,0,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
 
-              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-              POT_AC_I(IPOT,IE,S,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
-            ENDDO
+              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(0,T,IPOT,:)
+              POT_AC_I(IPOT,IE,0,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+              
+              IF (DABS(LECS%RC(0,T)-LECS%RC(1,T)) > 1.D-10) THEN
+                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(1,T,IPOT,:)
+                POT_AC_R(IPOT,IE,1,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+
+                INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(1,T,IPOT,:)
+                POT_AC_I(IPOT,IE,1,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+              ELSE
+                POT_AC_R(IPOT,IE,1,T,IL,LL) = POT_AC_R(IPOT,IE,0,T,IL,LL)
+                POT_AC_I(IPOT,IE,1,T,IL,LL) = POT_AC_I(IPOT,IE,0,T,IL,LL)
+              ENDIF
             ENDDO
             ENDDO
           ENDIF
