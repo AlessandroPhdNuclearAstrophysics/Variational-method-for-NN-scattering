@@ -1428,10 +1428,18 @@ CONTAINS
     INTEGER :: NCOMB
     INTEGER, ALLOCATABLE :: LCOMBINATIONS(:,:)
     DOUBLE PRECISION, ALLOCATABLE :: KIN_MIN_E(:,:,:)
+    DOUBLE PRECISION, ALLOCATABLE :: POT_AC_R(:,:,:,:,:,:), POT_AC_I(:,:,:,:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
       PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
+    ENDIF
+
+    WRITE(*,*) "Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
+    IF (USE_DYNAMIC) THEN
+      WRITE(*,*) "Using dynamic potential for asymptotic-core matrix elements"
+    ELSE
+      WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
     ENDIF
 
     CALL REALLOCATE_4D_1(H_MINUS_E_AC_R, NCHANNELS, NE, NNN_MAX, NCH_MAX)
@@ -1463,6 +1471,12 @@ CONTAINS
     NCOMB = SIZE(LCOMBINATIONS, DIM=1)
     ALLOCATE(KIN_MIN_E(NE,VAR_P%NNL,0:LMAX))
     KIN_MIN_E = ZERO
+    IF (USE_DYNAMIC) THEN
+      ALLOCATE(POT_AC_R(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER),NE,0:1,0:1,VAR_P%NNL,0:LMAX))
+      ALLOCATE(POT_AC_I(0:ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER),NE,0:1,0:1,VAR_P%NNL,0:LMAX))
+      POT_AC_R = ZERO
+      POT_AC_I = ZERO
+    ENDIF
 
     DO IE = 1, NE
       DO IL = 1, VAR_P%NNL
@@ -1478,16 +1492,24 @@ CONTAINS
           AKE1 = -HTM * B5_SINGLE(NX,H5,INTEGRAND,1)
           ! KINETIC ENERGY - ENERGY CORE-IRREGULAR
           KIN_MIN_E(IE,IL,LL) = AKE1 - ENERGIES_(IE) * AXX1
+
+          ! POTENTIAL ENERGY DYNAMIC CASE
+          IF (USE_DYNAMIC) THEN
+            DO T = 0, 1
+            DO S = 0, 1
+            DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
+              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+              POT_AC_R(IPOT,IE,S,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+
+              INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
+              POT_AC_I(IPOT,IE,S,T,IL,LL) = B5_SINGLE(NX,H5,INTEGRAND,1)
+            ENDDO
+            ENDDO
+            ENDDO
+          ENDIF
         ENDDO
       ENDDO
     ENDDO
-
-    WRITE(*,*) "Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
-    IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "Using dynamic potential for asymptotic-core matrix elements"
-    ELSE
-      WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
-    ENDIF
     
     ! Evaluate the matrix elements
     DO IE = 1, NE
@@ -1534,11 +1556,8 @@ CONTAINS
                 APE1 = B5_SINGLE(NX,H5,INTEGRAND,1)
               ELSE
                 DO IPOT = 0, ORDER_TO_NMAX(EFT_RADIAL_AC%ORDER)
-                  INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*FBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-                  FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
-
-                  INTEGRAND(2:) = AJ_AC*V0_AC(IL,:)*GBES_AC(IE,LL,:)*EFT_RADIAL_AC%FR_I(S,T,IPOT,:)
-                  FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = B5_SINGLE(NX,H5,INTEGRAND,1)
+                  FMAT_AC_R(IPOT,ICH,IE,IB,IAK) = POT_AC_R(IPOT,IE,S,T,IL,LL)
+                  FMAT_AC_I(IPOT,ICH,IE,IB,IAK) = POT_AC_I(IPOT,IE,S,T,IL,LL)
                 ENDDO
               ENDIF
 

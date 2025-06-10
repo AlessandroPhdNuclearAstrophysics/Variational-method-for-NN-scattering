@@ -121,7 +121,7 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       WRITE(*,*) GREEN, 'Channel ', GET_CHANNEL_NAME_FROM_OBJECT(CHANNELS(ICH)), ': ', "PASSED.", RESET
     ELSE
       WRITE(*,*) RED, 'Channel ', GET_CHANNEL_NAME_FROM_OBJECT(CHANNELS(ICH)), ': ', "FAILED. ", &
-          RESET, TRIM(GET_CHANNEL_NAME(CHANNELS(ICH))), ' has no significant differences.', RESET
+          RESET, TRIM(GET_CHANNEL_NAME(CHANNELS(ICH))), ' has significant differences.', RESET
     ENDIF
   ENDDO
 
