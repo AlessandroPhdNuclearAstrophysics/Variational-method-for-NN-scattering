@@ -178,7 +178,8 @@ test: $(TEST_EXECUTABLES)
 		echo "Running $$t"; \
 		$$t || exit 1; \
 	done
-	@./bin/tests/test_variational_module.sh
+	@./bin/tests/test_variational_module.sh 
+	@./bin/tests/test_library.sh
 
 
 # Make static library from all the modules
