@@ -117,11 +117,26 @@ CONTAINS
   !> \brief Change the current working directory.
   !! \param[in] new_dir Directory to change to
   SUBROUTINE CHANGE_DIRECTORY(new_dir)
+    USE, INTRINSIC :: ISO_C_BINDING
+    IMPLICIT NONE
     CHARACTER(LEN=*), INTENT(IN) :: new_dir
-    CHARACTER(LEN=256) :: command
+    INTEGER :: ierr
+    INTERFACE
+      INTEGER FUNCTION CHDIR(path) BIND(C, NAME="chdir")
+        USE, INTRINSIC :: ISO_C_BINDING
+        CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: path
+      END FUNCTION CHDIR
+    END INTERFACE
+    CHARACTER(KIND=C_CHAR), DIMENSION(:), ALLOCATABLE :: c_path
 
-    command = 'cd "' // TRIM(new_dir) // '"'
-    CALL SYSTEM(command)
+    ! Convert Fortran string to C null-terminated char array
+    ALLOCATE(c_path(0:LEN_TRIM(new_dir)))
+    c_path(0:LEN_TRIM(new_dir)-1) = TRANSFER(new_dir(1:LEN_TRIM(new_dir)), c_path(0:LEN_TRIM(new_dir)-1))
+    c_path(LEN_TRIM(new_dir)) = C_NULL_CHAR
+    ierr = CHDIR(c_path)
+    IF (ierr /= 0) THEN
+      WRITE(*,*) "Error: Could not change directory to ", TRIM(new_dir)
+    END IF
   END SUBROUTINE CHANGE_DIRECTORY
 
   !> \brief Get the operating system name.
