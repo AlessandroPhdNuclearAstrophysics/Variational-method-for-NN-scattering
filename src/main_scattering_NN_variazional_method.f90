@@ -26,6 +26,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
 
   !> \brief Number of energy points and number of channels.
   INTEGER :: NE = 200, NCH = 0
+  INTEGER :: NEQ
   !> \brief Maximum energy [MeV].
   DOUBLE PRECISION :: EMAX = 1.D0
   !> \brief Name of the scattering channel (for output).
@@ -115,13 +116,17 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
         CHANNEL_NAME = get_channel_name(CHANNEL)
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB, LEMP)
         PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
+        NEQ = GET_CHANNEL_NCH(CHANNEL)
         OPEN(21, FILE=TRIM(OUT_DIR)//'delta_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
+        IF (NEQ == 2) OPEN(22, FILE=TRIM(OUT_DIR)//'delta_Stapp_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
         DO I = 1, NE
           E =  ENERGIES(I)
           CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
-          WRITE(21, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
+          WRITE(21, *) E, PHASE_SHIFTS%delta1_BB, PHASE_SHIFTS%delta2_BB, PHASE_SHIFTS%epsilon_BB
+          IF (NEQ == 2) WRITE(22, *) E, PHASE_SHIFTS%delta1_S, PHASE_SHIFTS%delta2_S, PHASE_SHIFTS%epsilon_S
         ENDDO
         CLOSE(21)
+        IF (NEQ == 2) CLOSE(22)
       ENDDO
     ENDDO
   ENDDO

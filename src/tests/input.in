@@ -2,9 +2,9 @@
   EMAX = 1.D0,
   NE = 200,
   TZ = 0,
-  IPOT = 18,
+  IPOT = 14,
   ILB = 1,
   LEMP = 0,
   PRINT_COEFFICIENTS = .FALSE.,
-  OUT_DIR = "output/EFT_pless_15/",
+  OUT_DIR = "output/AV14/",
 /
