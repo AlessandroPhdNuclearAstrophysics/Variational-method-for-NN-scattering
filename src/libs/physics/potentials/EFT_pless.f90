@@ -217,6 +217,21 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_SINGLE
 
+  !> \brief Return the path to LECS_EFT.DAT depending on working directory.
+  FUNCTION GET_LECS_FILE_PATH() RESULT(lecs_file_path)
+    USE OPERATING_SYSTEM_LINUX
+    IMPLICIT NONE
+    CHARACTER(LEN=255) :: lecs_file_path
+    CHARACTER(LEN=256) :: current_dir
+
+    current_dir = GET_CURRENT_WORKING_DIRECTORY()
+    IF (INDEX(TRIM(current_dir), 'build') > 0) THEN
+      lecs_file_path = FIND_FILE('lecs_eft.dat', '../')
+    ELSE
+      lecs_file_path = FIND_FILE('lecs_eft.dat', '.')
+    END IF
+  END FUNCTION GET_LECS_FILE_PATH
+
   !> \brief Set all LECs from file.
   SUBROUTINE SET_ALL_LECS
     IMPLICIT NONE
@@ -229,7 +244,8 @@ CONTAINS
     IF (LECS_ALL_SET) RETURN
 
     ! Set the filename (you can change this as needed)
-    FILENAME = './src/libs/physics/potentials/lecs_eft.dat'
+    
+    FILENAME = GET_LECS_FILE_PATH()
 
     ! Open the file
     UNIT = 100
