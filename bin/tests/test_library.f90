@@ -82,7 +82,7 @@ PROGRAM FIT
         DO IE=1, NE
             E = ENERGIES(IE)
             CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PS)
-            WRITE(15,*) E, PS%delta1_BB, PS%delta2_BB, PS%epsilon_BB
+            WRITE(15,*) E, PS%delta1_S, PS%delta2_S, PS%epsilon_S
         ENDDO
         CLOSE(15)
     END DO

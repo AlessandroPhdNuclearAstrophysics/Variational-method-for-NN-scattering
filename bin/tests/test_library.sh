@@ -112,5 +112,6 @@ done
 
 rm -rf "$SCRIPT_DIR/tmp_output_library" # Clean up output directory
 rm -rf "$MODDIR" # Clean up mod directory
+rm -f "$EXE" # Clean up executable
 
 echo "Test complete."
