@@ -192,9 +192,13 @@ $(BUILD_DIR)/$(LIBRARY_FILE): $(NON_MAIN_OBJECTS)
 EXPORT_ZIP := libvariational.zip
 
 $(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
-	@echo "\033[0;32mCreating zip archive with static library and module files...\033[0m"
-	@zip -j $(BUILD_DIR)/$(EXPORT_ZIP) $(BUILD_DIR)/$(LIBRARY_FILE) $(BUILD_DIR)/*.mod
-	@echo "Created $(BUILD_DIR)/$(EXPORT_ZIP)"
+	@echo "\033[0;32mCreating zip archive with static library and module files in libvariational/ folder...\033[0m"
+	@mkdir -p $(BUILD_DIR)/libvariational
+	@cp $(BUILD_DIR)/$(LIBRARY_FILE) $(BUILD_DIR)/libvariational/
+	@cp $(BUILD_DIR)/*.mod $(BUILD_DIR)/libvariational/ 2>/dev/null || true
+	@cd $(BUILD_DIR) && zip -r $(EXPORT_ZIP) libvariational
+	@rm -rf $(BUILD_DIR)/libvariational
+	@echo "Created $(BUILD_DIR)/$(EXPORT_ZIP) with files in libvariational/"
 
 # Include all dependency files if they exist
 -include $(DEPFILES) $(TEST_DEPFILES)
