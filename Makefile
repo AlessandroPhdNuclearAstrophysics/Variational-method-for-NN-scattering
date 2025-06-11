@@ -196,6 +196,7 @@ $(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
 	@mkdir -p $(BUILD_DIR)/libvariational
 	@cp $(BUILD_DIR)/$(LIBRARY_FILE) $(BUILD_DIR)/libvariational/
 	@cp $(BUILD_DIR)/*.mod $(BUILD_DIR)/libvariational/ 2>/dev/null || true
+	@find . -name "lecs_eft.dat" -exec cp {} $(BUILD_DIR)/libvariational/ \; 2>/dev/null || true
 	@cd $(BUILD_DIR) && zip -r $(EXPORT_ZIP) libvariational
 	@rm -rf $(BUILD_DIR)/libvariational
 	@echo "Created $(BUILD_DIR)/$(EXPORT_ZIP) with files in libvariational/"
