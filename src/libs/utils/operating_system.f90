@@ -213,4 +213,62 @@ CONTAINS
     END DO
   END SUBROUTINE TO_LOWERCASE
 
+  !> \brief Find a file by name within a directory (recursively).
+  !! \param[in] FILENAME Name of the file to search for
+  !! \param[in] DIRECTORY Directory path to search in
+  !! \return FILE_NAME_WITH_RELATIVE_PATH Relative path to the found file, or empty string if not found
+  FUNCTION FIND_FILE(FILENAME, DIRECTORY) RESULT(FILE_NAME_WITH_RELATIVE_PATH)
+    CHARACTER(LEN=*), INTENT(IN) :: FILENAME
+    CHARACTER(LEN=*), INTENT(IN) :: DIRECTORY
+    CHARACTER(LEN=255) :: FILE_NAME_WITH_RELATIVE_PATH
+    CHARACTER(LEN=256) :: command
+    INTEGER :: ios
+
+    ! Create a temporary file to store the results
+    WRITE(*,*) "Searching for file: ", TRIM(FILENAME), " in directory: ", TRIM(DIRECTORY)
+    command = 'find "' // TRIM(DIRECTORY) // '" -type f -name "' // TRIM(FILENAME) // '" > temp_file_list.txt'
+    CALL SYSTEM(command)
+
+    ! Read the first file found
+    OPEN(UNIT=10, FILE='temp_file_list.txt', STATUS='OLD', ACTION='READ', IOSTAT=ios)
+    IF (ios == 0) THEN
+      READ(10, '(A)', IOSTAT=ios) FILE_NAME_WITH_RELATIVE_PATH
+      CLOSE(10)
+      CALL REMOVE_FILE('temp_file_list.txt')
+      IF (ios /= 0 .OR. LEN_TRIM(FILE_NAME_WITH_RELATIVE_PATH) == 0) THEN
+        FILE_NAME_WITH_RELATIVE_PATH = ''
+        WRITE(*,*) "No files found."
+      ELSE
+        WRITE(*,*) "Found file: ", TRIM(FILE_NAME_WITH_RELATIVE_PATH)
+      END IF
+    ELSE
+      WRITE(*,*) "Error finding files in directory"
+      FILE_NAME_WITH_RELATIVE_PATH = ''
+      WRITE(*,*) "No files found."
+    END IF
+  END FUNCTION FIND_FILE
+
+  !> \brief Get the current working directory as a string.
+  !! \return current_dir The current working directory path
+  FUNCTION GET_CURRENT_WORKING_DIRECTORY() RESULT(current_dir)
+    CHARACTER(LEN=256) :: current_dir
+    CHARACTER(LEN=256) :: command
+    INTEGER :: ios
+
+    ! Get the current working directory
+    command = 'pwd > current_dir.txt'
+    CALL SYSTEM(command)
+
+    OPEN(UNIT=10, FILE='current_dir.txt', STATUS='OLD', ACTION='READ', IOSTAT=ios)
+    IF (ios == 0) THEN
+      READ(10, '(A)') current_dir
+      CLOSE(10)
+      CALL REMOVE_FILE('current_dir.txt')
+      current_dir = TRIM(current_dir)
+    ELSE
+      WRITE(*,*) "Error getting current directory"
+      current_dir = ''
+    END IF
+  END FUNCTION GET_CURRENT_WORKING_DIRECTORY
+
 END MODULE OPERATING_SYSTEM_LINUX

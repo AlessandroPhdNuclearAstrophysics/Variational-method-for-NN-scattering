@@ -59,6 +59,9 @@ PROGRAM test_operating_system
     WRITE(*,*) "  ", TRIM(files(i))
   END DO
 
+  !> Test FIND_FILE for various cases (run while files/dir exist)
+  CALL TEST_FIND_FILE()
+
   ! Test 7: Remove test files
   DO i = 1, 5
     WRITE(temp_file, '(A,A,I1,A)') TRIM(test_dir), "/test_file_", i, ".txt"
@@ -105,8 +108,8 @@ PROGRAM test_operating_system
   ! Test 10.3: No matches
   CALL TEST_REGEX_NO_MATCHES()
 
+  
   WRITE(*,*) "All tests passed successfully!"
-
 CONTAINS
 
   SUBROUTINE TEST_REGEX_SIMPLE_MATCH()
@@ -181,5 +184,96 @@ CONTAINS
       WRITE(*,*) "  Test passed: No matches found as expected"
     END IF
   END SUBROUTINE TEST_REGEX_NO_MATCHES
+
+  SUBROUTINE TEST_FIND_FILE()
+    CHARACTER(LEN=256) :: found_path, test_file, test_dir_local
+    LOGICAL :: exists
+    INTEGER :: i
+
+    WRITE(*,*) "Testing FIND_FILE..."
+
+    ! Use the test directory created earlier
+    CALL GET_CURRENT_DIRECTORY(test_dir_local)
+    test_dir_local = TRIM(test_dir_local) // "/test_os_dir"
+
+    ! 1. Test finding an existing file
+    WRITE(test_file, '(A,A)') "test_file_1.txt"
+    found_path = FIND_FILE(test_file, test_dir_local)
+    IF (LEN_TRIM(found_path) == 0) THEN
+      WRITE(*,*) "ERROR: FIND_FILE did not find existing file ", TRIM(test_file)
+      STOP 1
+    ELSE
+      WRITE(*,*) "  Found file: ", TRIM(found_path)
+    END IF
+
+    ! Check that temp_file_list.txt is removed
+    exists = FILE_EXISTS("temp_file_list.txt")
+    IF (exists) THEN
+      WRITE(*,*) "ERROR: temp_file_list.txt was not removed after FIND_FILE"
+      STOP 1
+    END IF
+
+    ! 2. Test finding a non-existing file
+    found_path = FIND_FILE("nonexistent_file_abc123.txt", test_dir_local)
+    IF (LEN_TRIM(found_path) /= 0) THEN
+      WRITE(*,*) "ERROR: FIND_FILE returned a path for a non-existing file"
+      STOP 1
+    ELSE
+      WRITE(*,*) "  Correctly did not find nonexistent file"
+    END IF
+
+    exists = FILE_EXISTS("temp_file_list.txt")
+    IF (exists) THEN
+      WRITE(*,*) "ERROR: temp_file_list.txt was not removed after FIND_FILE (nonexistent)"
+      STOP 1
+    END IF
+
+    ! 3. Edge case: empty filename
+    found_path = FIND_FILE("", test_dir_local)
+    IF (LEN_TRIM(found_path) /= 0) THEN
+      WRITE(*,*) "ERROR: FIND_FILE returned a path for empty filename"
+      STOP 1
+    ELSE
+      WRITE(*,*) "  Correctly handled empty filename"
+    END IF
+
+    exists = FILE_EXISTS("temp_file_list.txt")
+    IF (exists) THEN
+      WRITE(*,*) "ERROR: temp_file_list.txt was not removed after FIND_FILE (empty filename)"
+      STOP 1
+    END IF
+
+    ! 4. Edge case: empty directory
+    found_path = FIND_FILE("test_file_1.txt", "")
+    IF (LEN_TRIM(found_path) /= 0) THEN
+      WRITE(*,*) "ERROR: FIND_FILE returned a path for empty directory"
+      STOP 1
+    ELSE
+      WRITE(*,*) "  Correctly handled empty directory"
+    END IF
+
+    exists = FILE_EXISTS("temp_file_list.txt")
+    IF (exists) THEN
+      WRITE(*,*) "ERROR: temp_file_list.txt was not removed after FIND_FILE (empty directory)"
+      STOP 1
+    END IF
+
+    ! 5. Edge case: directory does not exist
+    found_path = FIND_FILE("test_file_1.txt", "/this_directory_should_not_exist_12345")
+    IF (LEN_TRIM(found_path) /= 0) THEN
+      WRITE(*,*) "ERROR: FIND_FILE returned a path for non-existing directory"
+      STOP 1
+    ELSE
+      WRITE(*,*) "  Correctly handled non-existing directory"
+    END IF
+
+    exists = FILE_EXISTS("temp_file_list.txt")
+    IF (exists) THEN
+      WRITE(*,*) "ERROR: temp_file_list.txt was not removed after FIND_FILE (non-existing directory)"
+      STOP 1
+    END IF
+
+    WRITE(*,*) "FIND_FILE tests passed."
+  END SUBROUTINE TEST_FIND_FILE
 
 END PROGRAM test_operating_system
