@@ -377,17 +377,20 @@ CONTAINS
     CHARACTER(LEN=16) :: TMPNAME
     INTEGER :: L(2), S(2), J, TZ, NCH, POS, LEN1, LEN2
 
+    IF (LEN_TRIM(NAME) < 3) THEN
+      PRINT *, "Error: NAME must be at least 3 characters long.", NAME
+      STOP
+    ENDIF
+    IF (LEN_TRIM(NAME) > 7) THEN
+      PRINT *, "Error: NAME must not exceed 7 characters.", NAME
+      STOP
+    ENDIF
     ! Default TZ
     TZ = 0
 
     ! Check if the name contains a '-' (coupled channel)
     POS = INDEX(NAME, '-')
     IF (POS == 0) THEN
-      ! Uncoupled channel
-      IF (LEN_TRIM(NAME) < 3) THEN
-        PRINT *, "Error: NAME must be at least 3 characters long."
-        STOP
-      ENDIF
       IF (INDEX('SPDFGHIJKLMNOPQRSTUVWXYZ', NAME(2:2)) == 0) THEN
         PRINT *, "Error: Invalid spectroscopic letter in NAME."
         STOP

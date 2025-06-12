@@ -2677,7 +2677,7 @@ CONTAINS
       DO I = 1, NK2
         IF (IEQ==1) DELTA = PHASE_SHIFTS(I)%delta1_BB
         IF (IEQ==2) DELTA = PHASE_SHIFTS(I)%delta2_BB
-        IF (ABS(DELTA) > 1.D-6) THEN
+        IF (ABS(DELTA) > 2.5D-5) THEN
           IF (PRESENT(K2L1COTD)) THEN
             K2L1COTD(IEQ,I) = X(I)**((2.D0*L + 1.D0)/2.D0) / DTAN(DELTA*PI/180.D0)
           ENDIF
@@ -2688,6 +2688,7 @@ CONTAINS
           IMIN =-1
         ENDIF
       ENDDO
+      WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points"
       FIT_CONSTANTS_ = 0.D0
       CALL POLYNOMIAL_REGRESSION(Y(IMIN:), X(IMIN:), ORDER_OF_THE_FIT, NK2-IMIN, FIT_CONSTANTS_)
       FIT_CONSTANTS(IEQ,:) = FIT_CONSTANTS_

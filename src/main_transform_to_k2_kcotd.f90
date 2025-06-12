@@ -71,6 +71,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     IF (INDEX(current_file, "delta_") /= 1) CYCLE
 
     ! Parse filename to extract L, S, J
+    IF (LEN_TRIM(PARSE_FILENAME(TRIM(current_file))) > 7) CYCLE
     TMP = GET_CHANNEL_FROM_NAME(PARSE_FILENAME(TRIM(current_file)))
     NCH = GET_CHANNEL_NCH(TMP)
 
@@ -148,7 +149,11 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
       IF (is_coupled) THEN
         L = GET_CHANNEL_L(TMP, 2)
         deltas2(j_line) = deltas2(j_line) * pi / 180.0D0
-        kcotd2 = k**(2*L+1) * COS(deltas2(j_line)) / SIN(deltas2(j_line))
+        if(deltas2(j_line) /= 0.D0) then
+          kcotd2 = k**(2*L+1) * COS(deltas2(j_line)) / SIN(deltas2(j_line))
+        else
+          kcotd2 = HUGE(1.0D0)  ! Handle zero phase shift case
+        end if
         kcotd2_vals(j_line) = kcotd2
       END IF
     END DO
