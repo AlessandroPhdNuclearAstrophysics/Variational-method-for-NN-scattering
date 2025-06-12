@@ -107,9 +107,9 @@ PROGRAM VARIATIONAL_WITH_DYNAMIC_LECS
       CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, -1, -1, LEMP, PHASE_SHIFTS, PRINT_COEFFICIENTS=.FALSE.)
       ! Print energy and absolute percentage differences for all three on the same line
       IF (I <= SIZE(RESULTS)) THEN
-        IF (print_diff_pct_line(E,  PHASE_SHIFTS%delta1_BB , RESULTS(I)%PHASES(1), &
-                                    PHASE_SHIFTS%delta2_BB , RESULTS(I)%PHASES(2), &
-                                    PHASE_SHIFTS%epsilon_BB, RESULTS(I)%PHASES(3))) THEN
+        IF (print_diff_pct_line(E,  PHASE_SHIFTS%delta1_S , RESULTS(I)%PHASES(1), &
+                                    PHASE_SHIFTS%delta2_S , RESULTS(I)%PHASES(2), &
+                                    PHASE_SHIFTS%epsilon_S, RESULTS(I)%PHASES(3))) THEN
           NLINES(ICH) = NLINES(ICH) + 1
         ENDIF
       END IF

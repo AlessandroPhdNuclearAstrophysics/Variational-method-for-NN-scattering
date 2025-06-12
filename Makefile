@@ -65,7 +65,7 @@ ALL_MAIN_OBJECTS := $(MAIN_OBJECTS) $(TEST_OBJECTS)
 NON_MAIN_OBJECTS := $(filter-out $(ALL_MAIN_OBJECTS),$(OBJECTS))
 
 # Default rule
-all: $(LOG_DIR) $(DEP_DIR) $(ALL_EXECUTABLES)
+all: $(LOG_DIR) $(DEP_DIR) $(OUT_DIR) $(ALL_EXECUTABLES)
 
 # Rule to build executables: link only its own object and NON_MAIN_OBJECTS
 $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
@@ -91,6 +91,9 @@ $(LOG_DIR):
 $(DEP_DIR):
 	mkdir -p $(DEP_DIR)
 
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
 # Run the script in bin directory
 run:
 	./bin/runner.sh
@@ -114,11 +117,12 @@ $(OUT_XMGRACE): %.pdf: %.agr
 
 # Clean rule to delete all build artifacts
 clean:
-	rm -rvf $(BUILD_DIR) $(shell find . -name "*.eps") dependency_graphs/* libvariational.a
+	rm -rvf $(BUILD_DIR) $(shell find $(OUT_DIR) --min-depth 2 -name "*.eps") dependency_graphs/* libvariational.a
+	mkdir -p $(OUT_DIR)
 
 # Delete output files
 delete_out:
-	@rm -rvf $(shell find $(OUT_DIR) -type f)
+	@rm -rvf $(shell find $(OUT_DIR) -type d)
 
 # Doxygen documentation target (Doxyfile generated dynamically)
 doc:
@@ -175,7 +179,8 @@ delete_doc:
 # Test target: build and run all test executables in $(TEST_DIR)
 test: $(TEST_EXECUTABLES)
 	@for t in $(TEST_EXECUTABLES); do \
-		echo "Running $$t"; \
+		echo ; \
+		echo "\033[1;34mRunning $$t\033[0m"; \
 		$$t || exit 1; \
 	done
 	@./bin/tests/test_variational_module.sh 
