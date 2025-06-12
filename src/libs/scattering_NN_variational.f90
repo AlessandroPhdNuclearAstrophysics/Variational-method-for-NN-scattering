@@ -2668,7 +2668,7 @@ CONTAINS
         PRINT *, "Error: KSQUARED size does not match ENERGIES size"
         STOP
       ENDIF
-      X = SQRT(KSQUARED)
+      KSQUARED = X
     ENDIF
     
     DO IEQ = 1, NEQ

@@ -210,7 +210,7 @@ CONTAINS
 
   SUBROUTINE TEST_FIND_FILE()
     CHARACTER(LEN=256) :: found_path, test_file, test_dir_local
-    LOGICAL :: exists, ok
+    LOGICAL :: exist, ok
 
     WRITE(*,*) "Testing FIND_FILE..."
 
@@ -224,40 +224,40 @@ CONTAINS
     ok = (LEN_TRIM(found_path) > 0)
     CALL RECORD_TEST_RESULT("FIND_FILE existing file", ok)
 
-    exists = FILE_EXISTS("temp_file_list.txt")
-    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (existing)", .NOT. exists)
+    exist = FILE_EXISTS("temp_file_list.txt")
+    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (existing)", .NOT. exist)
 
     ! 2. Test finding a non-existing file
     found_path = FIND_FILE("nonexistent_file_abc123.txt", test_dir_local)
     ok = (LEN_TRIM(found_path) == 0)
     CALL RECORD_TEST_RESULT("FIND_FILE non-existing file", ok)
 
-    exists = FILE_EXISTS("temp_file_list.txt")
-    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (nonexistent)", .NOT. exists)
+    exist = FILE_EXISTS("temp_file_list.txt")
+    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (nonexistent)", .NOT. exist)
 
     ! 3. Edge case: empty filename
     found_path = FIND_FILE("", test_dir_local)
     ok = (LEN_TRIM(found_path) == 0)
     CALL RECORD_TEST_RESULT("FIND_FILE empty filename", ok)
 
-    exists = FILE_EXISTS("temp_file_list.txt")
-    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (empty filename)", .NOT. exists)
+    exist = FILE_EXISTS("temp_file_list.txt")
+    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (empty filename)", .NOT. exist)
 
     ! 4. Edge case: empty directory
     found_path = FIND_FILE("test_file_1.txt", "")
     ok = (LEN_TRIM(found_path) == 0)
     CALL RECORD_TEST_RESULT("FIND_FILE empty directory", ok)
 
-    exists = FILE_EXISTS("temp_file_list.txt")
-    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (empty directory)", .NOT. exists)
+    exist = FILE_EXISTS("temp_file_list.txt")
+    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (empty directory)", .NOT. exist)
 
     ! 5. Edge case: directory does not exist
     found_path = FIND_FILE("test_file_1.txt", "/this_directory_should_not_exist_12345")
     ok = (LEN_TRIM(found_path) == 0)
     CALL RECORD_TEST_RESULT("FIND_FILE non-existing directory", ok)
 
-    exists = FILE_EXISTS("temp_file_list.txt")
-    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (non-existing directory)", .NOT. exists)
+    exist = FILE_EXISTS("temp_file_list.txt")
+    CALL RECORD_TEST_RESULT("FIND_FILE temp file removed (non-existing directory)", .NOT. exist)
 
     WRITE(*,*) "FIND_FILE tests completed."
   END SUBROUTINE TEST_FIND_FILE
