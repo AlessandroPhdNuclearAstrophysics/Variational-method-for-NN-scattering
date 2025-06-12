@@ -180,6 +180,7 @@ test: $(TEST_EXECUTABLES)
 	done
 	@./bin/tests/test_variational_module.sh 
 	@./bin/tests/test_library.sh
+	@./bin/tests/test_variational_module_channels_energies.sh
 
 
 # Make static library from all the modules

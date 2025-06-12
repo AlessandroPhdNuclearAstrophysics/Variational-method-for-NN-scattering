@@ -211,7 +211,6 @@ CONTAINS
   SUBROUTINE TEST_FIND_FILE()
     CHARACTER(LEN=256) :: found_path, test_file, test_dir_local
     LOGICAL :: exists, ok
-    INTEGER :: i
 
     WRITE(*,*) "Testing FIND_FILE..."
 

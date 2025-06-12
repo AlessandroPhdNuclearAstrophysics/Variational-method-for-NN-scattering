@@ -513,7 +513,6 @@ CONTAINS
     INTEGER :: ICH, NCH, L, S, J
     TYPE(SCATTERING_CHANNEL) :: CHANNEL
 
-
     NCH = 0
     DO L = 0, LMAX
       DO S = 0, 1

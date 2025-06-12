@@ -8,13 +8,9 @@
 !! \date 2025
 
 MODULE OPERATING_SYSTEM_LINUX
-  IMPLICIT NONE
-
-  !> \brief Public interface for directory creation.
-  PUBLIC :: CREATE_DIRECTORY
+  IMPLICIT NONE 
 
 CONTAINS
-
   !> \brief Create a directory if it does not exist.
   !! \param[in] OUT_DIR Directory path to create
   SUBROUTINE CREATE_DIRECTORY(OUT_DIR)
@@ -24,6 +20,18 @@ CONTAINS
     command = 'mkdir -p "' // TRIM(OUT_DIR) // '"'
     CALL SYSTEM(command)
   END SUBROUTINE CREATE_DIRECTORY
+
+  SUBROUTINE DELETE_DIRECTORY(OUT_DIR)
+    CHARACTER(LEN=*), INTENT(IN) :: OUT_DIR
+    CHARACTER(LEN=256) :: command
+    INTEGER :: ios
+
+    command = 'rm -rvf "' // TRIM(OUT_DIR) // '"'
+    CALL SYSTEM(command, STATUS=ios)
+    IF (ios /= 0) THEN
+      WRITE(*,*) "Error deleting directory"
+    END IF
+  END SUBROUTINE DELETE_DIRECTORY
 
   !> \brief Check if a file exists.
   !! \param[in] filename File path to check
