@@ -2755,7 +2755,7 @@ CONTAINS
       DO I = 1, NK2
         IF (IEQ==1) DELTA = PHASE_SHIFTS(I)%delta1_S
         IF (IEQ==2) DELTA = PHASE_SHIFTS(I)%delta2_S
-        IF (ABS(DELTA) > 2.5D-5) THEN
+        IF (ABS(DELTA) > 2.5D-5 .OR. L == 3 .AND. I > 2*NK2/3) THEN
           IF (PRESENT(K2L1COTD)) THEN
             K2L1COTD(IEQ,I) = X(I)**((2.D0*L + 1.D0)/2.D0) / DTAN(DELTA*PI/180.D0)
           ENDIF
@@ -2766,6 +2766,11 @@ CONTAINS
           IMIN =-1
         ENDIF
       ENDDO
+      IF (IMIN == -1) THEN
+        WRITE(*,*) "Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
+        FIT_CONSTANTS(IEQ,:) = 0.D0
+        CYCLE
+      ENDIF
       WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points, ", &
           "using htm: ", HTM
       FIT_CONSTANTS_ = 0.D0
