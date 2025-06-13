@@ -2764,7 +2764,8 @@ CONTAINS
           IMIN =-1
         ENDIF
       ENDDO
-      WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points"
+      WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points, ", &
+          "using htm: ", HTM
       FIT_CONSTANTS_ = 0.D0
       CALL POLYNOMIAL_REGRESSION(Y(IMIN:), X(IMIN:), ORDER_OF_THE_FIT, NK2-IMIN, FIT_CONSTANTS_)
       FIT_CONSTANTS(IEQ,:) = FIT_CONSTANTS_

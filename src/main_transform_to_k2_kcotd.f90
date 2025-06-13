@@ -28,7 +28,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
 
   ! Variables for data processing
   DOUBLE PRECISION :: k, k2, kcotd1, kcotd2
-  DOUBLE PRECISION :: HTM, pi
+  DOUBLE PRECISION :: HTM, PI
   DOUBLE PRECISION, ALLOCATABLE :: energies(:), deltas1(:), deltas2(:), epsilons(:)
   DOUBLE PRECISION, ALLOCATABLE :: k_vals(:), k2_vals(:), kcotd1_vals(:), kcotd2_vals(:)
   INTEGER :: num_lines, j_line, NCH
@@ -36,7 +36,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
   TYPE(SCATTERING_CHANNEL) :: TMP
 
   ! Constants
-  pi = 4.0D0 * ATAN(1.0D0)
+  pi = 4.0D0 * DATAN(1.0D0)
 
   ! Get command line argument for folder path
   IF (COMMAND_ARGUMENT_COUNT() < 1) THEN
@@ -44,6 +44,12 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     STOP
   END IF
   CALL GET_COMMAND_ARGUMENT(1, folder_path)
+  ! Remove trailing '/' from folder_path if present
+  IF (LEN_TRIM(folder_path) > 0) THEN
+    IF (folder_path(LEN_TRIM(folder_path):LEN_TRIM(folder_path)) == '/') THEN
+      folder_path = folder_path(:LEN_TRIM(folder_path)-1)
+    END IF
+  END IF
 
   ! Initialize scattering module to get HTM
   ! Default parameters for np (TZ=0) system
