@@ -2405,8 +2405,8 @@ CONTAINS
       PRINT *, "Error: ENERGIES not set, first set them before calling SET_NEW_LECS"
       STOP
     ENDIF
-        IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
-      NEW_CUTOFFS = .TRUE.
+      IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
+        NEW_CUTOFFS = .TRUE.
       IF (USE_DYNAMIC) PREPARE = .TRUE.
     ELSE
       NEW_CUTOFFS = .FALSE.
@@ -2697,7 +2697,7 @@ CONTAINS
   !>
   !> @details
   !> Performs a polynomial fit of the low-energy expansion for the specified channel using the provided phase shift data.
-  !> The fit is performed up to the specified order. Optionally, returns arrays of squared momenta and k^{2L+1}cot(delta).
+  !> The fit is performed up to the specified order using the Stapp phase shifts. Optionally, returns arrays of squared momenta and k^{2L+1}cot(delta).
   !> Optional arguments: KSQUARED, K2L1COTD.
   !>
   !> CHANNEL_TO_FIT is of type SCATTERING_CHANNEL.
@@ -2733,6 +2733,8 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: X(:), Y(:)
     DOUBLE PRECISION :: DELTA
     DOUBLE PRECISION :: FIT_CONSTANTS_(ORDER_OF_THE_FIT +1)
+    WRITE(*,*) "Fitting channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", GET_CHANNEL_L(CHANNEL_TO_FIT, 1), &
+        " and order of the fit: ", ORDER_OF_THE_FIT
 
     NK2 = SIZE(ENERGIES)
     NEQ = GET_CHANNEL_NCH(CHANNEL_TO_FIT)
@@ -2751,8 +2753,8 @@ CONTAINS
       L = GET_CHANNEL_L(CHANNEL_TO_FIT, IEQ)
       IMIN = -1
       DO I = 1, NK2
-        IF (IEQ==1) DELTA = PHASE_SHIFTS(I)%delta1_BB
-        IF (IEQ==2) DELTA = PHASE_SHIFTS(I)%delta2_BB
+        IF (IEQ==1) DELTA = PHASE_SHIFTS(I)%delta1_S
+        IF (IEQ==2) DELTA = PHASE_SHIFTS(I)%delta2_S
         IF (ABS(DELTA) > 2.5D-5) THEN
           IF (PRESENT(K2L1COTD)) THEN
             K2L1COTD(IEQ,I) = X(I)**((2.D0*L + 1.D0)/2.D0) / DTAN(DELTA*PI/180.D0)
