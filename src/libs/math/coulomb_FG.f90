@@ -36,6 +36,7 @@ module gsl_coulomb
     end function
   end interface
 
+  private :: gsl_sf_coulomb_wave_FG_e  !< C function to compute Coulomb wave functions
 contains
 
   !> \brief Compute regular and irregular Coulomb wave functions and their derivatives.

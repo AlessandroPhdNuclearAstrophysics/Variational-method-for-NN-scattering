@@ -78,8 +78,32 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_FROM_LECS
 
-  !> \brief Set LECs from individual values (with optional arguments).
-  !! \param[in] R00, R10, ... LEC values
+  !> @brief Set the low-energy constants (LECs) for the EFT Plesset potential using individual values.
+  !>
+  !> @details
+  !> Sets the values of the LECs in the global LECS structure. Each argument corresponds to a specific LEC or radial cutoff.
+  !> All arguments are optional; at least one R* and one C* parameter must be provided. If a parameter is not present, its value is not updated.
+  !>
+  !> R00, R10, R01, R11 are the radial cutoff parameters for different spin/isospin channels.
+  !> C10, C01, C200, ..., C4Q are the LECs for various orders and operator structures.
+  !> CIT0, CIT1, CIT2, CIT3, CIT4 are the isospin-dependent LECs.
+  !>
+  !> @param[in] R00   (Optional) Radial cutoff for S=0, T=0 channel.
+  !> @param[in] R10   (Optional) Radial cutoff for S=1, T=0 channel.
+  !> @param[in] R01   (Optional) Radial cutoff for S=0, T=1 channel.
+  !> @param[in] R11   (Optional) Radial cutoff for S=1, T=1 channel.
+  !> @param[in] C10   (Optional) Leading-order LEC for S=1, T=0 channel.
+  !> @param[in] C01   (Optional) Leading-order LEC for S=1, T=1 channel.
+  !> @param[in] C200, C201, C210, C211, C2T0, C2T1, C2B
+  !>                (Optional) Next-to-leading-order LECs.
+  !> @param[in] C400, C410, C401, C411, C4T0, C4T1, C4B0, C4B1, C4BB0, C4BB1, C4Q
+  !>                (Optional) N3LO LECs.
+  !> @param[in] CIT0, CIT1, CIT2, CIT3, CIT4
+  !>                (Optional) Isospin-dependent LECs.
+  !>
+  !> @note
+  !> All arguments are optional, but at least one R* and one C* must be present.
+  !> The LECs are stored in the global LECS structure for use by other routines.
   SUBROUTINE SET_LECS_SINGLE(R00, R10, R01, R11, C10, C01, C200, C201, C210, C211, C2T0, C2T1, C2B, &
     C400, C410, C401, C411, C4T0, C4T1, C4B0, C4B1, C4BB0, C4BB1, C4Q, &
     CIT0, CIT1, CIT2, CIT3, CIT4)

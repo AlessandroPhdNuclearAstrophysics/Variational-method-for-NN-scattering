@@ -568,6 +568,9 @@ CONTAINS
   !! \param[out] PHASE_SHIFT  Structure with phase shifts and mixing angles
   !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
   !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
+  !! \param[in]  RESET  Reset the variational calculation (optional)
+  !! \note This routine allocates and deallocates several arrays, so it should be called with care.
+  !> \note If RESET is set to .TRUE., all allocated arrays are deallocated and the calculation is reset.
   SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
    PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET)
   IMPLICIT NONE
@@ -2534,6 +2537,34 @@ CONTAINS
 
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
+
+  !> @brief Compute NN scattering phase shifts for multiple energies and channels using the variational method.
+  !>
+  !> @details
+  !> Computes phase shifts for all specified energies and channels, using either a standard potential
+  !> (specified by IPOT and ILB) or a custom EFT potential (specified by LECS_FOR_PLESS).
+  !> Optionally, fits low-energy constants for the channels using the computed phase shifts.
+  !> Optional arguments: IPOT, ILB, LECS_FOR_PLESS, FIT_CONSTANTS, ORDER_OF_THE_FIT.
+  !> Either IPOT/ILB or LECS_FOR_PLESS must be provided, but not both.
+  !>
+  !> ENERGIES is a real array of size (NE).
+  !> CHANNELS is an array of type SCATTERING_CHANNEL of size (NCHANNELS).
+  !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NCHANNELS, NE).
+  !> FIT_CONSTANTS, if present, is a real array of size (NCHANNELS, ORDER_OF_THE_FIT+1).
+  !>
+  !> @param[in] ENERGIES      Array of energies at which to compute phase shifts.
+  !> @param[in] CHANNELS      Array of scattering channels.
+  !> @param[in] LEMP          Electromagnetic potential flag.
+  !> @param[out] PHASE_SHIFTS Array of phase shift results.
+  !> @param[in] IPOT          (Optional) Integer potential identifier.
+  !> @param[in] ILB           (Optional) Integer label for the potential.
+  !> @param[in] LECS_FOR_PLESS (Optional) Low-energy constants for PLESS potential.
+  !> @param[in] FIT_CONSTANTS (Optional) Fit constants for low-energy expansion.
+  !> @param[in] ORDER_OF_THE_FIT (Optional) Order of the polynomial fit for low-energy expansion.
+  !>
+  !> @note
+  !> Optional arguments are indicated as (Optional) in the parameter description.
+  !> Array dimensions are described in the comment body
   SUBROUTINE NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS(ENERGIES, CHANNELS, LEMP, PHASE_SHIFTS, IPOT, ILB, LECS_FOR_PLESS, &
         FIT_CONSTANTS, ORDER_OF_THE_FIT)
     IMPLICIT NONE
@@ -2620,6 +2651,26 @@ CONTAINS
     ENDIF
   END SUBROUTINE NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS
 
+  !> @brief Fit low-energy constants for multiple scattering channels using phase shift data.
+  !>
+  !> @details
+  !> Performs a polynomial fit of the low-energy expansion for each specified channel using the provided phase shift data.
+  !> The fit is performed up to the specified order for each channel.
+  !> Optional arguments: none.
+  !>
+  !> CHANNELS_TO_FIT is an array of type SCATTERING_CHANNEL of size (NCH_TO_FIT).
+  !> ENERGIES is a real array of size (NK2).
+  !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NCH_TO_FIT, NK2).
+  !> FIT_CONSTANTS is a real array of size (NCH_TO_FIT, ORDER_OF_THE_FIT+1).
+  !>
+  !> @param[in] CHANNELS_TO_FIT Array of channels to fit.
+  !> @param[in] ENERGIES        Array of energies used in the fit.
+  !> @param[in] PHASE_SHIFTS    Array of phase shift results.
+  !> @param[out] FIT_CONSTANTS  Output fit constants for each channel.
+  !> @param[in] ORDER_OF_THE_FIT Order of the polynomial fit.
+  !>
+  !> @note
+  !> Array dimensions are described in the comment
   SUBROUTINE FIT_CHANNELS_LOW_ENERGY(CHANNELS_TO_FIT, ENERGIES, PHASE_SHIFTS, FIT_CONSTANTS, ORDER_OF_THE_FIT)
     USE FIT_MODULE
     IMPLICIT NONE
@@ -2642,6 +2693,31 @@ CONTAINS
     ENDDO
   END SUBROUTINE FIT_CHANNELS_LOW_ENERGY
 
+  !> @brief Fit low-energy constants for a single scattering channel using phase shift data.
+  !>
+  !> @details
+  !> Performs a polynomial fit of the low-energy expansion for the specified channel using the provided phase shift data.
+  !> The fit is performed up to the specified order. Optionally, returns arrays of squared momenta and k^{2L+1}cot(delta).
+  !> Optional arguments: KSQUARED, K2L1COTD.
+  !>
+  !> CHANNEL_TO_FIT is of type SCATTERING_CHANNEL.
+  !> ENERGIES is a real array of size (NK2).
+  !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NK2).
+  !> FIT_CONSTANTS is a real array of size (NCH, ORDER_OF_THE_FIT+1).
+  !> KSQUARED, if present, is a real array of size (NK2).
+  !> K2L1COTD, if present, is a real array of size (NCH, NK2).
+  !>
+  !> @param[in] CHANNEL_TO_FIT Scattering channel to fit.
+  !> @param[in] ENERGIES       Array of energies used in the fit.
+  !> @param[in] PHASE_SHIFTS   Array of phase shift results for the channel.
+  !> @param[out] FIT_CONSTANTS Output fit constants for the channel.
+  !> @param[in] ORDER_OF_THE_FIT Order of the polynomial fit.
+  !> @param[out] KSQUARED      (Optional) Output array of squared momenta.
+  !> @param[out] K2L1COTD      (Optional) Output array for k^{2L+1}cot(delta).
+  !>
+  !> @note
+  !> Optional arguments are indicated as (Optional) in the parameter description.
+  !> Array dimensions are described in the comment body above.
   SUBROUTINE FIT_CHANNEL_LOW_ENERGY(CHANNEL_TO_FIT, ENERGIES, PHASE_SHIFTS, FIT_CONSTANTS, ORDER_OF_THE_FIT, KSQUARED, K2L1COTD)
     USE FIT_MODULE
     IMPLICIT NONE
