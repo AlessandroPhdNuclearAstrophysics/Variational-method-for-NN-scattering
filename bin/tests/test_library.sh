@@ -16,7 +16,7 @@ if [[ "$1" == "--debug" ]]; then
   DEBUG=1
 fi
 
-set -e
+# set -e    # Uncomment to stop on errors
 
 ROOT_DIR="$(dirname $(dirname $(dirname $(realpath "$0"))))"
 BUILD_DIR="$ROOT_DIR/build"
@@ -191,6 +191,7 @@ for refdir in "$SCRIPT_DIR/test_files/scattering_phase_shifts/AV18" "$SCRIPT_DIR
   if [ -d "$refdir" ]; then
     for ref in "$refdir"/delta_*.dat; do
       fname=$(basename "$ref")
+      echo "Comparing $fname in $refdir"
       # Skip files containing 'Stapp' in the name
       if [[ "$fname" == *Stapp* ]]; then
         continue

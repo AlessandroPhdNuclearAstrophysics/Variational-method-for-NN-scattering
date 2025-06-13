@@ -181,11 +181,14 @@ test: $(TEST_EXECUTABLES)
 	@for t in $(TEST_EXECUTABLES); do \
 		echo ; \
 		echo "\033[1;34mRunning $$t\033[0m"; \
-		$$t || exit 1; \
+		$$t || (echo "\033[1;31mERROR:Something went wrong\033[0m"); \
 	done
-	@./bin/tests/test_variational_module.sh 
-	@./bin/tests/test_library.sh
-	@./bin/tests/test_variational_module_channels_energies.sh
+	@echo "\033[1;34mRunning test_variational_module.x \033[0m"
+	@./bin/tests/test_variational_module.sh || (echo "\033[1;31mERROR:Something went wrong\033[0m")
+	@echo "\033[1;34mRunning test_library.x \033[0m"
+	@./bin/tests/test_library.sh || (echo "\033[1;31mERROR:Something went wrong\033[0m")
+	@echo "\033[1;34mRunning test_variational_module_channels_energies.x \033[0m"
+	@./bin/tests/test_variational_module_channels_energies.sh || (echo "\033[1;31mERROR:Something went wrong\033[0m")
 
 
 # Make static library from all the modules
