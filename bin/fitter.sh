@@ -5,6 +5,13 @@ if [ $# -ne 1 ] || [ ! -d "$1" ] || ! ls "$1"/k2_kcotd_*.dat 1>/dev/null 2>&1; t
   exit 1
 fi
 
+if [ "$1" == "--debug" ]; then
+  BUILD_DIR="build/debug"
+else
+  BUILD_DIR="build/release"
+fi
+EXE="$BUILD_DIR/main_evaluate_low_energy_scattering_observables.x"
+
 # Remove trailing slash from input_dir if present
 input_dir="${1%/}"
 output_dir="fits/$(basename "$input_dir")"
@@ -18,5 +25,5 @@ for file in "$input_dir"/k2_kcotd_*.dat; do
   base_name=$(basename "$file")
   # Extract everything after k2_kcotd_ prefix
   output_name="${base_name#k2_kcotd_}"
-  ./build/main_evaluate_low_energy_scattering_observables.x "$file" > "$output_dir/$output_name"
+  "$EXE" "$file" > "$output_dir/$output_name"
 done

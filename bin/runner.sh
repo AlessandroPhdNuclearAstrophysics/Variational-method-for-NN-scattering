@@ -1,6 +1,22 @@
 #!/bin/bash
 
-make -j 
+if [ "$1" == "--debug" ]; then
+  BUILD_DIR="build/debug"
+else
+  BUILD_DIR="build/release"
+fi
+# Check if the build directory exists
+if [ ! -d "$BUILD_DIR" ]; then
+  echo "Build directory $BUILD_DIR does not exist. Please run 'make' first."
+  exit 1
+fi
+
+EXE="$BUILD_DIR/main_scattering_NN_variazional_method.x"
+# Check if the executable exists
+if [ ! -f "$EXE" ]; then
+  echo "Executable $EXE does not exist. Please run 'make' first."
+  exit 1
+fi
 
 # Default values for the parameters
 EMAX=1.D0
@@ -76,7 +92,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
 fi
 
 # Run the Fortran program with the namelist file
-./build/main_scattering_NN_variazional_method.x "$NAMELIST_FILE"
+"$EXE" "$NAMELIST_FILE"
 
 # Clean up the temporary file
 rm -f "$NAMELIST_FILE"

@@ -19,17 +19,22 @@ fi
 # set -e    # Uncomment to stop on errors
 
 ROOT_DIR="$(dirname $(dirname $(dirname $(realpath "$0"))))"
-BUILD_DIR="$ROOT_DIR/build"
+if [[ DEBUG -eq 1 ]]; then
+  BUILD_DIR="$ROOT_DIR/build/debug"
+  ZIP_NAME="libvariational_debug.zip"
+else
+  BUILD_DIR="$ROOT_DIR/build/release"
+  ZIP_NAME="libvariational_release.zip"
+fi
 SCRIPT_DIR="$(dirname $(realpath "$0"))"
-ZIP_NAME="libvariational.zip"
 LIB_DIR="libvariational"
 
 # 1. Generate the zip library
 if [ $DEBUG -eq 1 ]; then
   echo -e "\033[0;34m[DEBUG] Running: make -C $ROOT_DIR $BUILD_DIR/$ZIP_NAME\033[0m"
-  make -C "$ROOT_DIR" "build/$ZIP_NAME"
+  make -C "$ROOT_DIR" export DEBUG=1
 else
-  make -C "$ROOT_DIR" "build/$ZIP_NAME" >/dev/null
+  make -C "$ROOT_DIR" export 
 fi
 
 # 2. Copy the zip to the script directory
@@ -56,9 +61,10 @@ MODS="$MODDIR"/*.mod
 SRC="$SCRIPT_DIR/test_library.f90"
 EXE="$SCRIPT_DIR/test_library.x"
 FFLAGS="-O3 -march=native -funroll-loops -ftree-vectorize -fopenmp -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan -I$MODDIR -J$MODDIR"
-LDFLAGS="-O3 -march=native -funroll-loops -ftree-vectorize -fopenmp -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan -lgsl -lgslcblas -llapack -lblas"
+LDFLAGS="-lgsl -lgslcblas -llapack -lblas"
 if [ $DEBUG -eq 1 ]; then
-  echo -e "\033[0;34m[DEBUG] Compiling $SRC with:\033[0m $FC $FFLAGS -o $EXE $SRC $LIBFILE $LDFLAGS"
+  echo -e "\033[0;34m[DEBUG] Compiling $SRC with:"
+  echo -e "\033[0m $FC $FFLAGS -o $EXE $SRC $LIBFILE $LDFLAGS"
   $FC $FFLAGS -o "$EXE" "$SRC" "$LIBFILE" $LDFLAGS
 else
   $FC $FFLAGS -o "$EXE" "$SRC" "$LIBFILE" $LDFLAGS >/dev/null 2>&1

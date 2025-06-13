@@ -1,15 +1,19 @@
 #!/bin/bash
-
-
 echo 
 echo "============================================================"
-echo "Testing variational module channels energies"
+echo "      Testing variational module channels energies"
 echo "============================================================"
+
+if [ "$1" == "--debug" ]; then
+  BUILD_DIR="build/debug"
+else
+  BUILD_DIR="build/release"
+fi
 
 AV18_2="output/test_AV18_2"
 EFT_pless_15_2="output/test_EFT_pless_15_2"
 EFT_pless_15_dynamic_2="output/test_EFT_pless_15_dynamic_2"
-EXE="build/tests/test_NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS.x"
+EXE="$BUILD_DIR/tests/test_NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS.x"
 
 need_make=0
 for dir in "$AV18_2" "$EFT_pless_15_2" "$EFT_pless_15_dynamic_2"; do

@@ -8,7 +8,11 @@
 # -----------------------------------------------------------------------------
 
 # Set up paths for the binary and reference files (relative to bin/tests/)
-BIN_DIR="$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")/build"
+if [[ "$1" == "--debug" ]]; then
+  BIN_DIR="$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")/build/debug"
+else
+  BIN_DIR="$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")/build/release"
+fi
 REF_BASE="$(dirname "$0")/test_files/scattering_phase_shifts"
 
 FAILED=0

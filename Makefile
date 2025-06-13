@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := all
+
 # Fortran compiler
 FC = gfortran
 
@@ -9,7 +11,6 @@ GMON ?= 0
 # Define directory paths
 SRC_DIR := src
 BUILD_DIR ?= build/$(if $(filter 1,$(DEBUG)),debug,release)
-MOD_DIR := build/modules
 TEST_DIR := $(SRC_DIR)/tests
 LOG_DIR := $(BUILD_DIR)/logs
 DEP_DIR := $(BUILD_DIR)/dep
@@ -23,7 +24,7 @@ COMMON_FLAGS+= -Wno-compare-reals -Wno-maybe-uninitialized
 COMMON_FLAGS+= -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
 
 # Set the flags for the Fortran compiler
-FFLAGS = -c -J$(MOD_DIR) -I$(BUILD_DIR) $(COMMON_FLAGS)
+FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) $(COMMON_FLAGS)
 LDFLAGS = $(COMMON_FLAGS)
 
 ifeq ($(DEBUG),1)
@@ -72,7 +73,7 @@ ALL_MAIN_OBJECTS := $(MAIN_OBJECTS) $(TEST_OBJECTS)
 NON_MAIN_OBJECTS := $(filter-out $(ALL_MAIN_OBJECTS),$(OBJECTS))
 
 # Default rule
-all: $(LOG_DIR) $(MOD_DIR) $(DEP_DIR) $(OUT_DIR) $(ALL_EXECUTABLES)
+all: $(LOG_DIR) $(DEP_DIR) $(OUT_DIR) $(ALL_EXECUTABLES)
 
 # Rule to build executables: link only its own object and NON_MAIN_OBJECTS
 $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
@@ -100,9 +101,6 @@ $(DEP_DIR):
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
-
-$(MOD_DIR):
-	mkdir -p $(MOD_DIR)
 
 # Generate dependency graphs using Graphviz
 generate_dependency_graphs: $(DEP_FILES)
@@ -200,14 +198,11 @@ test: $(TEST_EXECUTABLES)
 LIBRARY_FILE := libvariational.a
 $(BUILD_DIR)/$(LIBRARY_FILE): $(NON_MAIN_OBJECTS)
 	@echo "\033[0;32mCreating static library $(LIBRARY_FILE)\033[0m"
-	@mkdir -p $(BUILD_DIR)
 	ar rcs $(BUILD_DIR)/$(LIBRARY_FILE) $^
 
-# Rule to create a zip archive with the static library and module files
-EXPORT_ZIP := libvariational.zip
-
-$(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
-	@echo "\033[0;32mCreating zip archive with static library and module files in libvariational/ folder...\033[0m"
+# Export library with mode-specific zip name
+export: $(BUILD_DIR)/$(LIBRARY_FILE)
+	@echo "\033[0;32mExporting static library and module files...\033[0m"
 	@mkdir -p $(BUILD_DIR)/libvariational/public_interfaces
 	@for i in $$(find $(SRC_DIR)/libs -name "*.f90"); do \
 		echo "Generating module interface for $$i..."; \
@@ -216,9 +211,11 @@ $(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
 	@cp $(BUILD_DIR)/$(LIBRARY_FILE) $(BUILD_DIR)/libvariational/
 	@cp $(BUILD_DIR)/*.mod $(BUILD_DIR)/libvariational/ 2>/dev/null || true
 	@find . -name "lecs_eft.dat" -exec cp {} $(BUILD_DIR)/libvariational/ \; 2>/dev/null || true
-	@cd $(BUILD_DIR) && zip -r $(EXPORT_ZIP) libvariational
+	@MODE=$$( [ "$(DEBUG)" = "1" ] && echo "debug" || echo "release" ); \
+	cd $(BUILD_DIR) && zip -r libvariational_$$MODE.zip libvariational
 	@rm -rvf $(BUILD_DIR)/libvariational
-	@echo "Created $(BUILD_DIR)/$(EXPORT_ZIP) with files in libvariational/"
+	@echo "\033[0;32mLibrary exported as $(BUILD_DIR)/libvariational_`[ "$(DEBUG)" = "1" ] && echo debug || echo release`.zip\033[0m"
+
 
 # Include all dependency files if they exist
 -include $(DEPFILES) $(TEST_DEPFILES)
