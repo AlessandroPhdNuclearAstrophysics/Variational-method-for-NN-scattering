@@ -191,11 +191,11 @@ for refdir in "$SCRIPT_DIR/test_files/scattering_phase_shifts/AV18" "$SCRIPT_DIR
   if [ -d "$refdir" ]; then
     for ref in "$refdir"/delta_*.dat; do
       fname=$(basename "$ref")
-      echo "Comparing $fname in $refdir"
       # Skip files containing 'Stapp' in the name
-      if [[ "$fname" == *Stapp* ]]; then
+      if [[ "$fname" == *BB* ]]; then
         continue
       fi
+      echo "Comparing $fname in $refdir"
       outdir="$SCRIPT_DIR/tmp_output_library/$(basename $refdir)"
       out="$outdir/$fname"
       if [ -f "$out" ]; then
