@@ -7,8 +7,15 @@ DEBUG ?= 0
 GMON ?= 0
 
 # Common flags
-FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
-LDFLAGS = -Wall -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
+COMMON_FLAGS = -fimplicit-none -ffree-line-length-none -Wall -Wextra
+COMMON_FLAGS+= -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-dummy-argument
+COMMON_FLAGS+= -Wno-implicit-interface -Wno-argument-mismatch
+COMMON_FLAGS+= -Wno-compare-reals -Wno-maybe-uninitialized
+COMMON_FLAGS+= -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
+
+# Set the flags for the Fortran compiler
+FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) $(COMMON_FLAGS)
+LDFLAGS = $(COMMON_FLAGS)
 
 ifeq ($(DEBUG),1)
 	FFLAGS  += -g -fcheck=all -finit-local-zero -fbacktrace
@@ -28,7 +35,6 @@ ifeq ($(GMON),1)
 endif
 
 LDFLAGS += -lgsl -lgslcblas -llapack -lblas
-
 
 # Define directory paths
 SRC_DIR := src
@@ -94,10 +100,6 @@ $(DEP_DIR):
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
-# Run the script in bin directory
-run:
-	./bin/runner.sh
-
 # Generate dependency graphs using Graphviz
 generate_dependency_graphs: $(DEP_FILES)
 	@echo "Generating dependency graphs..."
@@ -117,8 +119,7 @@ $(OUT_XMGRACE): %.pdf: %.agr
 
 # Clean rule to delete all build artifacts
 clean:
-	rm -rvf $(BUILD_DIR) $(shell find $(OUT_DIR) --min-depth 2 -name "*.eps") dependency_graphs/* libvariational.a
-	mkdir -p $(OUT_DIR)
+	rm -rvf $(BUILD_DIR) $(shell find $(OUT_DIR) -mindepth 2 -name "*.eps") dependency_graphs/* libvariational.a
 
 # Delete output files
 delete_out:
@@ -218,4 +219,4 @@ $(BUILD_DIR)/$(EXPORT_ZIP): all $(BUILD_DIR)/$(LIBRARY_FILE)
 # Include all dependency files if they exist
 -include $(DEPFILES) $(TEST_DEPFILES)
 
-.PHONY: all clean run delete_out check_graphs doc delete_doc test
+.PHONY: all clean delete_out check_graphs doc delete_doc test analyze_gprof_dynamic_LECS

@@ -96,7 +96,7 @@ PROGRAM test_operating_system
   IF (exists) STOP 1
 
   ! Test 9: Try changing directory
-  CALL CHANGE_DIRECTORY("/tmp")
+  CALL CHDIR("/tmp")
   CALL GET_CURRENT_DIRECTORY(current_dir)
   WRITE(*,*) "Changed directory to: ", TRIM(current_dir)
   ! Accept /tmp, /tmp/, or any path ending with /tmp or /tmp/, or containing /tmp as last component
