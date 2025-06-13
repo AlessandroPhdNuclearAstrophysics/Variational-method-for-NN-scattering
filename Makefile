@@ -6,6 +6,15 @@ FC = gfortran
 DEBUG ?= 0
 GMON ?= 0
 
+# Define directory paths
+SRC_DIR := src
+BUILD_DIR ?= build/$(if $(filter 1,$(DEBUG)),debug,release)
+MOD_DIR := build/modules
+TEST_DIR := $(SRC_DIR)/tests
+LOG_DIR := $(BUILD_DIR)/logs
+DEP_DIR := $(BUILD_DIR)/dep
+OUT_DIR := output
+
 # Common flags
 COMMON_FLAGS = -fimplicit-none -ffree-line-length-none -Wall -Wextra
 COMMON_FLAGS+= -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-dummy-argument
@@ -14,7 +23,7 @@ COMMON_FLAGS+= -Wno-compare-reals -Wno-maybe-uninitialized
 COMMON_FLAGS+= -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
 
 # Set the flags for the Fortran compiler
-FFLAGS = -c -J$(BUILD_DIR) -I$(BUILD_DIR) $(COMMON_FLAGS)
+FFLAGS = -c -J$(MOD_DIR) -I$(BUILD_DIR) $(COMMON_FLAGS)
 LDFLAGS = $(COMMON_FLAGS)
 
 ifeq ($(DEBUG),1)
@@ -35,14 +44,6 @@ ifeq ($(GMON),1)
 endif
 
 LDFLAGS += -lgsl -lgslcblas -llapack -lblas
-
-# Define directory paths
-SRC_DIR := src
-BUILD_DIR := build
-TEST_DIR := $(SRC_DIR)/tests
-LOG_DIR := $(BUILD_DIR)/logs
-DEP_DIR := $(BUILD_DIR)/dep
-OUT_DIR := output
 
 # Find all .f90 files (recursively in src/)
 ALL_SOURCES := $(shell find $(SRC_DIR) -name "*.f90")
@@ -71,7 +72,7 @@ ALL_MAIN_OBJECTS := $(MAIN_OBJECTS) $(TEST_OBJECTS)
 NON_MAIN_OBJECTS := $(filter-out $(ALL_MAIN_OBJECTS),$(OBJECTS))
 
 # Default rule
-all: $(LOG_DIR) $(DEP_DIR) $(OUT_DIR) $(ALL_EXECUTABLES)
+all: $(LOG_DIR) $(MOD_DIR) $(DEP_DIR) $(OUT_DIR) $(ALL_EXECUTABLES)
 
 # Rule to build executables: link only its own object and NON_MAIN_OBJECTS
 $(BUILD_DIR)/%.x: $(BUILD_DIR)/%.o $(NON_MAIN_OBJECTS)
@@ -88,7 +89,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.f90
 $(DEP_DIR)/%.d: $(SRC_DIR)/%.f90
 	@echo "Generating dependencies for $<"
 	@mkdir -p $(dir $@)
-	@python3 tools/scan_deps.py $< || echo "$<: dependency scan failed" > $@
+	@python3 tools/scan_deps.py $<  $(BUILD_DIR) || echo "$<: dependency scan failed" > $@
 
 # Create required directories
 $(LOG_DIR):
@@ -99,6 +100,9 @@ $(DEP_DIR):
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
+
+$(MOD_DIR):
+	mkdir -p $(MOD_DIR)
 
 # Generate dependency graphs using Graphviz
 generate_dependency_graphs: $(DEP_FILES)

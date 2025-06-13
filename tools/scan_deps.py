@@ -6,11 +6,12 @@ import os                 # for environment variables
 
 # Get the Fortran source file passed as argument
 src_file = Path(sys.argv[1])
+build_name = Path(sys.argv[2]) if len(sys.argv) > 2 else "build"
 
 # Define root folders for source and build
 # Try to read from environment variables if set, otherwise use defaults
 src_root = Path(os.environ.get("SRC_ROOT", "src"))
-build_root = Path(os.environ.get("BUILD_ROOT", "build"))
+build_root = Path(os.environ.get("BUILD_ROOT", build_name))
 
 # Debug info if needed
 debug_mode = os.environ.get("DEBUG_DEPS", "0") == "1"
