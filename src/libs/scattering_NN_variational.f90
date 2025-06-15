@@ -22,12 +22,14 @@ MODULE SCATTERING_NN_VARIATIONAL
   !> \brief Structure to store the results of phase shift calculations.
   !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
   TYPE, PUBLIC :: PHASE_SHIFT_RESULT
-    DOUBLE PRECISION :: delta1_BB   !< Phase shift 1 (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: delta2_BB   !< Phase shift 2 (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: epsilon_BB  !< Mixing angle (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: delta1_S    !< Phase shift 1 (Stapp convention) [deg]
-    DOUBLE PRECISION :: delta2_S    !< Phase shift 2 (Stapp convention) [deg]
-    DOUBLE PRECISION :: epsilon_S   !< Mixing angle (Stapp convention) [deg]
+    DOUBLE PRECISION :: delta1_BB                !< Phase shift 1 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta2_BB                !< Phase shift 2 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: epsilon_BB               !< Mixing angle (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta1_S                 !< Phase shift 1 (Stapp convention) [deg]
+    DOUBLE PRECISION :: delta2_S                 !< Phase shift 2 (Stapp convention) [deg]
+    DOUBLE PRECISION :: epsilon_S                !< Mixing angle (Stapp convention) [deg]
+    DOUBLE PRECISION :: R(2,2) = 0.0D0           !< Scattering matrix R in the coupled basis
+    DOUBLE COMPLEX   :: S(2,2) = (0.0D0, 0.0D0)  !< Scattering matrix S in the coupled basis
   END TYPE PHASE_SHIFT_RESULT
 
   !> \ingroup scattering_nn_variational_mod
@@ -795,6 +797,7 @@ CONTAINS
   AIR = H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)
   AII = H_MINUS_E_AA_II(CH_INDEX, IE, :, :)
 
+  AM = 0.D0
   DO IAB = 1, NCH
   DO IAK = 1, NCH
     AM(IAB,IAK)=BD1(IAK,IAB)+BD1(IAB,IAK)+AII(IAB,IAK)+AII(IAK,IAB)
@@ -843,6 +846,11 @@ CONTAINS
     ENDIF
   ENDIF
 
+! If energy is zero, return the R matrix
+  PHASE_SHIFT%R(:NCH, :NCH) = RMAT2
+  IF (E==0.0D0) &
+    RETURN
+
 ! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
   CALL CALCULATE_PHASE_SHIFTS_BLATT(RMAT2, NCH, DELTA1, DELTA2, AMIXR)
   DELTA1G = TO_DEGREES(DELTA1)
@@ -863,6 +871,7 @@ CONTAINS
   
 ! Calculating the S-matrix
   CALL CALCULATE_S_MATRIX(SMAT, NCH, DELTA1, DELTA2, AMIXR)
+  PHASE_SHIFT%S(:NCH, :NCH) = SMAT
 
   IF (PRINT_I) THEN
     WRITE(*,*)
