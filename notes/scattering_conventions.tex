@@ -115,7 +115,7 @@
 	
 	\subsection{Radial Schr\"odinger Equation}
 	
-	Consider two nucleons interacting via a central potential \( V(r) \). The time-independent Schr�dinger equation reads:
+	Consider two nucleons interacting via a central potential \( V(r) \). The time-independent Schr\"odinger equation reads:
 	\[
 	\left[ -\frac{\hbar^2}{2\mu} \nabla^2 + V(r) \right] \psi(\ve{r}) = E \psi(\ve{r})
 	\]
@@ -153,13 +153,14 @@
 	\end{itemize}
 	
 	In the external region, the general solution is:
-	\[
-	u_\ell(r) = A_\ell \left[ F_\ell(kr) \cos\delta_\ell + G_\ell(kr) \sin\delta_\ell \right]
-	\]
+	\begin{equation}
+		u_\ell(r) = A_\ell\, k r \left[ F_\ell(kr) \cos\delta_\ell + G_\ell(kr) \sin\delta_\ell \right]\,.
+		\label{eq:asymptotic_u}
+	\end{equation}
 	Matching this with the internal solution at \( r = a \), one derives \cite{advances}:
-	\[
-	S_\ell = \frac{1 + iR_\ell}{1 - iR_\ell}
-	\]
+	\begin{equation}
+		S_\ell = \frac{1 + iR_\ell}{1 - iR_\ell}
+	\end{equation}
 	
 	\section{Matrix Structure: Uncoupled and Coupled Channels}
 	
@@ -215,6 +216,7 @@
 			\epsilon +\tan \delta_2 \cos ^2\epsilon \\
 		\end{array}
 		\right)\,.
+		\label{eq:RBB}
 	\end{equation}
 	The combination $R_{11}-R_{22}$ is
 	\begin{equation}
@@ -319,15 +321,313 @@
 	The \textit{S}-matrix and \textit{R}-matrix are central tools in analyzing nucleon--nucleon scattering. While the \textit{S}-matrix encapsulates the observable content of the interaction, the \textit{R}-matrix provides a convenient and often more numerically robust intermediate object, especially in resonance or coupled-channel analyses. Their connection through a M\"obius transformation reflects deep structural links in scattering theory.
 	
 	
+	\begin{appendices}
+		\section{Asymptotic expansion and scattering length}
+		As seen in \eq{\eqref{eq:asymptotic_u}} it is possibly to write for non-coupled channels
+		\begin{equation}
+			u_\ell(r) = 
+			\tilde{A}_\ell\,
+			kr\,
+			\left(
+				F_\ell
+				+ \tan \delta_\ell \,
+				G_\ell
+			\right)\,,
+		\end{equation}
+		where $\tilde{A}_\ell \equiv A_\ell\, \cos \delta_\ell$.
+		In this case $R_{\ell \ell } = \tan \delta_\ell$ and therefore
+		
+		\begin{equation}
+			u_\ell(r) = 
+			\tilde{A}_\ell\,
+			kr\,
+			\left(
+			F_\ell
+			+ R_{\ell\ell} \,
+			G_\ell
+			\right)\,.
+		\end{equation}
+		Here $R_\ell$ ($G_\ell$) are the regular (irregular) solution to the Schr\"odinger equation and in the case if the potential is short-range 
+		\begin{equation}
+			\begin{cases}
+				F_\ell(kr) &\rightarrow\quad j_\ell(kr)\,,\\
+				G_\ell(kr) &\rightarrow\quad y_\ell(kr)\,,\\
+			\end{cases}
+		\end{equation}
+		where $j_\ell$ ($y_\ell$) is the regular (irregular) spherical Bessel function.\\
+		In case of a long range potential of the type $\propto 1/r$ 
+		\begin{equation}
+			\begin{cases}
+				F_\ell & \rightarrow \quad F_\ell(\eta, kr)\,,\\
+				G_\ell & \rightarrow \quad G_\ell(\eta, kr)\,,
+			\end{cases}
+		\end{equation}
+		where $F_\ell(\eta,kr)$ ($G_\ell(\eta,kr)$) is the regular (irregular) Coulomb function.
+		
+		\subsection{The scattering length}
+		For small energies there are two observables of importance, which depend linearly on the energy, the scattering length $a_\ell$ and the effective range $r_{e,\ell}$, they are connected to the momentum $k$ and the phase shift $\delta_\ell$ by 
+		\begin{equation}
+			k^{2\ell+1}\,\cot\delta_\ell = -\frac{1}{a_\ell} + \frac{1}{2}\,r_{e,\ell}\,k^2\,. 
+		\end{equation}
+		Specifically, for $E\rightarrow 0$ 
+		\begin{equation}
+			k^{2\ell+1}\,\cot\delta_\ell\rightarrow -\frac{1}{a_\ell}\,.
+		\end{equation}
+		Since for uncoupled channels $R_{\ell\ell}=\tan\delta_\ell$ it is possible to write
+		\begin{equation}
+			R_{\ell\ell} \rightarrow 
+			-a_\ell\,k^{2\ell+1}\,.
+		\end{equation}
+		It is possible to re-define the variational asymptotic functions to 
+		\begin{equation}
+			\begin{cases}
+				F_\ell(kr) &\rightarrow \quad
+				\tilde{F}_\ell(kr) = 
+				\sqrt{k^{2\ell+1}}\,F_\ell(kr)\,,\\
+				G_\ell(kr) &\rightarrow \quad
+				\tilde{G}_\ell(kr) = -f(r)
+				\dfrac{1}{\sqrt{k^{2\ell+1}}}\,G_\ell(kr)\,,
+			\end{cases}
+		\end{equation}
+		where $f(r)$ goes to zero faster than the denominator of $G_\ell(kr)$ for small $r$, but otherwise is basically one outside the core.\\
+		Using this redefinition, outside the core the reduced radial function becomes
+		\begin{equation}
+			u_\ell(kr) = 
+			\mathcal{A}_\ell\,kr \left(
+			F_\ell(kr)
+			+\tilde{R}_{\ell\ell}\,G_\ell(kr)
+			\right)
+		\end{equation}
+		with 
+		\begin{equation}
+			\tilde{R}_{\ell\ell} = -
+			\frac{R_{\ell\ell}}{k^{2\ell+1}}
+		\end{equation}
+		and, for $E\rightarrow 0$, 
+		\begin{equation}
+			\tilde{R}_{\ell\ell}\rightarrow a_\ell\,.
+		\end{equation}
+		The problem with this approach is that for $E\rightarrow 0$ the asymptotic function tend to zero or to infinity.
+		
+		\subsubsection{Eliminating the energy dependence from the spherical Bessel functions}
+		Focusing on the spherical
+		Bessel function, the asymptotic limit for their argument going to zero is \cite{HS}
+		\begin{equation}
+			\begin{cases}
+				F_\ell(kr) = j_\ell(x) &\rightarrow
+				\quad \dfrac{x^\ell}{(2\ell+1)!!}\,,\\[2.ex]
+				G_\ell(kr)=y_\ell(x) &\rightarrow
+				\quad- \dfrac{(2\ell-1)!!}{x^{\ell+1}}\,.
+			\end{cases}
+		\end{equation}
+		Using for $E\rightarrow 0$ the functions [code]
+		\begin{equation}
+			\begin{cases}
+				\tilde{F}_\ell( r) = r^\ell\,, \\
+				\tilde{G}_\ell( r) = -\dfrac{1}{(2\ell + 1)\, r^{\ell+1}} \left(1 - e^{-\epsilon r}\right)^{2\ell + 1}\,,
+			\end{cases}
+		\end{equation}
+		for $r\rightarrow \infty$ it is possible to write
+		\begin{equation}
+			\tilde{A}_\ell
+			\left(\tilde{F}_\ell+R\,\tilde{G}_\ell
+			\right)
+			=
+			\tilde{A}_\ell
+			\left(r^\ell
+			-
+			\dfrac{\tilde{R}_{\ell\ell}}{2\ell+1}\,\frac{1}{r^{\ell+1}}\right)
+		\end{equation}
+		and confronting it with the actual behavior
+		\begin{equation}
+			A_\ell\,
+			\left(
+			F_\ell(kr)
+			+
+			R_{\ell\ell}\,
+			G_\ell(kr)
+			\right)
+			\simeq
+			A_\ell
+			\left(
+			\frac{k^\ell r^\ell}{(2\ell+1)!!}
+			-
+			R_{\ell\ell}\,
+			\frac{(2\ell-1)!!}{k^{\ell+1}r^{\ell+1}}
+			\right)
+		\end{equation}
+		it is possible to map
+		\begin{equation}
+			\dfrac{\tilde{R}_{\ell\ell}}{2\ell+1}
+			=
+			\frac{(2\ell+1)!!\,(2\ell-1)!!}{k^{2\ell+1}}\,R_{\ell\ell}
+		\end{equation}
+		and therefore
+		\begin{equation}
+			\tilde{R}_{\ell\ell} = -
+			\left[(2\ell+1)!!\right]^2\,
+			a_\ell\,.
+		\end{equation}
+		
+		\paragraph{Coupled case}
+		In the case of a coupled channel
+		\begin{equation}
+			\begin{cases}
+				A_{\ell_1} \left(F_{\ell_1}(kr) + R_{\ell_1\ell_1}\,G_{\ell_1}(kr) + 
+				R_{\ell_1(\ell_2)}\,G_{\ell_2}(kr)\right)\,,\\
+				A_{\ell_2} \left(F_{\ell_2}(kr) + R_{(\ell_2)\ell_1}\,G_{\ell_1}(kr) + 
+				R_{(\ell_2)(\ell_2)}\,G_{\ell_2}(kr)\right)
+			\end{cases}
+		\end{equation}
+		the choice for small energies brings to
+		\begin{equation}
+			\begin{cases}
+				\tilde{A}_{\ell_1}
+				\left(
+				r^{\ell_1} - \dfrac{\tilde{R}_{\ell_1\ell_1}}{(2\ell_1+1)}\,
+				\dfrac{1}{r^{\ell_1+1}} - \dfrac{\tilde{R}_{\ell_1\ell_2}}{(2\ell_2+1)}\,
+				\dfrac{1}{r^{\ell_2+1}}
+				\right)\,,\\[2.5ex]
+				\tilde{A}_{\ell_2}
+				\left(
+				r^{\ell_2} - \dfrac{\tilde{R}_{\ell_2\ell_1}}{(2\ell_1+1)}\,
+				\dfrac{1}{r^{\ell_1+1}} - \dfrac{\tilde{R}_{\ell_2\ell_2}}{(2\ell_2+1)}\,
+				\dfrac{1}{r^{\ell_2+1}}
+				\right)\,.
+			\end{cases}
+		\end{equation}
+		Comparing with the actual behavior
+		\begin{equation}
+			\begin{cases}
+				A_{\ell_1}
+				\left(
+				\dfrac{k^{\ell_1}\,r^{\ell_1}}{(2\ell_1+1)!!} - \tilde{R}_{\ell_1\ell_1}\,
+				\dfrac{(2\ell_1-1)!!}{k^{\ell_1+1}\,r^{\ell_1+1}} - \tilde{R}_{\ell_1\ell_2}\,
+				\dfrac{(2\ell_2-1)!!}{k^{\ell_2+1}\,r^{\ell_2+1}}
+				\right)\,,\\[2.5ex]
+				A_{\ell_2}
+				\left(
+				\dfrac{k^{\ell_2}\,r^{\ell_2}}{(2\ell_2+1)!!} - \tilde{R}_{\ell_2\ell_1}\,
+				\dfrac{(2\ell_1-1)!!}{k^{\ell_1+1}\,r^{\ell_1+1}} - \tilde{R}_{\ell_2\ell_2}\,
+				\dfrac{(2\ell_2-1)!!}{k^{\ell_2+1}\,r^{\ell_2+1}}
+				\right)\,,
+			\end{cases}
+		\end{equation}
+		it is possible to extract
+		\begin{equation}
+			\begin{cases}
+				\tilde{R}_{\ell_1\ell_1} =& 
+				\left[(2\ell_1+1)!!\right]^2\,\dfrac{R_{\ell_1\ell_1}}{k^{2\ell_1+1}}\,,\\[2.ex]
+				\tilde{R}_{\ell_1\ell_2} =& 
+				(2\ell_1+1)!!\,(2\ell_2+1)!!\,\dfrac{R_{\ell_1\ell_2}}{k^{\ell_1+\ell_2+1}}\,,\\[2.ex]
+				\tilde{R}_{\ell_2\ell_1} =& 
+				(2\ell_1+1)!!\,(2\ell_2+1)!!\,\dfrac{R_{\ell_2\ell_1}}{k^{\ell_1+\ell_2+1}}\,,\\[2.ex]
+				\tilde{R}_{\ell_2\ell_2} =& 
+				\left[(2\ell_2+1)!!\right]^2\,\dfrac{R_{\ell_2\ell_2}}{k^{2\ell_2+1}}
+			\end{cases}
+		\end{equation}
+		Since for coupled channels $\ell_2=\ell+2$ where $\ell\equiv \ell_1$ it is possible to use \eq{\eqref{eq:RBB}} and write
+		\begin{equation}
+			\begin{pmatrix}
+				\tilde{R}_{\ell_1\ell_1} & 
+				\tilde{R}_{\ell_1\ell_2} \\ 
+				\tilde{R}_{\ell_2\ell_1} & 
+				\tilde{R}_{\ell_2\ell_2} \\
+			\end{pmatrix}
+			=
+			\begin{pmatrix}
+				\left[(2\ell+1)!!\right]^2\left(
+				\dfrac{\tan\delta_1}{k^{2\ell+1}}\cos^2\epsilon
+				+\dfrac{\tan\delta_2}{k^{2\ell+1}}\sin^2\epsilon
+				\right) & 
+				(2\ell+1)!!(2\ell+5)!!
+				\dfrac{\tan\delta_1-\tan\delta_2}{k^{2\ell+3}}
+				\sin\epsilon\cos\epsilon\\
+				(2\ell+1)!!(2\ell+5)!!
+				\dfrac{\tan\delta_1-\tan\delta_2}{k^{2\ell+3}}
+				\sin\epsilon\cos\epsilon &
+				\left[(2\ell+5)!!\right]^2\left(
+				\dfrac{\tan\delta_1}{k^{2\ell+5}}\sin^2\epsilon
+				+\dfrac{\tan\delta_2}{k^{2\ell+5}}\cos^2\epsilon
+				\right)
+			\end{pmatrix}\,.
+		\end{equation}
+		Simplifying
+		\begin{equation}
+			\begin{pmatrix}
+				\tilde{R}_{\ell_1\ell_1} & 
+				\tilde{R}_{\ell_1\ell_2} \\ 
+				\tilde{R}_{\ell_2\ell_1} & 
+				\tilde{R}_{\ell_2\ell_2} \\
+			\end{pmatrix}
+			=-
+			\begin{pmatrix}
+				\left[(2\ell+1)!!\right]^2\left(
+				a_1\,\cos^2\epsilon
+				+a_2\,k^4\sin^2\epsilon
+				\right) & 
+				(2\ell+1)!!(2\ell+5)!!
+				\left(a_1-k^4\,a_2\right)
+				\dfrac{\sin2\epsilon}{k^2}\\
+				(2\ell+1)!!(2\ell+5)!!
+				\left(a_1-k^4\,a_2\right)
+				\dfrac{\sin2\epsilon}{k^2} &
+				\left[(2\ell+5)!!\right]^2\left(
+				a_1\,\dfrac{\sin^2\epsilon}{k^4}
+				+a_2\,\cos^2\epsilon
+				\right)
+			\end{pmatrix}\,.
+		\end{equation}
+		From this it is possible to infer that, in order for the $R$ matrix to not diverge
+		$\epsilon\simeq k^{2}$ at least, this is proven in Ref.~\cite{BB}. Defining
+		\begin{equation}
+			e_J = \frac{\epsilon}{k^2}	
+		\end{equation}
+		the $R$ matrix becomes
+		\begin{empheq}[box=\mymath]{equation}
+			\begin{pmatrix}
+				\tilde{R}_{\ell_1\ell_1} & 
+				\tilde{R}_{\ell_1\ell_2} \\ 
+				\tilde{R}_{\ell_2\ell_1} & 
+				\tilde{R}_{\ell_2\ell_2} \\
+			\end{pmatrix}
+			=-
+			\begin{pmatrix}
+				\left[(2\ell+1)!!\right]^2\,
+				a_1 & 
+				2(2\ell+1)!!(2\ell+5)!!\,
+				a_1\,
+				e_1\\
+				2(2\ell+1)!!(2\ell+5)!!\,
+				a_1\,
+				e_1 &
+				\left[(2\ell+5)!!\right]^2\left(
+				a_1\,e_1^2
+				+a_2
+				\right)
+			\end{pmatrix}\,.			
+		\end{empheq}
+		
+		
+		
+		
+		
+		
+	\end{appendices}
+	
+	
 	\begin{thebibliography}{9}
 		\bibitem{advances}
-		L. M. Delves, Advances in Nuclear Physics, vol.~5 (1972), Eds. M. Baranger, E. V\"ogt (Plenum Press, London, New York).
+		L. M. Delves, \textit{Advances in Nuclear Physics, vol.~5} (1972), Eds. M. Baranger, E. V\"ogt (Plenum Press, London, New York).
 		
 		\bibitem{Stapp}
 		H. P. Stapp, T. Ypsilantis and N. Metropolis, Phys. Rev. \textbf{105}, 302 (1957).
 		
 		\bibitem{BB}
 		J. M. Blatt and L. C. Biedenharn, Phys. Rev. \textbf{86}, 399 (1952).
+		
+		\bibitem{HS}
+		M. Abramowitz, and I.A. Stegun, \textit{Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables}, Dover Publications Inc., New York (1965), (page 437).
 		
 		
 	\end{thebibliography}

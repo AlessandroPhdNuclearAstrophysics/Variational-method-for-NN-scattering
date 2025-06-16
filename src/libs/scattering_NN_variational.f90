@@ -28,7 +28,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     DOUBLE PRECISION :: delta1_S                 !< Phase shift 1 (Stapp convention) [deg]
     DOUBLE PRECISION :: delta2_S                 !< Phase shift 2 (Stapp convention) [deg]
     DOUBLE PRECISION :: epsilon_S                !< Mixing angle (Stapp convention) [deg]
-    DOUBLE PRECISION :: R(2,2) = 0.0D0           !< Scattering matrix R in the coupled basis
+    DOUBLE PRECISION :: R_BB(2,2) = 0.0D0        !< Scattering matrix R in the coupled basis
     DOUBLE COMPLEX   :: S(2,2) = (0.0D0, 0.0D0)  !< Scattering matrix S in the coupled basis
   END TYPE PHASE_SHIFT_RESULT
 
@@ -607,6 +607,9 @@ CONTAINS
 ! S-MATRIX
   DOUBLE COMPLEX, ALLOCATABLE, SAVE :: SMAT(:,:)
 
+! EXTERNAL FUNCTIONS AND SUBROUTINES
+  INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
+
   IF (PRESENT(RESET)) THEN
     IF (.NOT. RESET) RETURN
     NNN = 0
@@ -648,6 +651,8 @@ CONTAINS
       STOP
     ENDIF
     IF (ENERGIES_SET) THEN
+      PRINT *, "DEBUG: Setting potential and variational parameters for these channels"
+      WRITE(*,*) "Setting potential and variational parameters for this channels"
       CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
       CALL PREPARE_POTENTIAL(CHANNELS_)
       POTENTIAL_SET = .TRUE.
@@ -847,9 +852,16 @@ CONTAINS
   ENDIF
 
 ! If energy is zero, return the R matrix
-  PHASE_SHIFT%R(:NCH, :NCH) = RMAT2
-  IF (E==0.0D0) &
+  PHASE_SHIFT%R_BB(:NCH, :NCH) = RMAT2!/DOUBLE_FACTORIAL(2*L+1)/DOUBLE_FACTORIAL(2*L-1)
+  IF (E==0.0D0) THEN
+    PHASE_SHIFT%R_BB(1,1) = -PHASE_SHIFT%R_BB(1,1) / DOUBLE_FACTORIAL(2*L+1)**2
+    IF (NCH==2) THEN
+      PHASE_SHIFT%R_BB(1,2) = -PHASE_SHIFT%R_BB(1,2) / (2*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
+      PHASE_SHIFT%R_BB(2,1) = -PHASE_SHIFT%R_BB(2,1) / (2*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
+      PHASE_SHIFT%R_BB(2,2) = -PHASE_SHIFT%R_BB(2,2) / DOUBLE_FACTORIAL(2*L+5)**2 - PHASE_SHIFT%R_BB(1,2)**2 * PHASE_SHIFT%R_BB(1,1)
+    ENDIF
     RETURN
+  ENDIF
 
 ! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
   CALL CALCULATE_PHASE_SHIFTS_BLATT(RMAT2, NCH, DELTA1, DELTA2, AMIXR)
@@ -2366,17 +2378,16 @@ CONTAINS
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
-  !> @brief Returns the Hamiltonian time constant (HTM).
+  !> @brief Returns hbar^2 / (2 * M)
   !>
-  !> This function retrieves the value of the Hamiltonian time constant (HTM).
+  !> This function retrieves the value of hbar^2 / (2 * M).
   !> If the HTM value has not been set, an error message is printed and the program stops.
   !>
-  !> @return The value of the Hamiltonian time constant (HTM).
+  !> @return The value of hbar^2 / (2 * M).
   FUNCTION GET_HTM() RESULT(HTM_VALUE)
     IMPLICIT NONE
     DOUBLE PRECISION :: HTM_VALUE
 
-    ! Return the Hamiltonian time constant
     IF (.NOT.HTM_SET) THEN
       PRINT *, "Error: HTM not set"
       STOP
@@ -2648,7 +2659,7 @@ CONTAINS
         CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT_, ILB_, LEMP, PHASE_SHIFTS(ICH,IE))
       ENDDO
     ENDDO
-    CALL RESET_SCATTERING_NN_VARIATIONAL
+    ! CALL RESET_SCATTERING_NN_VARIATIONAL
 
     IF (PRESENT(FIT_CONSTANTS) .OR. PRESENT(ORDER_OF_THE_FIT)) THEN
       IF (.NOT.PRESENT(ORDER_OF_THE_FIT)) THEN
