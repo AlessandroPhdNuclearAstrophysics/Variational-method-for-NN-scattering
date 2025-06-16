@@ -154,9 +154,10 @@
 	
 	In the external region, the general solution is:
 	\begin{equation}
-		u_\ell(r) = A_\ell\, k r \left[ F_\ell(kr) \cos\delta_\ell + G_\ell(kr) \sin\delta_\ell \right]\,.
+		\psi_\ell(r) = C_\ell\, \left[ F_\ell(kr) \cos\delta_\ell + G_\ell(kr) \sin\delta_\ell \right]\,,
 		\label{eq:asymptotic_u}
 	\end{equation}
+	where $C_\ell$ is a normalization constant.
 	Matching this with the internal solution at \( r = a \), one derives \cite{advances}:
 	\begin{equation}
 		S_\ell = \frac{1 + iR_\ell}{1 - iR_\ell}
@@ -325,22 +326,19 @@
 		\section{Asymptotic expansion and scattering length}
 		As seen in \eq{\eqref{eq:asymptotic_u}} it is possibly to write for non-coupled channels
 		\begin{equation}
-			u_\ell(r) = 
-			\tilde{A}_\ell\,
-			kr\,
+			\psi_\ell(r) = 
+			A_\ell\,
 			\left(
 				F_\ell
 				+ \tan \delta_\ell \,
 				G_\ell
 			\right)\,,
 		\end{equation}
-		where $\tilde{A}_\ell \equiv A_\ell\, \cos \delta_\ell$.
+		where $A_\ell \equiv C_\ell\, \cos \delta_\ell$.
 		In this case $R_{\ell \ell } = \tan \delta_\ell$ and therefore
-		
 		\begin{equation}
-			u_\ell(r) = 
-			\tilde{A}_\ell\,
-			kr\,
+			\psi_\ell(r) = 
+			A_\ell\,
 			\left(
 			F_\ell
 			+ R_{\ell\ell} \,
@@ -378,36 +376,6 @@
 			R_{\ell\ell} \rightarrow 
 			-a_\ell\,k^{2\ell+1}\,.
 		\end{equation}
-		It is possible to re-define the variational asymptotic functions to 
-		\begin{equation}
-			\begin{cases}
-				F_\ell(kr) &\rightarrow \quad
-				\tilde{F}_\ell(kr) = 
-				\sqrt{k^{2\ell+1}}\,F_\ell(kr)\,,\\
-				G_\ell(kr) &\rightarrow \quad
-				\tilde{G}_\ell(kr) = -f(r)
-				\dfrac{1}{\sqrt{k^{2\ell+1}}}\,G_\ell(kr)\,,
-			\end{cases}
-		\end{equation}
-		where $f(r)$ goes to zero faster than the denominator of $G_\ell(kr)$ for small $r$, but otherwise is basically one outside the core.\\
-		Using this redefinition, outside the core the reduced radial function becomes
-		\begin{equation}
-			u_\ell(kr) = 
-			\mathcal{A}_\ell\,kr \left(
-			F_\ell(kr)
-			+\tilde{R}_{\ell\ell}\,G_\ell(kr)
-			\right)
-		\end{equation}
-		with 
-		\begin{equation}
-			\tilde{R}_{\ell\ell} = -
-			\frac{R_{\ell\ell}}{k^{2\ell+1}}
-		\end{equation}
-		and, for $E\rightarrow 0$, 
-		\begin{equation}
-			\tilde{R}_{\ell\ell}\rightarrow a_\ell\,.
-		\end{equation}
-		The problem with this approach is that for $E\rightarrow 0$ the asymptotic function tend to zero or to infinity.
 		
 		\subsubsection{Eliminating the energy dependence from the spherical Bessel functions}
 		Focusing on the spherical
