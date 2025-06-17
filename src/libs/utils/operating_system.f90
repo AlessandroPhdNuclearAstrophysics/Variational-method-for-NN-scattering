@@ -223,7 +223,6 @@ CONTAINS
     INTEGER :: ios
 
     ! Create a temporary file to store the results
-    WRITE(*,*) "Searching for file: ", TRIM(FILENAME), " in directory: ", TRIM(DIRECTORY)
     command = 'find "' // TRIM(DIRECTORY) // '" -type f -name "' // TRIM(FILENAME) // '" > temp_file_list.txt'
     CALL SYSTEM(command)
 
@@ -236,8 +235,6 @@ CONTAINS
       IF (ios /= 0 .OR. LEN_TRIM(FILE_NAME_WITH_RELATIVE_PATH) == 0) THEN
         FILE_NAME_WITH_RELATIVE_PATH = ''
         WRITE(*,*) "No files found."
-      ELSE
-        WRITE(*,*) "Found file: ", TRIM(FILE_NAME_WITH_RELATIVE_PATH)
       END IF
     ELSE
       WRITE(*,*) "Error finding files in directory"

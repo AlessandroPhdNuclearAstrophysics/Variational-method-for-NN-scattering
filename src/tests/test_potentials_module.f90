@@ -1,0 +1,169 @@
+PROGRAM TEST_POTENTIALS_MODULE
+  USE POTENTIALS
+  USE QUANTUM_NUMBERS
+  IMPLICIT NONE
+
+  INTEGER, PARAMETER :: NR   = 2000
+  INTEGER, PARAMETER :: LMAX = 2
+  INTEGER, PARAMETER :: JMAX = 2
+  INTEGER, PARAMETER :: TZ   = 0
+  INTEGER, PARAMETER :: LEMP = 0
+  DOUBLE PRECISION, PARAMETER :: TOLERANCE = 1.D-18
+  DOUBLE PRECISION :: RMIN = 1.0D-10, RMAX = 1.0D2
+  DOUBLE PRECISION :: RVALS(NR)
+  INTEGER :: I, J, POT, NCHANNELS
+  TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: CHANNELS(:)
+  TYPE(POTENTIAL_PARAMETERS) :: POT_PARAMS
+  DOUBLE PRECISION :: VPW1(2,2), VPW2(2,2), VPW3(2,2)
+  INTEGER, PARAMETER :: IPOT_LIST(4) = [18, 19, 19, 19]
+  INTEGER, PARAMETER :: ILB_LIST(4)  = [ 1,  5, 10, 15]
+  INTEGER :: IPOT, ILB
+  DOUBLE PRECISION :: DIFF
+  LOGICAL :: CONSISTENT
+  INTEGER :: T1Z, T2Z, L, S, JVAL
+  TYPE(SCATTERING_CHANNEL) :: CH
+  LOGICAL :: DEBUG
+  INTEGER :: NARG
+  CHARACTER(LEN=32) :: ARG
+  INTEGER :: NFAIL_ALL = 0, NFAIL_UNCOUPLED = 0, NFAIL_COUPLED = 0
+
+
+  DEBUG = .FALSE.
+  NARG = COMMAND_ARGUMENT_COUNT()
+  DO I = 1, NARG
+    CALL GET_COMMAND_ARGUMENT(I, ARG)
+    IF (TRIM(ARG) == '--debug') THEN
+      DEBUG = .TRUE.
+    END IF
+  END DO
+
+  CALL PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
+  NCHANNELS = SIZE(CHANNELS)
+
+  CALL RANDOM_SEED()
+  DO I = 1, NR
+    CALL RANDOM_NUMBER(RVALS(I))
+    ! Flat in log scale: R = exp( log(RMIN) + (log(RMAX)-log(RMIN))*rand )
+    RVALS(I) = EXP(LOG(RMIN) + (LOG(RMAX) - LOG(RMIN)) * RVALS(I))
+  END DO
+
+  WRITE(*,*) "R min for this test ", MINVAL(RVALS)
+  WRITE(*,*) "R max for this test ", MAXVAL(RVALS)
+
+  PRINT *, "Testing consistency of potential implementations..."
+  DO POT = 1, SIZE(IPOT_LIST)
+    IPOT = IPOT_LIST(POT)
+    ILB  = ILB_LIST(POT)
+    POT_PARAMS%POT_MODEL = IPOT
+    POT_PARAMS%POT_SUBMODEL = ILB
+    POT_PARAMS%EM_INTERACTION = LEMP
+
+    IF (DEBUG) THEN
+      PRINT *, "==== IPOT=", IPOT, " ILB=", ILB, " ===="
+      WRITE(*,'(A)') "IPOT ILB CH   R        J  L  S T1Z T2Z VPW1(1,1) VPW1(1,2) VPW1(2,1) VPW1(2,2) VPW2(1,1) VPW2(1,2) VPW2(2,1) VPW2(2,2) VPW3(1,1) VPW3(1,2) VPW3(2,1) VPW3(2,2) DIFF12   DIFF13"
+    END IF
+    DO I = 1, NCHANNELS
+      CH = CHANNELS(I)
+      DO J = 1, NR
+        JVAL = GET_CHANNEL_J(CH)
+        T1Z = 1
+        T2Z = -1
+        L = GET_CHANNEL_L(CH, 1)
+        S = GET_CHANNEL_S(CH, 1)
+
+        VPW1 = 0.D0
+        VPW2 = 0.D0
+        VPW3 = 0.D0
+        CALL POT_PW_PARAMS_ALL(IPOT, ILB, LEMP, L, S, JVAL, T1Z, T2Z, RVALS(J), VPW1)
+        CALL POT_PW_PARAMS(POT_PARAMS, L, S, JVAL, T1Z, T2Z, RVALS(J), VPW2)
+        CALL POT_PW_PARAMS_CHANNEL(POT_PARAMS, CH, RVALS(J), VPW3)
+
+        IF (DEBUG) THEN
+          WRITE(*,'(1X,I3,1X,I3,1X,I3,1X,F8.3,1X,I3,1X,I3,1X,I3,1X,I3,1X,I3,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0,1X,ES8.0)') &
+            IPOT, ILB, I, RVALS(J), JVAL, L, S, T1Z, T2Z, &
+            VPW1(1,1), VPW1(1,2), VPW1(2,1), VPW1(2,2), &
+            VPW2(1,1), VPW2(1,2), VPW2(2,1), VPW2(2,2), &
+            VPW3(1,1), VPW3(1,2), VPW3(2,1), VPW3(2,2), &
+            MAXVAL(ABS(VPW1-VPW2)), MAXVAL(ABS(VPW1-VPW3))
+        END IF
+
+        DIFF = MAXVAL(ABS(VPW1 - VPW2))
+        IF (DIFF > TOLERANCE) THEN
+          NFAIL_ALL = NFAIL_ALL + 1
+          IF (DEBUG) THEN
+            PRINT *, "Mismatch between POT_PW_PARAMS_ALL and POT_PW_PARAMS:"
+            PRINT *, "IPOT=", IPOT, "ILB=", ILB, "CHANNEL=", I, "R=", RVALS(J)
+            PRINT *, "VPW1=", VPW1
+            PRINT *, "VPW2=", VPW2
+            CALL PRINT_PERCENT_DIFF(VPW1, VPW2)
+          END IF
+        END IF
+
+        IF (.NOT. IS_CHANNEL_COUPLED(CH)) THEN
+          DIFF = ABS(VPW1(1,1) - VPW3(1,1))
+          IF (DIFF > TOLERANCE) THEN
+            NFAIL_UNCOUPLED = NFAIL_UNCOUPLED + 1
+            IF (DEBUG) THEN
+              PRINT *, "Mismatch between POT_PW_PARAMS_ALL and POT_PW_PARAMS_CHANNEL (uncoupled):"
+              PRINT *, "IPOT=", IPOT, "ILB=", ILB, "CHANNEL=", I, "R=", RVALS(J)
+              PRINT *, "VPW1=", VPW1
+              PRINT *, "VPW3=", VPW3
+              CALL PRINT_PERCENT_DIFF_SCALAR(VPW1(1,1), VPW3(1,1))
+            END IF
+          END IF
+        END IF
+        IF (IS_CHANNEL_COUPLED(CH)) THEN
+          DIFF = MAXVAL(ABS(VPW1 - VPW3))
+          IF (DIFF > TOLERANCE) THEN
+            NFAIL_COUPLED = NFAIL_COUPLED + 1
+            IF (DEBUG) THEN
+              PRINT *, "Mismatch between POT_PW_PARAMS_ALL and POT_PW_PARAMS_CHANNEL (coupled):"
+              PRINT *, "IPOT=", IPOT, "ILB=", ILB, "CHANNEL=", I, "R=", RVALS(J)
+              PRINT *, "VPW1=", VPW1
+              PRINT *, "VPW3=", VPW3
+              CALL PRINT_PERCENT_DIFF(VPW1, VPW3)
+            END IF
+          END IF
+        END IF
+      END DO
+    END DO
+    IF (NFAIL_ALL + NFAIL_UNCOUPLED + NFAIL_COUPLED == 0) THEN
+      PRINT *, CHAR(27)//'[32mPASSED'//CHAR(27)//'[0m: ', 'IPOT=', IPOT, 'ILB=', ILB
+    ELSE
+      PRINT *, CHAR(27)//'[31mFAILED'//CHAR(27)//'[0m: ', 'IPOT=', IPOT, 'ILB=', ILB, '-> TOT NUMBER tests failed', NFAIL_ALL + NFAIL_UNCOUPLED + NFAIL_COUPLED
+    END IF
+  END DO
+
+  PRINT *, "All potential implementations are consistent for tested cases."
+
+CONTAINS
+
+  SUBROUTINE PRINT_PERCENT_DIFF(A, B)
+    DOUBLE PRECISION, INTENT(IN) :: A(2,2), B(2,2)
+    DOUBLE PRECISION :: PDIFF(2,2)
+    INTEGER :: I, J
+    DO I = 1, 2
+      DO J = 1, 2
+        IF (ABS(A(I,J)) > 0.D0) THEN
+          PDIFF(I,J) = 100.D0 * (A(I,J) - B(I,J)) / A(I,J)
+        ELSE
+          PDIFF(I,J) = 0.D0
+        END IF
+      END DO
+    END DO
+    PRINT *, "Percentage difference matrix (A vs B) [%]:"
+    PRINT *, PDIFF
+  END SUBROUTINE PRINT_PERCENT_DIFF
+
+  SUBROUTINE PRINT_PERCENT_DIFF_SCALAR(A, B)
+    DOUBLE PRECISION, INTENT(IN) :: A, B
+    DOUBLE PRECISION :: PDIFF
+    IF (ABS(A) > 0.D0) THEN
+      PDIFF = 100.D0 * (A - B) / A
+    ELSE
+      PDIFF = 0.D0
+    END IF
+    PRINT *, "Percentage difference (A vs B) [%]:", PDIFF
+  END SUBROUTINE PRINT_PERCENT_DIFF_SCALAR
+
+END PROGRAM TEST_POTENTIALS_MODULE
