@@ -2186,7 +2186,7 @@ CONTAINS
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     TYPE(SCATTERING_CHANNEL) :: CHANNEL_CURRENT
     TYPE(POTENTIAL_PARAMETERS) :: POT_PARAMS
-    INTEGER :: NC, NEQ_C, ICH, IR, L, S, J, T, TZ, T1Z, T2Z
+    INTEGER :: NC, NEQ, ICH, IR, L, S, J, T, TZ, T1Z, T2Z
     LOGICAL :: COUPLED
     DOUBLE PRECISION :: R, V2(2,2)
 
@@ -2200,7 +2200,6 @@ CONTAINS
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     NC = SIZE(CHANNELS)
-    
     IF (.NOT.USE_DYNAMIC) THEN
       ALLOCATE(V_CC(NC, VAR_P%NX_CC, 2, 2), V_AC(NC, VAR_P%NX_AC, 2, 2), V_AA(NC, VAR_P%NX_AA, 2, 2))
 
@@ -2209,77 +2208,24 @@ CONTAINS
       V_AA = ZERO
       DO ICH = 1, NC
         CHANNEL_CURRENT = CHANNELS(ICH)
-        NEQ_C = GET_CHANNEL_NCH(CHANNEL_CURRENT)
-        J   = GET_CHANNEL_J(CHANNEL_CURRENT)
-        TZ  = GET_CHANNEL_TZ(CHANNEL_CURRENT)
-        COUPLED = IS_CHANNEL_COUPLED(CHANNEL_CURRENT)
-        L   = GET_CHANNEL_L(CHANNEL_CURRENT, 1)
-        S   = GET_CHANNEL_S(CHANNEL_CURRENT, 1)
-        T   = GET_CHANNEL_T(CHANNEL_CURRENT, 1)
-        CALL EVAL_T1Z_T2Z
+        NEQ = GET_CHANNEL_NCH(CHANNEL_CURRENT)
 
         DO IR = 1, VAR_P%NX_CC
           R = XX_CC(IR)
           CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
-          V_CC(ICH,IR,:,:) = V2
-          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          ! IF (COUPLED) THEN
-          !   V_CC(ICH,IR,:,:) = V2
-          ! ELSEIF (NEQ_C == 2) THEN
-          !   V_CC(ICH,IR,:,:) = ZERO
-          !   V_CC(ICH,IR,1,1) = V2(1,1)
-          !   L   = GET_CHANNEL_L(CHANNEL_CURRENT, 2)
-          !   S   = GET_CHANNEL_S(CHANNEL_CURRENT, 2)
-          !   T   = GET_CHANNEL_T(CHANNEL_CURRENT, 2)
-          !   CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          !   V_CC(ICH,IR,2,2) = V2(1,1)
-          ! ELSE
-          !   V_CC(ICH,IR,:,:) = ZERO
-          !   V_CC(ICH,IR,1,1) = V2(1,1)
-          ! ENDIF
+          V_CC(ICH,IR,:,:) = V2(1:NEQ, 1:NEQ)
         ENDDO
 
         DO IR = 1, VAR_P%NX_AC
           R = XX_AC(IR)
           CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
-          V_AC(ICH,IR,:,:) = V2
-          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          ! IF (COUPLED) THEN
-          !   V_AC(ICH,IR,:,:) = V2
-          !   ELSEIF (NEQ_C == 2) THEN
-          !     V_AC(ICH,IR,:,:) = ZERO
-          !     V_AC(ICH,IR,1,1) = V2(1,1)
-          !     L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-          !     S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-          !     T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          !     CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          !     V_AC(ICH,IR,2,2) = V2(1,1)
-          !   ELSE
-          !     V_AC(ICH,IR,:,:) = ZERO
-          !     V_AC(ICH,IR,1,1) = V2(1,1)
-          !   ENDIF
-            ! if (r<=20) WRITE(1000+(2*S+1)*100+L*10+J,*) R, V2(1,1), V2(1,2), V2(2,1), V2(2,2)
+          V_AC(ICH,IR,:,:) = V2(1:NEQ, 1:NEQ)
         ENDDO
 
         DO IR = 1, VAR_P%NX_AA
           R = XX_AA(IR)
           CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
-          V_AA(ICH,IR,:,:) = V2
-          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          ! IF (COUPLED) THEN
-          !   V_AA(ICH,IR,:,:) = V2
-          ! ELSEIF (NEQ_C == 2) THEN
-          !   V_AA(ICH,IR,:,:) = ZERO
-          !   V_AA(ICH,IR,1,1) = V2(1,1)
-          !   L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-          !   S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-          !   T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-          !   CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          !   V_AA(ICH,IR,2,2) = V2(1,1)
-          ! ELSE
-          !   V_AA(ICH,IR,:,:) = ZERO
-          !   V_AA(ICH,IR,1,1) = V2(1,1)
-          ! ENDIF
+          V_AA(ICH,IR,:,:) = V2(1:NEQ, 1:NEQ)
         ENDDO
       ENDDO
     ELSE
@@ -2294,27 +2240,6 @@ CONTAINS
     ENDIF
 
     POTENTIAL_SET = .TRUE.
-    ! stop
-    
-  CONTAINS
-    !> \brief Evaluate T1Z and T2Z from TZ.
-    SUBROUTINE EVAL_T1Z_T2Z()
-      IMPLICIT NONE
-      SELECT CASE (TZ)
-        CASE (1)
-          T1Z = 1
-          T2Z = 1
-        CASE (0)
-          T1Z = 1
-          T2Z =-1
-        CASE (-1)
-          T1Z =-1
-          T2Z =-1
-        CASE DEFAULT
-          PRINT *, "Invalid TZ value"
-          STOP
-      END SELECT
-    END SUBROUTINE EVAL_T1Z_T2Z
   END SUBROUTINE PREPARE_POTENTIAL
 
   !> \ingroup scattering_nn_variational_mod
