@@ -161,6 +161,9 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
           kcotd2 = HUGE(1.0D0)  ! Handle zero phase shift case
         end if
         kcotd2_vals(j_line) = kcotd2
+
+        epsilons(j_line) = epsilons(j_line) * pi / 180.0D0
+        epsilons(j_line) = epsilons(j_line) / k**2
       END IF
     END DO
 
@@ -170,7 +173,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     if (is_coupled) THEN
       output_file = TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(7:9)) // ".dat"
       output_file1= TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(11:13)) // ".dat"
-      output_file2= TRIM(folder_path) // "/k2_kcotd_epsilon_" // TRIM(current_file(7:))
+      output_file2= TRIM(folder_path) // "/k2_epsilon_over_k2_" // TRIM(current_file(7:))
     ELSE
       output_file = TRIM(folder_path) // "/k2_kcotd_" // TRIM(current_file(7:9)) // ".dat"
     END IF
@@ -183,7 +186,7 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     WRITE(unit_out, '(A)') "# k^2    k^(2L+1)*cot(delta1)"
     IF (is_coupled) THEN
       WRITE(unit_out+1, '(A)') "# k^2    k^(2L+1)*cot(delta2)"
-      WRITE(unit_out+2, '(A)') "# k^2    epsilon"
+      WRITE(unit_out+2, '(A)') "# k^2    epsilon/k^2"
     END IF
 
     ! Write data
