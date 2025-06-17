@@ -2185,6 +2185,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
     TYPE(SCATTERING_CHANNEL) :: CHANNEL_CURRENT
+    TYPE(POTENTIAL_PARAMETERS) :: POT_PARAMS
     INTEGER :: NC, NEQ_C, ICH, IR, L, S, J, T, TZ, T1Z, T2Z
     LOGICAL :: COUPLED
     DOUBLE PRECISION :: R, V2(2,2)
@@ -2193,6 +2194,8 @@ CONTAINS
       PRINT *, "Error: IPOT not set"
       RETURN
     ENDIF
+
+    CALL SET_POTENTIAL_PARAMETERS(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, POT_PARAMS)
     
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
@@ -2215,21 +2218,23 @@ CONTAINS
 
         DO IR = 1, VAR_P%NX_CC
           R = XX_CC(IR)
-          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          IF (COUPLED) THEN
-            V_CC(ICH,IR,:,:) = V2
-          ELSEIF (NEQ_C == 2) THEN
-            V_CC(ICH,IR,:,:) = ZERO
-            V_CC(ICH,IR,1,1) = V2(1,1)
-            L   = GET_CHANNEL_L(CHANNEL_CURRENT, 2)
-            S   = GET_CHANNEL_S(CHANNEL_CURRENT, 2)
-            T   = GET_CHANNEL_T(CHANNEL_CURRENT, 2)
-            CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-            V_CC(ICH,IR,2,2) = V2(1,1)
-          ELSE
-            V_CC(ICH,IR,:,:) = ZERO
-            V_CC(ICH,IR,1,1) = V2(1,1)
-          ENDIF
+          CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
+          V_CC(ICH,IR,:,:) = V2
+          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          ! IF (COUPLED) THEN
+          !   V_CC(ICH,IR,:,:) = V2
+          ! ELSEIF (NEQ_C == 2) THEN
+          !   V_CC(ICH,IR,:,:) = ZERO
+          !   V_CC(ICH,IR,1,1) = V2(1,1)
+          !   L   = GET_CHANNEL_L(CHANNEL_CURRENT, 2)
+          !   S   = GET_CHANNEL_S(CHANNEL_CURRENT, 2)
+          !   T   = GET_CHANNEL_T(CHANNEL_CURRENT, 2)
+          !   CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          !   V_CC(ICH,IR,2,2) = V2(1,1)
+          ! ELSE
+          !   V_CC(ICH,IR,:,:) = ZERO
+          !   V_CC(ICH,IR,1,1) = V2(1,1)
+          ! ENDIF
         ENDDO
 
         DO IR = 1, VAR_P%NX_AC

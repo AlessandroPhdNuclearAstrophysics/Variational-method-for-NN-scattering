@@ -141,13 +141,13 @@ CONTAINS
   SUBROUTINE PRINT_PERCENT_DIFF(A, B)
     DOUBLE PRECISION, INTENT(IN) :: A(2,2), B(2,2)
     DOUBLE PRECISION :: PDIFF(2,2)
-    INTEGER :: I, J
-    DO I = 1, 2
-      DO J = 1, 2
-        IF (ABS(A(I,J)) > 0.D0) THEN
-          PDIFF(I,J) = 100.D0 * (A(I,J) - B(I,J)) / A(I,J)
+    INTEGER :: II, JJ
+    DO II = 1, 2
+      DO JJ = 1, 2
+        IF (ABS(A(II,JJ)) > 0.D0) THEN
+          PDIFF(II,JJ) = 100.D0 * (A(II,JJ) - B(II,JJ)) / A(II,JJ)
         ELSE
-          PDIFF(I,J) = 0.D0
+          PDIFF(II,JJ) = 0.D0
         END IF
       END DO
     END DO

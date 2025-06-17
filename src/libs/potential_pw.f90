@@ -16,6 +16,7 @@ MODULE POTENTIALS
   PUBLIC :: POT_PW_PARAMS
   PUBLIC :: POT_PW_PARAMS_CHANNEL
   PUBLIC :: POTENTIAL_PARAMETERS
+  PUBLIC :: SET_POTENTIAL_PARAMETERS
 
   INTERFACE POT_PW
     MODULE PROCEDURE POT_PW_PARAMS_ALL
@@ -133,4 +134,23 @@ CONTAINS
       END DO
     END IF
   END SUBROUTINE POT_PW_PARAMS_CHANNEL
+
+
+  !> Sets the potential parameters structure.
+  !! \param[in] IPOT Potential identifier (14=AV14, 18=AV18, 19=EFT_PLESS)
+  !! \param[in] ILB Channel index (used by some potentials)
+  !! \param[in] LEMP Type of electromagnetic interaction (0=Coulomb, >0=see AV18 EMPOT)
+  !! \param[out] POTENTIAL_PARAMS Structure to be filled with potential parameters
+  !> This subroutine initializes the potential parameters structure with the given values.
+  !> It sets the potential model, submodel, and electromagnetic interaction type.
+  SUBROUTINE SET_POTENTIAL_PARAMETERS(IPOT, ILB, LEMP, POTENTIAL_PARAMS)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: IPOT, ILB, LEMP
+    TYPE(POTENTIAL_PARAMETERS), INTENT(OUT) :: POTENTIAL_PARAMS
+
+    POTENTIAL_PARAMS%POT_MODEL = IPOT
+    POTENTIAL_PARAMS%POT_SUBMODEL = ILB
+    POTENTIAL_PARAMS%EM_INTERACTION = LEMP
+  END SUBROUTINE SET_POTENTIAL_PARAMETERS
+
 END MODULE POTENTIALS
