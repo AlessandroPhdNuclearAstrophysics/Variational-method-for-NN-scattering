@@ -22,12 +22,12 @@ MODULE SCATTERING_NN_VARIATIONAL
   !> \brief Structure to store the results of phase shift calculations.
   !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
   TYPE, PUBLIC :: PHASE_SHIFT_RESULT
-    DOUBLE PRECISION :: delta1_BB                !< Phase shift 1 (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: delta2_BB                !< Phase shift 2 (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: epsilon_BB               !< Mixing angle (Blatt-Biedenharn convention) [deg]
-    DOUBLE PRECISION :: delta1_S                 !< Phase shift 1 (Stapp convention) [deg]
-    DOUBLE PRECISION :: delta2_S                 !< Phase shift 2 (Stapp convention) [deg]
-    DOUBLE PRECISION :: epsilon_S                !< Mixing angle (Stapp convention) [deg]
+    DOUBLE PRECISION :: delta1_BB = 0.D0         !< Phase shift 1 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta2_BB = 0.D0         !< Phase shift 2 (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: epsilon_BB = 0.D0        !< Mixing angle (Blatt-Biedenharn convention) [deg]
+    DOUBLE PRECISION :: delta1_S = 0.D0          !< Phase shift 1 (Stapp convention) [deg]
+    DOUBLE PRECISION :: delta2_S = 0.D0          !< Phase shift 2 (Stapp convention) [deg]
+    DOUBLE PRECISION :: epsilon_S = 0.D0         !< Mixing angle (Stapp convention) [deg]
     DOUBLE PRECISION :: R_BB(2,2) = 0.0D0        !< Scattering matrix R in the coupled basis
     DOUBLE COMPLEX   :: S(2,2) = (0.0D0, 0.0D0)  !< Scattering matrix S in the coupled basis
   END TYPE PHASE_SHIFT_RESULT
