@@ -2241,41 +2241,45 @@ CONTAINS
 
         DO IR = 1, VAR_P%NX_AC
           R = XX_AC(IR)
-          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          IF (COUPLED) THEN
-            V_AC(ICH,IR,:,:) = V2
-            ELSEIF (NEQ_C == 2) THEN
-              V_AC(ICH,IR,:,:) = ZERO
-              V_AC(ICH,IR,1,1) = V2(1,1)
-              L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-              S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-              T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-              CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-              V_AC(ICH,IR,2,2) = V2(1,1)
-            ELSE
-              V_AC(ICH,IR,:,:) = ZERO
-              V_AC(ICH,IR,1,1) = V2(1,1)
-            ENDIF
+          CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
+          V_AC(ICH,IR,:,:) = V2
+          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          ! IF (COUPLED) THEN
+          !   V_AC(ICH,IR,:,:) = V2
+          !   ELSEIF (NEQ_C == 2) THEN
+          !     V_AC(ICH,IR,:,:) = ZERO
+          !     V_AC(ICH,IR,1,1) = V2(1,1)
+          !     L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
+          !     S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
+          !     T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+          !     CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          !     V_AC(ICH,IR,2,2) = V2(1,1)
+          !   ELSE
+          !     V_AC(ICH,IR,:,:) = ZERO
+          !     V_AC(ICH,IR,1,1) = V2(1,1)
+          !   ENDIF
             ! if (r<=20) WRITE(1000+(2*S+1)*100+L*10+J,*) R, V2(1,1), V2(1,2), V2(2,1), V2(2,2)
         ENDDO
 
         DO IR = 1, VAR_P%NX_AA
           R = XX_AA(IR)
-          CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-          IF (COUPLED) THEN
-            V_AA(ICH,IR,:,:) = V2
-          ELSEIF (NEQ_C == 2) THEN
-            V_AA(ICH,IR,:,:) = ZERO
-            V_AA(ICH,IR,1,1) = V2(1,1)
-            L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
-            S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
-            T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
-            CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
-            V_AA(ICH,IR,2,2) = V2(1,1)
-          ELSE
-            V_AA(ICH,IR,:,:) = ZERO
-            V_AA(ICH,IR,1,1) = V2(1,1)
-          ENDIF
+          CALL POT_PW(POT_PARAMS, CHANNEL_CURRENT, R, V2)
+          V_AA(ICH,IR,:,:) = V2
+          ! CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          ! IF (COUPLED) THEN
+          !   V_AA(ICH,IR,:,:) = V2
+          ! ELSEIF (NEQ_C == 2) THEN
+          !   V_AA(ICH,IR,:,:) = ZERO
+          !   V_AA(ICH,IR,1,1) = V2(1,1)
+          !   L   = GET_CHANNEL_L(CHANNELS(ICH), 2)
+          !   S   = GET_CHANNEL_S(CHANNELS(ICH), 2)
+          !   T   = GET_CHANNEL_T(CHANNELS(ICH), 2)
+          !   CALL POT_PW(VAR_P%IPOT, VAR_P%ILB, VAR_P%LEMP, L, S, J, T1Z, T2Z, R, V2)
+          !   V_AA(ICH,IR,2,2) = V2(1,1)
+          ! ELSE
+          !   V_AA(ICH,IR,:,:) = ZERO
+          !   V_AA(ICH,IR,1,1) = V2(1,1)
+          ! ENDIF
         ENDDO
       ENDDO
     ELSE
