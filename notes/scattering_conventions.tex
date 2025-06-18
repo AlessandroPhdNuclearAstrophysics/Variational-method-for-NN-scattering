@@ -13,6 +13,7 @@
 \usepackage{empheq}
 \usepackage{bibref}
 \usepackage[most]{tcolorbox}
+\usepackage{cancel}
 \geometry{left=2cm, right=2cm, top=3cm, bottom=3cm}
 
 \author{Alessandro Grassi}
@@ -319,12 +320,6 @@
 	
 	
 	
-	\section{Conclusion}
-	
-	The \textit{S}-matrix and \textit{R}-matrix are central tools in analyzing nucleon--nucleon scattering. While the \textit{S}-matrix encapsulates the observable content of the interaction, the \textit{R}-matrix provides a convenient and often more numerically robust intermediate object, especially in resonance or coupled-channel analyses. Their connection through a M\"obius transformation reflects deep structural links in scattering theory.
-	
-	
-	\begin{appendices}
 		\section{Asymptotic expansion and scattering length}
 		As seen in \eq{\eqref{eq:asymptotic_u}} it is possibly to write for non-coupled channels
 		\begin{equation}
@@ -496,7 +491,7 @@
 				\left[(2\ell_2+1)!!\right]^2\,\dfrac{R_{\ell_2\ell_2}}{k^{2\ell_2+1}}
 			\end{cases}
 		\end{equation}
-		Since for coupled channels $\ell_2=\ell+2$ where $\ell\equiv \ell_1$ it is possible to use \eq{\eqref{eq:RBB}} and write
+		It is possible to use \eq{\eqref{eq:RBB}} and write
 		\begin{equation}
 			\begin{pmatrix}
 				\tilde{R}_{\ell_1\ell_1} & 
@@ -506,23 +501,23 @@
 			\end{pmatrix}
 			=
 			\begin{pmatrix}
-				\left[(2\ell+1)!!\right]^2\left(
-				\dfrac{\tan\delta_1}{k^{2\ell+1}}\cos^2\epsilon
-				+\dfrac{\tan\delta_2}{k^{2\ell+1}}\sin^2\epsilon
+				\left[(2\ell_1+1)!!\right]^2\left(
+				\dfrac{\tan\delta_1}{k^{2\ell_1+1}}\cos^2\epsilon
+				+\dfrac{\tan\delta_2}{k^{2\ell_1+1}}\sin^2\epsilon
 				\right) & 
-				(2\ell+1)!!(2\ell+5)!!
-				\dfrac{\tan\delta_1-\tan\delta_2}{k^{2\ell+3}}
+				(2\ell_1+1)!!(2\ell_2+1)!!
+				\dfrac{\tan\delta_1-\tan\delta_2}{k^{\ell_1+\ell_2+1}}
 				\sin\epsilon\cos\epsilon\\
-				(2\ell+1)!!(2\ell+5)!!
-				\dfrac{\tan\delta_1-\tan\delta_2}{k^{2\ell+3}}
+				(2\ell_1+1)!!(2\ell_2+ 1)!!
+				\dfrac{\tan\delta_1-\tan\delta_2}{k^{\ell_1+\ell_2+1}}
 				\sin\epsilon\cos\epsilon &
-				\left[(2\ell+5)!!\right]^2\left(
-				\dfrac{\tan\delta_1}{k^{2\ell+5}}\sin^2\epsilon
-				+\dfrac{\tan\delta_2}{k^{2\ell+5}}\cos^2\epsilon
+				\left[(2\ell_2+1)!!\right]^2\left(
+				\dfrac{\tan\delta_1}{k^{2\ell_2+1}}\sin^2\epsilon
+				+\dfrac{\tan\delta_2}{k^{2\ell_2+1}}\cos^2\epsilon
 				\right)
 			\end{pmatrix}\,.
 		\end{equation}
-		Simplifying
+		Simplifying using $\ell_2=\ell+\Delta \ell$ where $\ell\equiv \ell_1$
 		\begin{equation}
 			\begin{pmatrix}
 				\tilde{R}_{\ell_1\ell_1} & 
@@ -534,24 +529,24 @@
 			\begin{pmatrix}
 				\left[(2\ell+1)!!\right]^2\left(
 				a_1\,\cos^2\epsilon
-				+a_2\,k^4\sin^2\epsilon
+				+a_2\,k^{2\Delta\ell}\sin^2\epsilon
 				\right) & 
-				(2\ell+1)!!(2\ell+5)!!
-				\left(a_1-k^4\,a_2\right)
-				\dfrac{\sin2\epsilon}{2k^2}\\[2.ex]
-				(2\ell+1)!!(2\ell+5)!!
-				\left(a_1-k^4\,a_2\right)
-				\dfrac{\sin2\epsilon}{2k^2} &
-				\left[(2\ell+5)!!\right]^2\left(
-				a_1\,\dfrac{\sin^2\epsilon}{k^4}
+				(2\ell+1)!!(2(\ell+\Delta\ell)+1)!!
+				\left(a_1-k^{2\Delta\ell}\,a_2\right)
+				\dfrac{\sin2\epsilon}{2k^{\Delta\ell}}\\[2.ex]
+				(2\ell+1)!!(2(\ell+\Delta\ell)+1)!!
+				\left(a_1-k^{2\Delta\ell}\,a_2\right)
+				\dfrac{\sin2\epsilon}{2k^{\Delta\ell}} &
+				\left[(2(\ell+\Delta\ell)+1)!!\right]^2\left(
+				a_1\,\dfrac{\sin^2\epsilon}{k^{2\Delta\ell}}
 				+a_2\,\cos^2\epsilon
 				\right)
 			\end{pmatrix}\,.
 		\end{equation}
 		From this it is possible to infer that, in order for the $R$ matrix to not diverge
-		$\epsilon\simeq k^{2}$ at least, this is proven in Ref.~\cite{BB}. Defining
+		$\epsilon\simeq k^{\Delta\ell}$ at least, this is proven in Ref.~\cite{BB}. Defining
 		\begin{equation}
-			e_J = \frac{\epsilon}{k^2}	
+			e_J \equiv \frac{\epsilon}{k^{\Delta \ell}}	
 		\end{equation}
 		the $R$ matrix becomes
 		\begin{empheq}[box=\mymath]{equation}
@@ -586,16 +581,17 @@
 				a_1 &=- \dfrac{\tilde{R}_{\ell_1\ell_1}}{\left[(2\ell+1)!!\right]^2}\,,\\[2.5ex]
 				e_J &=	
 				\dfrac{(2\ell+1)!!\,\tilde{R}_{\ell_1\ell_2}}
-				{(2\ell+5)!!\,\tilde{R}_{\ell_1\ell_1}}\,,\\[2.5ex]
+				{(2(\ell+\Delta\ell)+1)!!\,\tilde{R}_{\ell_1\ell_1}}\,,\\[2.5ex]
 				a_2 &=
-				\dfrac{\tilde{R}_{\ell_1\ell_2}^2-\tilde{R}_{\ell_1\ell_1}\tilde{R}_{\ell_2\ell_2}}{(2\ell+5)!!\,\tilde{R}_{\ell_1\ell_1}}\,,
+				\dfrac{\tilde{R}_{\ell_1\ell_2}^2-\tilde{R}_{\ell_1\ell_1}\tilde{R}_{\ell_2\ell_2}}{(2(\ell+\Delta\ell)+1)!!\,\tilde{R}_{\ell_1\ell_1}}\,,
 			\end{cases}
 			\mand
 			\begin{cases}
 				\delta_1 &\simeq -a_1 \,k^{2\ell_1+1}\,,\\
-				\epsilon &\simeq e_J\,k^2\,\\
+				\epsilon &\simeq e_J\,k^{\Delta \ell}\,\\
 				\delta_2 & \simeq - a_2\,k^{2\ell_2+1}\,.
 			\end{cases}
+			\label{eq:lowEnergiesBB}
 		\end{equation}
 		
 		
@@ -608,51 +604,26 @@
 		\end{equation}
 		where $\delta_1$, $\delta_2$ and $\epsilon$ are respectively the scattering length of the first and second channel, and the mixing angle in the BB parametrization. 
 		From now on the quantities in the Stapp parametrization will have a tilde on top of them.
-		To extract $\tilde{a}_i$ and $\tilde{e}_J$ it is necessary to expand this, obtaining
+		Reporting here the solution from \eq{\eqref{eq:tildeepsilon}} (appendix)
 		\begin{equation}
-			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{\ell_1+\ell_2+1}\,.
+			\tilde{\epsilon}\simeq 
+			- a_1\,e_J\,k^{\ell_1+\ell_2+1}
 		\end{equation}
-		Defining $\ell_2\equiv\ell_1+\Delta \ell$ and $\ell\equiv \ell_1$
+		and defining
 		\begin{equation}
-			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{2\ell+\Delta \ell +1}\,.
+			\tilde{e}_J \equiv \frac{\tilde{\epsilon}}{k^{\ell_1+\ell_2+1}}
 		\end{equation}
-		or, using $\Delta\ell = 2$ 
-		\begin{equation}
-			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{2\ell+3}\,.
-		\end{equation}
-		Therefore 
-		\begin{equation}
-			\tilde{e}_J = \frac{\tilde{\epsilon}}{k^{2\ell+3}}
-		\end{equation}
-		giving
+		one finds
 		\begin{equation}
 			\tilde{e}_J =
-			-a_1\,|e_J|\,\mtm{sign}(a_2)\,.
+			-a_1\,e_J\,.
 		\end{equation}
 		
-		Doing the same procedure for 
+		In the appendix it is also proved that
 		\begin{equation}
-			\tilde{\delta}_1 = -\frac{i}{2}\,\log\left(\frac{S_{11}}{\cos\tilde{\epsilon}}\right)
+			\tilde{a}_1 = a_1 
 		\end{equation}
-		leads to
-		\begin{equation}
-			\tilde{\delta}_1 = -a_1\,k^{2\ell_1+1} 
-		\end{equation}
-		and therefore
-		\begin{equation}
-			\tilde{a}_1 = a_1\,.
-		\end{equation}
-		
-		Finally, repeating the procedure for $\tilde{\delta}_2$ 
-		\begin{equation}
-			\delta_2 = -\frac{i}{2}\,\sqrt{\frac{S_{22}}{\cos\tilde{\epsilon}}}
-		\end{equation}
-		one gets
-		\begin{equation}
-			\tilde{\delta}_2 \simeq
-			-(a_2+a_1\,e_J^2)k^{2\ell_2+1}
-		\end{equation}
-		and therefore
+		and
 		\begin{equation}
 			\tilde{a}_2 = a_2+a_1\,e_J^2\,.
 		\end{equation}
@@ -662,7 +633,7 @@
 			\begin{cases}
 				\tilde{a}_1 &= a_1\,,\\
 				\tilde{e}_J &=
-				-a_1\,|e_J|\,\mtm{sign}(a_2)\,,\\
+				-a_1\,e_J\,,\\
 				\tilde{a}_2 &= a_2+a_1\,e_J^2\,,
 			\end{cases}
 			\mand
@@ -675,10 +646,183 @@
 			\end{cases}
 		\end{equation}
 		
+	\begin{appendices}
+	\newcommand{\teps}{\tilde{\epsilon}}
+	\newcommand{\tdone}{\tilde{\delta}_1}
+	\newcommand{\tdtwo}{\tilde{\delta}_2}
+	\section{Proving Stapp expansions}
+		Another way to calculate $\tilde{\epsilon}$ is 
+		\begin{equation}
+			\sin2\teps = 
+			\frac{S_{12}}{i\sqrt{\det S}}\,.
+		\end{equation}	
+		Using the BB version of the $S$-matrix
+		\begin{equation}
+			\det S = \det\left(O^T(\epsilon)
+			\begin{pmatrix}
+				e^{2i\delta_1} & 0 \\
+				0 & e^{2i\delta_2}
+			\end{pmatrix}\,
+			O(\epsilon)
+			\right)
+			=
+			\det\left(O(\epsilon)\right)^2\,
+			\det\begin{pmatrix}
+				e^{2i\delta_1} & 0 \\
+				0 & e^{2i\delta_2}
+			\end{pmatrix}
+			=
+			e^{2i(\delta_1+\delta_2)}\,.
+		\end{equation}
+		Therefore
+		\begin{equation}
+			\sin2\teps = 
+			-i\frac{(e^{2i\delta_1}-e^{2i\delta_2})\sin\epsilon\cos\epsilon}{e^{i(\delta_1+\delta_2)}}\,.
+		\end{equation}	
+		Using \eq{\eqref{eq:lowEnergiesBB}}, for $k\rightarrow 0$, $\delta_1$, $\delta_2$ and $\epsilon$ get to zero and
+		\begin{equation}
+			\teps \simeq -\frac{1}{2}\arcsin\left(
+			i\frac{(\cancel{1}+2i\delta_1-\cancel{1}-2i\delta_2)\epsilon}{1}
+			\right)
+			\simeq
+			(\delta_1-\delta_2)\epsilon
+			\simeq 
+			(-a_1\,k^{2\ell+1}+a_2\,k^{2\ell+1+2\Delta\ell})e_J\,k^{\Delta\ell}\,.
+		\end{equation}
+		Therefore
+		\begin{equation}
+			\teps \simeq -a_1\,e_J\,k^{2\ell+1+\Delta\ell}
+		\end{equation}
+		and finally
+		\begin{equation}
+			\teps \simeq -a_1 \,e_J\,k^{\ell_1+\ell_1+1}\,.
+			\label{eq:tildeepsilon}
+		\end{equation}
+		
+		For $\tdone$ one can write
+		\begin{equation}
+			e^{2i\tdone} = \frac{S_{11}}{\cos2\teps}\,.
+		\end{equation}
+		Therefore
+		\begin{equation}
+			e^{2i\tdone} =
+			\frac{
+				e^{2i\delta_1}\cos^2\epsilon
+				+
+				e^{2i\delta_2}\sin^2\epsilon
+			 }{
+			 \cos\left[-
+			 \cancel{2}
+			 \cancel{\frac{1}{2}}\arcsin
+			 \left(
+			 -i\frac{(e^{2i\delta_1}-e^{2i\delta_2})\sin\epsilon\cos\epsilon}{e^{i(\delta_1+\delta_2)}}
+			 \right)
+			 \right]
+			 }\,.
+		\end{equation}
+		Using 
+		\begin{equation}
+			\cos (\arcsin x )=
+			\sqrt{1-\sin^2(\arcsin x)}=\sqrt{1-x^2}
+		\end{equation}
+		it simplifies to
+		\begin{equation}
+			e^{2i\tdone} =
+			\frac{
+				e^{2i\delta_1}\cos^2\epsilon
+				+
+				e^{2i\delta_2}\sin^2\epsilon
+			}{
+			\sqrt{
+				1
+				+
+				e^{-2i(\delta_1+\delta_2)}
+			(e^{2i\delta_1}-e^{2i\delta_2})^2\sin^2\epsilon\,\cos^2\epsilon}
+			}\,.
+		\end{equation}
+		Since $\epsilon\rightarrow0$, and $\delta_i\rightarrow 0$ for small energies one finds
+		\begin{equation}
+			e^{2i\tdone} \simeq
+				e^{2i\delta_1}
+		\end{equation}
+		and 
+		\begin{equation}
+			\tdone \simeq \delta_1 \simeq -a_1\,k^{2\ell_1+1}\,.
+		\end{equation}
+		Here the fact that $\delta_2 = \mathcal{O}(\delta_1)$ has been used.
+		Therefore
+		\begin{equation}
+			\tilde{a}_1 = a_1\,.
+		\end{equation}
+		
+		Finally one finds $\tdtwo$ using
+		\begin{equation}
+			e^{2i\tdtwo} = \frac{S_{22}}{\cos2\teps}\,.
+		\end{equation}
+		which expands to
+		\begin{equation}
+			e^{2i\tdtwo} =
+			\frac{
+				e^{2i\delta_1}\sin^2\epsilon
+				+
+				e^{2i\delta_2}\cos^2\epsilon
+			}{
+				\sqrt{
+					1
+					+
+					e^{-2i(\delta_1+\delta_2)}
+					(e^{2i\delta_1}-e^{2i\delta_2})^2\sin^2\epsilon\,\cos^2\epsilon}
+			}\,.
+		\end{equation}
+		For small energies
+		\begin{align}
+			1+2i\tdtwo &\simeq
+			(1+2i\delta_1)\,\epsilon^2
+			+
+			(1+2i\delta_2)
+			\left(	
+				1-\dfrac{\epsilon^2}{2}
+			\right)^2
+			\,,\\
+			1+2i\tdtwo &\simeq
+			\epsilon^2+2i\delta_1\,\epsilon^2
+			+
+			(1+2i\delta_2)
+			\left(	
+			1-\epsilon^2
+			\right)
+			\,,\\
+			\cancel{1}+2i\tdtwo &\simeq
+			\cancel{\epsilon^2}+2i\delta_1\,\epsilon^2
+			+
+			\cancel{1}+2i\delta_2-\cancel{\epsilon^2}
+			\,,\\
+			\tdtwo &\simeq \delta_2 + \delta_1\,\epsilon^2\,.
+		\end{align}
+		Using the expansion for small energies
+		\begin{align}
+			-\tilde{a}_2\,k^{2\ell_2+1}
+			&=
+			-a_2\,k^{2\ell_2+1}
+			-
+			a_1\,e_J^2\,
+			k^{2\ell_1+1+2\Delta\ell}\,,\\
+			\tilde{a}_2\,k^{2\ell_2+1}
+			&=
+			a_2\,k^{2\ell_2+1}
+			+
+			a_1\,e_J^2\,
+			k^{2\ell_2+1}\,.
+		\end{align}
+		Therefore finally
+		\begin{equation}
+			\tilde{a}_2 = a_2+a_1\,e_J^2\,.
+		\end{equation}
+		
+		
 		
 		
 	\end{appendices}
-	
 	
 	\begin{thebibliography}{9}
 		\bibitem{advances}

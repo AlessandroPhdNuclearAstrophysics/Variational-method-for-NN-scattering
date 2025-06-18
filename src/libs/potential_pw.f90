@@ -136,6 +136,11 @@ CONTAINS
     END IF
   END SUBROUTINE POT_PW_PARAMS_CHANNEL
 
+  !> Computes the potential matrix for a set of R values for a given channel.
+  !! \param[in] POTENTIAL_PARAMS Structure containing all potential parameters
+  !! \param[in] CHANNEL Scattering channel structure
+  !! \param[in] RVALS Array of interparticle distances (fm)
+  !! \param[out] VPW Array of potential matrices, shape (size(RVALS), NCH, NCH)
   SUBROUTINE POT_PW_RVALUES(POTENTIAL_PARAMS, CHANNEL, RVALS, VPW)
     IMPLICIT NONE
     TYPE(POTENTIAL_PARAMETERS), INTENT(IN) :: POTENTIAL_PARAMS
@@ -171,8 +176,8 @@ CONTAINS
   !! \param[in] ILB Channel index (used by some potentials)
   !! \param[in] LEMP Type of electromagnetic interaction (0=Coulomb, >0=see AV18 EMPOT)
   !! \param[out] POTENTIAL_PARAMS Structure to be filled with potential parameters
-  !> This subroutine initializes the potential parameters structure with the given values.
-  !> It sets the potential model, submodel, and electromagnetic interaction type.
+  !! This subroutine initializes the potential parameters structure with the given values.
+  !! It sets the potential model, submodel, and electromagnetic interaction type.
   SUBROUTINE SET_POTENTIAL_PARAMETERS(IPOT, ILB, LEMP, POTENTIAL_PARAMS)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: IPOT, ILB, LEMP
