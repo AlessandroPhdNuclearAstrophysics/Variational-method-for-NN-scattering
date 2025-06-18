@@ -15,6 +15,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   USE REALLOCATE_UTILS
   USE QUANTUM_NUMBERS
   USE EFT_PLESS
+  USE PHYSICAL_CONSTANTS
   IMPLICIT NONE
   PRIVATE
 
@@ -65,12 +66,11 @@ MODULE SCATTERING_NN_VARIATIONAL
   INTEGER :: NNN_MAX
   LOGICAL :: USE_DYNAMIC = .FALSE.
 
-  DOUBLE PRECISION, PARAMETER :: HC = 197.327053D0
-  DOUBLE PRECISION, PARAMETER :: MP = 938.272029D0
-  DOUBLE PRECISION, PARAMETER :: MN = 939.565630D0
-  DOUBLE PRECISION, PARAMETER :: MR = MP * MN / (MP + MN)
+  DOUBLE PRECISION, PARAMETER :: HC = HBARC
+  DOUBLE PRECISION, PARAMETER :: MP = MASS_PROTON
+  DOUBLE PRECISION, PARAMETER :: MN = MASS_NEUTRON
+  DOUBLE PRECISION, PARAMETER :: MR = MASS_REDUCED_NP
   DOUBLE PRECISION, PARAMETER :: ONE = 1.0D0, ZERO = 0.0D0
-  DOUBLE PRECISION, PARAMETER :: PI = 4*DATAN(ONE)
   DOUBLE COMPLEX,   PARAMETER :: IM = (ZERO, ONE)
 
   DOUBLE PRECISION :: HTM = 0, M = 0
@@ -193,7 +193,6 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: FIT_CHANNELS_LOW_ENERGY
 
   PRIVATE:: PRINT_DIVIDER
-  PRIVATE:: SET_M_T1Z_T2Z_HTM
   PRIVATE:: PREPARE_GRID
   PRIVATE:: PREPARE_LAGUERRE
   PRIVATE:: PREPARE_POTENTIAL
@@ -204,158 +203,6 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
-
-  SUBROUTINE PRINT_ALL_DATA_IN_MODULE(unit)
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: unit
-    INTEGER :: i
-    CHARACTER(LEN=256) :: fname
-    
-    WRITE(fname, '(A,I0,A)') 'scattering_nn_variational_dump_unit', unit, '.txt'
-    OPEN(unit, FILE=TRIM(fname), STATUS='REPLACE', ACTION='WRITE')
-
-    WRITE(unit,*) '==== Module SCATTERING_NN_VARIATIONAL Dump ===='
-
-    ! Scalars
-    WRITE(unit,*) 'NCH =', NCH
-    WRITE(unit,*) 'NNN_MAX =', NNN_MAX
-    WRITE(unit,*) 'USE_DYNAMIC =', USE_DYNAMIC
-    WRITE(unit,*) 'HTM =', HTM
-    WRITE(unit,*) 'M =', M
-    WRITE(unit,*) 'HTM_SET =', HTM_SET
-    WRITE(unit,*) 'PRINT_I =', PRINT_I
-    WRITE(unit,*) 'LMAX =', LMAX
-    WRITE(unit,*) 'TZ_SET =', TZ_SET
-    WRITE(unit,*) 'LMAX_SET =', LMAX_SET
-    WRITE(unit,*) 'PREPARE =', PREPARE
-    WRITE(unit,*) 'NCHANNELS =', NCHANNELS
-    WRITE(unit,*) 'CHANNELS_SET =', CHANNELS_SET
-    WRITE(unit,*) 'GRID_SET =', GRID_SET
-    WRITE(unit,*) 'POTENTIAL_SET =', POTENTIAL_SET
-    WRITE(unit,*) 'IPOT_SET =', IPOT_SET
-    WRITE(unit,*) 'NE =', NE
-    WRITE(unit,*) 'ENERGIES_SET =', ENERGIES_SET
-    WRITE(unit,*) 'BESSELS_SET =', BESSELS_SET
-    WRITE(unit,*) 'LAGUERRE_SET =', LAGUERRE_SET
-    WRITE(unit,*) 'LECS_SET =', LECS_SET
-    WRITE(unit,*) 'NEW_LECS =', NEW_LECS
-    WRITE(unit,*) 'CH_INDEX =', CH_INDEX
-
-    ! Arrays and allocatables: print only sizes
-    WRITE(unit,*) 'LC: size =', SIZE(LC)
-
-    IF (ALLOCATED(CHANNELS_)) THEN
-      WRITE(unit,*) 'CHANNELS_ size =', SIZE(CHANNELS_)
-      DO i=1, SIZE(CHANNELS_)
-        WRITE(unit,*) '  CHANNELS_(',i,') = ', GET_CHANNEL_NAME(CHANNELS_(i))
-      END DO
-    END IF
-
-    WRITE(unit,*) 'CHANNEL: ', GET_CHANNEL_NAME(CHANNEL)
-
-    IF (ALLOCATED(XX_CC)) WRITE(unit,*) 'XX_CC size =', SIZE(XX_CC)
-    IF (ALLOCATED(YY_CC)) WRITE(unit,*) 'YY_CC size =', SIZE(YY_CC)
-    IF (ALLOCATED(XX_AC)) WRITE(unit,*) 'XX_AC size =', SIZE(XX_AC)
-    IF (ALLOCATED(XX_AA)) WRITE(unit,*) 'XX_AA size =', SIZE(XX_AA)
-    IF (ALLOCATED(A_CC))  WRITE(unit,*) 'A_CC size =', SIZE(A_CC)
-    IF (ALLOCATED(A_AC))  WRITE(unit,*) 'A_AC size =', SIZE(A_AC)
-    IF (ALLOCATED(A_AA))  WRITE(unit,*) 'A_AA size =', SIZE(A_AA)
-    IF (ALLOCATED(B_AA))  WRITE(unit,*) 'B_AA size =', SIZE(B_AA)
-    IF (ALLOCATED(AJ_AA)) WRITE(unit,*) 'AJ_AA size =', SIZE(AJ_AA)
-    IF (ALLOCATED(AJ_AC)) WRITE(unit,*) 'AJ_AC size =', SIZE(AJ_AC)
-    IF (ALLOCATED(YYL_AC))WRITE(unit,*) 'YYL_AC size =', SIZE(YYL_AC)
-
-    IF (ALLOCATED(V_CC))  WRITE(unit,*) 'V_CC size =', SHAPE(V_CC)
-    IF (ALLOCATED(V_AC))  WRITE(unit,*) 'V_AC size =', SHAPE(V_AC)
-    IF (ALLOCATED(V_AA))  WRITE(unit,*) 'V_AA size =', SHAPE(V_AA)
-
-    IF (ALLOCATED(ENERGIES_)) WRITE(unit,*) 'ENERGIES_ size =', SIZE(ENERGIES_)
-    IF (ALLOCATED(KK))       WRITE(unit,*) 'KK size =', SIZE(KK)
-    IF (ALLOCATED(K2))       WRITE(unit,*) 'K2 size =', SIZE(K2)
-
-    IF (ALLOCATED(FBES_AA))  WRITE(unit,*) 'FBES_AA size =', SHAPE(FBES_AA)
-    IF (ALLOCATED(FBES_AC))  WRITE(unit,*) 'FBES_AC size =', SHAPE(FBES_AC)
-    IF (ALLOCATED(GBES_AA))  WRITE(unit,*) 'GBES_AA size =', SHAPE(GBES_AA)
-    IF (ALLOCATED(GBES_AC))  WRITE(unit,*) 'GBES_AC size =', SHAPE(GBES_AC)
-    IF (ALLOCATED(GBES0_AA)) WRITE(unit,*) 'GBES0_AA size =', SHAPE(GBES0_AA)
-    IF (ALLOCATED(GBES1_AA)) WRITE(unit,*) 'GBES1_AA size =', SHAPE(GBES1_AA)
-    IF (ALLOCATED(GBES2_AA)) WRITE(unit,*) 'GBES2_AA size =', SHAPE(GBES2_AA)
-    IF (ALLOCATED(HNOR_AA))  WRITE(unit,*) 'HNOR_AA size =', SHAPE(HNOR_AA)
-
-    IF (ALLOCATED(V0_CC)) WRITE(unit,*) 'V0_CC size =', SHAPE(V0_CC)
-    IF (ALLOCATED(V1_CC)) WRITE(unit,*) 'V1_CC size =', SHAPE(V1_CC)
-    IF (ALLOCATED(V2_CC)) WRITE(unit,*) 'V2_CC size =', SHAPE(V2_CC)
-    IF (ALLOCATED(V0_AC)) WRITE(unit,*) 'V0_AC size =', SHAPE(V0_AC)
-    IF (ALLOCATED(V1_AC)) WRITE(unit,*) 'V1_AC size =', SHAPE(V1_AC)
-    IF (ALLOCATED(V2_AC)) WRITE(unit,*) 'V2_AC size =', SHAPE(V2_AC)
-
-    IF (ALLOCATED(H_MINUS_E_CC))    WRITE(unit,*) 'H_MINUS_E_CC size =', SHAPE(H_MINUS_E_CC)
-    IF (ALLOCATED(H_MINUS_E_AC_R))  WRITE(unit,*) 'H_MINUS_E_AC_R size =', SHAPE(H_MINUS_E_AC_R)
-    IF (ALLOCATED(H_MINUS_E_AC_I))  WRITE(unit,*) 'H_MINUS_E_AC_I size =', SHAPE(H_MINUS_E_AC_I)
-    IF (ALLOCATED(H_MINUS_E_AA_RR)) WRITE(unit,*) 'H_MINUS_E_AA_RR size =', SHAPE(H_MINUS_E_AA_RR)
-    IF (ALLOCATED(H_MINUS_E_AA_RI)) WRITE(unit,*) 'H_MINUS_E_AA_RI size =', SHAPE(H_MINUS_E_AA_RI)
-    IF (ALLOCATED(H_MINUS_E_AA_IR)) WRITE(unit,*) 'H_MINUS_E_AA_IR size =', SHAPE(H_MINUS_E_AA_IR)
-    IF (ALLOCATED(H_MINUS_E_AA_II)) WRITE(unit,*) 'H_MINUS_E_AA_II size =', SHAPE(H_MINUS_E_AA_II)
-
-    IF (ALLOCATED(K_MINUS_E_CC))    WRITE(unit,*) 'K_MINUS_E_CC size =', SHAPE(K_MINUS_E_CC)
-    IF (ALLOCATED(K_MINUS_E_AC_R))  WRITE(unit,*) 'K_MINUS_E_AC_R size =', SHAPE(K_MINUS_E_AC_R)
-    IF (ALLOCATED(K_MINUS_E_AC_I))  WRITE(unit,*) 'K_MINUS_E_AC_I size =', SHAPE(K_MINUS_E_AC_I)
-    IF (ALLOCATED(K_MINUS_E_AA_RR)) WRITE(unit,*) 'K_MINUS_E_AA_RR size =', SHAPE(K_MINUS_E_AA_RR)
-    IF (ALLOCATED(K_MINUS_E_AA_RI)) WRITE(unit,*) 'K_MINUS_E_AA_RI size =', SHAPE(K_MINUS_E_AA_RI)
-    IF (ALLOCATED(K_MINUS_E_AA_IR)) WRITE(unit,*) 'K_MINUS_E_AA_IR size =', SHAPE(K_MINUS_E_AA_IR)
-    IF (ALLOCATED(K_MINUS_E_AA_II)) WRITE(unit,*) 'K_MINUS_E_AA_II size =', SHAPE(K_MINUS_E_AA_II)
-
-    IF (ALLOCATED(VM_CC))    WRITE(unit,*) 'VM_CC size =', SHAPE(VM_CC)
-    IF (ALLOCATED(VM_AC_R))  WRITE(unit,*) 'VM_AC_R size =', SHAPE(VM_AC_R)
-    IF (ALLOCATED(VM_AC_I))  WRITE(unit,*) 'VM_AC_I size =', SHAPE(VM_AC_I)
-    IF (ALLOCATED(VM_AA_RR)) WRITE(unit,*) 'VM_AA_RR size =', SHAPE(VM_AA_RR)
-    IF (ALLOCATED(VM_AA_RI)) WRITE(unit,*) 'VM_AA_RI size =', SHAPE(VM_AA_RI)
-    IF (ALLOCATED(VM_AA_IR)) WRITE(unit,*) 'VM_AA_IR size =', SHAPE(VM_AA_IR)
-    IF (ALLOCATED(VM_AA_II)) WRITE(unit,*) 'VM_AA_II size =', SHAPE(VM_AA_II)
-
-    IF (ALLOCATED(FMAT_CC))    WRITE(unit,*) 'FMAT_CC size =', SHAPE(FMAT_CC)
-    IF (ALLOCATED(FMAT_AC_R))  WRITE(unit,*) 'FMAT_AC_R size =', SHAPE(FMAT_AC_R)
-    IF (ALLOCATED(FMAT_AC_I))  WRITE(unit,*) 'FMAT_AC_I size =', SHAPE(FMAT_AC_I)
-    IF (ALLOCATED(FMAT_AA_RR)) WRITE(unit,*) 'FMAT_AA_RR size =', SHAPE(FMAT_AA_RR)
-    IF (ALLOCATED(FMAT_AA_RI)) WRITE(unit,*) 'FMAT_AA_RI size =', SHAPE(FMAT_AA_RI)
-    IF (ALLOCATED(FMAT_AA_IR)) WRITE(unit,*) 'FMAT_AA_IR size =', SHAPE(FMAT_AA_IR)
-    IF (ALLOCATED(FMAT_AA_II)) WRITE(unit,*) 'FMAT_AA_II size =', SHAPE(FMAT_AA_II)
-
-    ! Dump types
-    WRITE(unit,*) 'VAR_P:'
-    WRITE(unit,*) '  J=', VAR_P%J, ' L=', VAR_P%L, ' S=', VAR_P%S, ' T=', VAR_P%T, ' TZ=', VAR_P%TZ
-    WRITE(unit,*) '  T1Z=', VAR_P%T1Z, ' T2Z=', VAR_P%T2Z, ' IPOT=', VAR_P%IPOT, ' ILB=', VAR_P%ILB, ' LEMP=', VAR_P%LEMP
-    WRITE(unit,*) '  E=', VAR_P%E, ' K=', VAR_P%K, ' HR1=', VAR_P%HR1, ' H=', VAR_P%H, ' RANGE=', VAR_P%RANGE
-    WRITE(unit,*) '  GAMMA=', VAR_P%GAMMA, ' EPS=', VAR_P%EPS, ' AF=', VAR_P%AF
-    WRITE(unit,*) '  NX_AA=', VAR_P%NX_AA, ' NX_AC=', VAR_P%NX_AC, ' NX_CC=', VAR_P%NX_CC, ' NNL=', VAR_P%NNL
-
-    WRITE(unit,*) 'LECS:'
-    WRITE(unit,*) '  ILB=', LECS%ILB, ' ORDER=', LECS%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
-    WRITE(unit,*) '  CLO(0:1)'
-    WRITE(unit,*) '  CNLO(7)'
-    WRITE(unit,*) '  CN3LO(11)'
-    WRITE(unit,*) '  CIT(0:4)'
-
-    WRITE(unit,*) 'EFT_RADIAL_CC:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_CC%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
-    IF (ALLOCATED(EFT_RADIAL_CC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_CC%FR_I)
-
-    WRITE(unit,*) 'EFT_RADIAL_AC:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AC%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
-    IF (ALLOCATED(EFT_RADIAL_AC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AC%FR_I)
-
-    WRITE(unit,*) 'EFT_RADIAL_AA:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AA%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
-    IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AA%FR_I)
-
-    CLOSE(unit)
-  END SUBROUTINE PRINT_ALL_DATA_IN_MODULE
-
-
 !> \ingroup scattering_nn_variational_mod
 !> \brief Set all variational parameters at once.
   !! \param[in] J    Total angular momentum
@@ -410,18 +257,11 @@ CONTAINS
     IF (PRESENT(NX_CC)) VAR_P%NX_CC = NX_CC
     IF (PRESENT(NNL))   VAR_P%NNL   = NNL
 
-    SELECT CASE (TZ)
-    CASE (1)
-      VAR_P%T1Z = 1
-      VAR_P%T2Z = 1
-    CASE (0)
-      VAR_P%T1Z =-1
-      VAR_P%T2Z = 1
-    CASE (-1)
-      VAR_P%T1Z =-1
-      VAR_P%T2Z =-1
-    END SELECT
-    CALL SET_M_T1Z_T2Z_HTM(TZ)
+    CALL TZ_TO_T1Z_T2Z(VAR_P%TZ, VAR_P%T1Z, VAR_P%T2Z)
+    HTM = HBARM_NUCLEON_NUCLEON(VAR_P%TZ)
+
+    CALL SET_REDUCED_MASS_AND_HTM(TZ, M, HTM)
+    HTM_SET = .TRUE.
   END SUBROUTINE SET_VARIATIONAL_PARAMETERS
 
   !> \ingroup scattering_nn_variational_mod
@@ -436,14 +276,14 @@ CONTAINS
     ENERGIES_ = ENERGIES
     ENERGIES_SET = .TRUE.
     IF (CHANNELS_SET .AND. .NOT.BESSELS_SET .AND. HTM_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-      END SUBROUTINE SET_ENERGIES
+  END SUBROUTINE SET_ENERGIES
 
   SUBROUTINE SET_IPOT(IPOT)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: IPOT
         VAR_P%IPOT = IPOT
     IPOT_SET = .TRUE.
-      END SUBROUTINE SET_IPOT
+  END SUBROUTINE SET_IPOT
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the scattering channels to be analyzed.
@@ -471,7 +311,7 @@ CONTAINS
     TZ_SET = .TRUE.
     LMAX_SET = .TRUE.
     IF (ENERGIES_SET .AND. .NOT.BESSELS_SET) CALL PREPARE_ASYMPTOTIC_FUNCTIONS
-      END SUBROUTINE SET_CHANNELS
+  END SUBROUTINE SET_CHANNELS
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the number of Laguerre basis functions for the variational calculation.
@@ -480,7 +320,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: NNL
         VAR_P%NNL = NNL
-      END SUBROUTINE SET_NNL
+  END SUBROUTINE SET_NNL
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set the exponential grid parameter AF.
@@ -489,7 +329,7 @@ CONTAINS
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: AF
         VAR_P%AF = AF
-      END SUBROUTINE SET_AF
+  END SUBROUTINE SET_AF
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set all variational parameters for a single calculation (internal use).
@@ -509,27 +349,13 @@ CONTAINS
     VAR_P%E = E
 
     VAR_P%NX_AC = INT(VAR_P%RANGE/VAR_P%HR1) + 10
-
-    SELECT CASE (TZ)
-    CASE (1)
-      VAR_P%T1Z = 1
-      VAR_P%T2Z = 1
-    CASE (0)
-      VAR_P%T1Z =-1
-      VAR_P%T2Z = 1
-    CASE (-1)
-      VAR_P%T1Z =-1
-      VAR_P%T2Z =-1
-    END SELECT
-
-    CALL SET_M_T1Z_T2Z_HTM(TZ)
+    
+    CALL TZ_TO_T1Z_T2Z(TZ, VAR_P%T1Z, VAR_P%T2Z)
+    CALL SET_REDUCED_MASS_AND_HTM(TZ, M, HTM)
+    HTM_SET = .TRUE.
 
   ! Ensure T is set such that T + L + S is odd
-    IF (MOD(L + S, 2) == 0) THEN
-      VAR_P%T = 1
-    ELSE
-      VAR_P%T = 0
-    END IF
+    VAR_P%T = T_FROM_L_S(L, S)
 
     VAR_P%K = DSQRT(2*E*MR) / HC
 
@@ -575,342 +401,343 @@ CONTAINS
   !> \note If RESET is set to .TRUE., all allocated arrays are deallocated and the calculation is reset.
   SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
    PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET)
-  IMPLICIT NONE
-! INPUT PARAMETERS
-  DOUBLE PRECISION, INTENT(IN) :: E
-  INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
-  TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
-  LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET
+    USE ANGLES
+    IMPLICIT NONE
+    ! INPUT PARAMETERS
+    DOUBLE PRECISION, INTENT(IN) :: E
+    INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
+    TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
+    LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET
 
-  LOGICAL :: PRINT_C, FIRST_CALL = .TRUE., CALL_TO_IS_FIRST_CALL
-! VARIABLES AND PARAMETERS FOR DGESV
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: CAR(:,:), CAI(:,:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: CARR(:), CAII(:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: XRCOEFF(:,:), XICOEFF(:,:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: IPIV(:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: C(:,:), CC(:,:), CCC(:,:)
-  INTEGER :: INFO, IAK, IAB, IE
-  INTEGER, SAVE :: NNN
+    LOGICAL :: PRINT_C, FIRST_CALL = .TRUE., CALL_TO_IS_FIRST_CALL
+    ! VARIABLES AND PARAMETERS FOR DGESV
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: CAR(:,:), CAI(:,:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: CARR(:), CAII(:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: XRCOEFF(:,:), XICOEFF(:,:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: IPIV(:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: C(:,:), CC(:,:), CCC(:,:)
+    INTEGER :: INFO, IAK, IAB, IE
+    INTEGER, SAVE :: NNN
 
-  ! MATRICES FOR THE VARIATIONAL METHOD
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: ARI(:,:), AIR(:,:), ARR(:,:), AII(:,:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: BD1(:,:), BD2(:,:), BD3(:,:), BD4(:,:)
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: AM(:,:), AN(:,:), AMM(:,:), RMAT(:,:)
+    ! MATRICES FOR THE VARIATIONAL METHOD
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: ARI(:,:), AIR(:,:), ARR(:,:), AII(:,:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: BD1(:,:), BD2(:,:), BD3(:,:), BD4(:,:)
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: AM(:,:), AN(:,:), AMM(:,:), RMAT(:,:)
 
-  ! COEFFICIENT RMAT2
-  DOUBLE PRECISION, ALLOCATABLE, SAVE :: RMAT2(:,:)
+    ! COEFFICIENT RMAT2
+    DOUBLE PRECISION, ALLOCATABLE, SAVE :: RMAT2(:,:)
 
-  ! PHASE-SHIFTS AND MIXING ANGLES
-  DOUBLE PRECISION :: AMIXR, AMIXG, DELTA1, DELTA2, DELTA1G, DELTA2G
-  DOUBLE PRECISION :: AMIXGS, DELTA1S, DELTA2S
+    ! PHASE-SHIFTS AND MIXING ANGLES
+    DOUBLE PRECISION :: AMIXR, AMIXG, DELTA1, DELTA2, DELTA1G, DELTA2G
+    DOUBLE PRECISION :: AMIXGS, DELTA1S, DELTA2S
 
-! S-MATRIX
-  DOUBLE COMPLEX, ALLOCATABLE, SAVE :: SMAT(:,:)
+    ! S-MATRIX
+    DOUBLE COMPLEX, ALLOCATABLE, SAVE :: SMAT(:,:)
 
-! EXTERNAL FUNCTIONS AND SUBROUTINES
-  INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
+    ! EXTERNAL FUNCTIONS AND SUBROUTINES
+    INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
 
-  IF (PRESENT(RESET)) THEN
-    IF (.NOT. RESET) RETURN
-    NNN = 0
-    IF (ALLOCATED(CAR)) DEALLOCATE(CAR)
-    IF (ALLOCATED(CAI)) DEALLOCATE(CAI)
-    IF (ALLOCATED(CARR)) DEALLOCATE(CARR)
-    IF (ALLOCATED(CAII)) DEALLOCATE(CAII)
-    IF (ALLOCATED(XRCOEFF)) DEALLOCATE(XRCOEFF)
-    IF (ALLOCATED(XICOEFF)) DEALLOCATE(XICOEFF)
-    IF (ALLOCATED(IPIV)) DEALLOCATE(IPIV)
-    IF (ALLOCATED(C)) DEALLOCATE(C)
-    IF (ALLOCATED(CC)) DEALLOCATE(CC)
-    IF (ALLOCATED(CCC)) DEALLOCATE(CCC)
-    IF (ALLOCATED(BD1)) DEALLOCATE(BD1)
-    IF (ALLOCATED(BD2)) DEALLOCATE(BD2)
-    IF (ALLOCATED(BD3)) DEALLOCATE(BD3)
-    IF (ALLOCATED(BD4)) DEALLOCATE(BD4)
-    IF (ALLOCATED(ARI)) DEALLOCATE(ARI)
-    IF (ALLOCATED(AIR)) DEALLOCATE(AIR)
-    IF (ALLOCATED(ARR)) DEALLOCATE(ARR)
-    IF (ALLOCATED(AII)) DEALLOCATE(AII)
-    IF (ALLOCATED(AM)) DEALLOCATE(AM)
-    IF (ALLOCATED(AN)) DEALLOCATE(AN)
-    IF (ALLOCATED(AMM)) DEALLOCATE(AMM)
-    IF (ALLOCATED(RMAT)) DEALLOCATE(RMAT)
-    IF (ALLOCATED(RMAT2)) DEALLOCATE(RMAT2)
-    IF (ALLOCATED(SMAT)) DEALLOCATE(SMAT)
-    CALL R_SECOND_ORDER
-    RETURN
-  ENDIF
-  
-  IF (NEW_LECS .AND. USE_DYNAMIC) FIRST_CALL = .TRUE.
-
-  CALL_TO_IS_FIRST_CALL = IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP)
-  FIRST_CALL = FIRST_CALL .OR. CALL_TO_IS_FIRST_CALL
-  IF (.NOT.POTENTIAL_SET) THEN
-    IF (.NOT.CHANNELS_SET) THEN
-      PRINT *, "Error: Potential not set and channels not set!"
-      STOP
+    IF (PRESENT(RESET)) THEN
+      IF (.NOT. RESET) RETURN
+      NNN = 0
+      IF (ALLOCATED(CAR)) DEALLOCATE(CAR)
+      IF (ALLOCATED(CAI)) DEALLOCATE(CAI)
+      IF (ALLOCATED(CARR)) DEALLOCATE(CARR)
+      IF (ALLOCATED(CAII)) DEALLOCATE(CAII)
+      IF (ALLOCATED(XRCOEFF)) DEALLOCATE(XRCOEFF)
+      IF (ALLOCATED(XICOEFF)) DEALLOCATE(XICOEFF)
+      IF (ALLOCATED(IPIV)) DEALLOCATE(IPIV)
+      IF (ALLOCATED(C)) DEALLOCATE(C)
+      IF (ALLOCATED(CC)) DEALLOCATE(CC)
+      IF (ALLOCATED(CCC)) DEALLOCATE(CCC)
+      IF (ALLOCATED(BD1)) DEALLOCATE(BD1)
+      IF (ALLOCATED(BD2)) DEALLOCATE(BD2)
+      IF (ALLOCATED(BD3)) DEALLOCATE(BD3)
+      IF (ALLOCATED(BD4)) DEALLOCATE(BD4)
+      IF (ALLOCATED(ARI)) DEALLOCATE(ARI)
+      IF (ALLOCATED(AIR)) DEALLOCATE(AIR)
+      IF (ALLOCATED(ARR)) DEALLOCATE(ARR)
+      IF (ALLOCATED(AII)) DEALLOCATE(AII)
+      IF (ALLOCATED(AM)) DEALLOCATE(AM)
+      IF (ALLOCATED(AN)) DEALLOCATE(AN)
+      IF (ALLOCATED(AMM)) DEALLOCATE(AMM)
+      IF (ALLOCATED(RMAT)) DEALLOCATE(RMAT)
+      IF (ALLOCATED(RMAT2)) DEALLOCATE(RMAT2)
+      IF (ALLOCATED(SMAT)) DEALLOCATE(SMAT)
+      CALL R_SECOND_ORDER
+      RETURN
     ENDIF
-    IF (ENERGIES_SET) THEN
-      PRINT *, "DEBUG: Setting potential and variational parameters for these channels"
-      WRITE(*,*) "Setting potential and variational parameters for this channels"
-      CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
-      CALL PREPARE_POTENTIAL(CHANNELS_)
-      POTENTIAL_SET = .TRUE.
+
+    IF (NEW_LECS .AND. USE_DYNAMIC) FIRST_CALL = .TRUE.
+
+    CALL_TO_IS_FIRST_CALL = IS_FIRST_CALL(J, L, S, TZ, IPOT, ILB, LEMP)
+    FIRST_CALL = FIRST_CALL .OR. CALL_TO_IS_FIRST_CALL
+    IF (.NOT.POTENTIAL_SET) THEN
+      IF (.NOT.CHANNELS_SET) THEN
+        PRINT *, "Error: Potential not set and channels not set!"
+        STOP
+      ENDIF
+      IF (ENERGIES_SET) THEN
+        PRINT *, "DEBUG: Setting potential and variational parameters for these channels"
+        WRITE(*,*) "Setting potential and variational parameters for this channels"
+        CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
+        CALL PREPARE_POTENTIAL(CHANNELS_)
+        POTENTIAL_SET = .TRUE.
+      ELSE
+        PRINT *, "Error: Potential not set and energies not set!"
+        STOP
+      ENDIF
+    ENDIF
+
+
+    IF (PRESENT(PRINT_COEFFICIENTS)) THEN
+      PRINT_C = PRINT_COEFFICIENTS
     ELSE
-      PRINT *, "Error: Potential not set and energies not set!"
-      STOP
+      PRINT_C = .FALSE.
     ENDIF
-  ENDIF
+
+    IF (PRESENT(PRINT_INFORMATIONS)) THEN
+      PRINT_I = PRINT_INFORMATIONS
+    ELSE
+      PRINT_I = .FALSE.
+    ENDIF
 
 
-  IF (PRESENT(PRINT_COEFFICIENTS)) THEN
-    PRINT_C = PRINT_COEFFICIENTS
-  ELSE
-    PRINT_C = .FALSE.
-  ENDIF
-
-  IF (PRESENT(PRINT_INFORMATIONS)) THEN
-    PRINT_I = PRINT_INFORMATIONS
-  ELSE
-    PRINT_I = .FALSE.
-  ENDIF
-
-
-  ! INITIALIZE THE VARIATIONAL PARAMETERS
-  IF (FIRST_CALL) THEN
-    CALL SET_VARIATIONAL_PARAMETERS_(E, J, L, S, TZ, IPOT, ILB, LEMP)
-    IF (.NOT.GRID_SET) CALL PREPARE_GRID
-    NNN     = VAR_P%NNL * NCH
-    NNN_MAX = VAR_P%NNL * NCH_MAX
-    CALL REALLOCATE_2D_3(C, CC, CCC, NNN, NNN)
-    CALL REALLOCATE_2D_2(CAR, CAI, NNN, NCH)
-    CALL REALLOCATE_1D_1(CARR, NNN)
-    CALL REALLOCATE_1D_1(CAII, NNN)
-    CALL REALLOCATE_2D_2(XRCOEFF, XICOEFF, NCH, NNN)
-    CALL REALLOCATE_1D_1(IPIV, NNN)
-    CALL REALLOCATE_2D_4(BD1, BD2, BD3, BD4, NCH, NCH)
-    CALL REALLOCATE_2D_9(ARI, AIR, ARR, AII, AM, AN, AMM, RMAT, RMAT2, NCH, NCH)
-    IF (ALLOCATED(SMAT)) DEALLOCATE(SMAT)
-    ALLOCATE(SMAT(NCH, NCH))
+    ! INITIALIZE THE VARIATIONAL PARAMETERS
+    IF (FIRST_CALL) THEN
+      CALL SET_VARIATIONAL_PARAMETERS_(E, J, L, S, TZ, IPOT, ILB, LEMP)
+      IF (.NOT.GRID_SET) CALL PREPARE_GRID
+      NNN     = VAR_P%NNL * NCH
+      NNN_MAX = VAR_P%NNL * NCH_MAX
+      CALL REALLOCATE_2D_3(C, CC, CCC, NNN, NNN)
+      CALL REALLOCATE_2D_2(CAR, CAI, NNN, NCH)
+      CALL REALLOCATE_1D_1(CARR, NNN)
+      CALL REALLOCATE_1D_1(CAII, NNN)
+      CALL REALLOCATE_2D_2(XRCOEFF, XICOEFF, NCH, NNN)
+      CALL REALLOCATE_1D_1(IPIV, NNN)
+      CALL REALLOCATE_2D_4(BD1, BD2, BD3, BD4, NCH, NCH)
+      CALL REALLOCATE_2D_9(ARI, AIR, ARR, AII, AM, AN, AMM, RMAT, RMAT2, NCH, NCH)
+      IF (ALLOCATED(SMAT)) DEALLOCATE(SMAT)
+      ALLOCATE(SMAT(NCH, NCH))
 
 
-    CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
-    CH_INDEX = FIND_CHANNEL_INDEX()
-    WRITE(*,*) "CH_INDEX", CH_INDEX
-  ELSE
-    VAR_P%E = E
-    VAR_P%K = DSQRT(2*E*MR) / HC
-  ENDIF
+      CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+      CH_INDEX = FIND_CHANNEL_INDEX()
+      WRITE(*,*) "CH_INDEX", CH_INDEX
+    ELSE
+      VAR_P%E = E
+      VAR_P%K = DSQRT(2*E*MR) / HC
+    ENDIF
 
-  IF (.NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-    STOP "Grid not ready or Bessels not ready"
-  ENDIF
+    IF (.NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
+      STOP "Grid not ready or Bessels not ready"
+    ENDIF
 
-  IF (PRINT_I) CALL PRINT_INFO()
-  IF (PREPARE) THEN
-    CALL PREPARE_CORE_CORE_MATRIX_ELEMENTS
+    IF (PRINT_I) CALL PRINT_INFO()
+    IF (PREPARE) THEN
+      CALL PREPARE_CORE_CORE_MATRIX_ELEMENTS
+      IF (PRINT_I) CALL PRINT_DIVIDER
+      CALL PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
+    ENDIF
+
     IF (PRINT_I) CALL PRINT_DIVIDER
-    CALL PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
-  ENDIF
 
-  IF (PRINT_I) CALL PRINT_DIVIDER
+    IE = FIND_ENERGY_INDEX(E)
 
-  IE = FIND_ENERGY_INDEX(E)
+    IF (USE_DYNAMIC .AND. NEW_LECS) THEN
+      WRITE(*,*) "Combining the CC potential"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
+      WRITE(*,*) "Combining the AC potential (real part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
+      WRITE(*,*) "Combining the AC potential (imaginary part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
+      VM_CC = VM_CC / HTM
+      VM_AC_R = VM_AC_R / HTM
+      VM_AC_I = VM_AC_I / HTM
+      
+      H_MINUS_E_CC   = K_MINUS_E_CC + VM_CC
+      H_MINUS_E_AC_R = K_MINUS_E_AC_R + VM_AC_R
+      H_MINUS_E_AC_I = K_MINUS_E_AC_I + VM_AC_I
+    ENDIF
 
-  IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-    WRITE(*,*) "Combining the CC potential"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
-    WRITE(*,*) "Combining the AC potential (real part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
-    WRITE(*,*) "Combining the AC potential (imaginary part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
-    VM_CC = VM_CC / HTM
-    VM_AC_R = VM_AC_R / HTM
-    VM_AC_I = VM_AC_I / HTM
-    
-    H_MINUS_E_CC   = K_MINUS_E_CC + VM_CC
-    H_MINUS_E_AC_R = K_MINUS_E_AC_R + VM_AC_R
-    H_MINUS_E_AC_I = K_MINUS_E_AC_I + VM_AC_I
-  ENDIF
+    C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
+    CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
+    CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
 
-  C   = H_MINUS_E_CC  (CH_INDEX, IE, 1:NNN, 1:NNN)  ! H - E
-  CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
-  CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
-  
-  IF (PRINT_I) CALL PRINT_DIVIDER
-
-  DO IAK=1, NCH
-! Preparing the matrix elements for the diagonalization
-    CARR =-CAR(:,IAK)
-    CAII =-CAI(:,IAK)
-    CC  = C
-    CCC = C
-
-  ! Solving the eigenvalue problem using LAPACK dgesv
-  ! Evaluating for the "c_{n, alpha}" coefficients
-    CALL DGESV(NNN, 1, CC , NNN, IPIV, CARR, NNN, INFO)
-    CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-    IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
-    CALL DGESV(NNN, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
-    CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
-    IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
-
-    XRCOEFF(IAK,:) = CARR
-    XICOEFF(IAK,:) = CAII
-  ENDDO
-
-! Calculating R coefficients
-  IF (PRINT_I) WRITE(*,*) NCH, NNN
-
-  ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
-  CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
-  CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD2, SIZE(BD2,1))
-  CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAR, SIZE(CAR,1), 0.0D0, BD3, SIZE(BD3,1))
-  CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), CAR, SIZE(CAR,1), 0.0D0, BD4, SIZE(BD4,1))
-
-  IF (PREPARE) THEN
     IF (PRINT_I) CALL PRINT_DIVIDER
-    CALL PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
-    IF (PRINT_I) CALL PRINT_DIVIDER
-    PREPARE = .FALSE.
-  ENDIF
 
-  IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-    WRITE(*,*) "Combining the AA potential (real part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-    WRITE(*,*) "Combining the AA potential (real-imaginary part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-    WRITE(*,*) "Combining the AA potential (imaginary-real part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-    WRITE(*,*) "Combining the AA potential (imaginary part)"
-    CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
-    VM_AA_RR = VM_AA_RR / HTM
-    VM_AA_RI = VM_AA_RI / HTM
-    VM_AA_IR = VM_AA_IR / HTM
-    VM_AA_II = VM_AA_II / HTM
-    WRITE(*,*) "Finished combining potentials"    
-    H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
-    H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
-    H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
-    H_MINUS_E_AA_II = K_MINUS_E_AA_II + VM_AA_II
+    DO IAK=1, NCH
+    ! Preparing the matrix elements for the diagonalization
+      CARR =-CAR(:,IAK)
+      CAII =-CAI(:,IAK)
+      CC  = C
+      CCC = C
 
-    NEW_LECS = .FALSE.
-  ENDIF
+    ! Solving the eigenvalue problem using LAPACK dgesv
+    ! Evaluating for the "c_{n, alpha}" coefficients
+      CALL DGESV(NNN, 1, CC , NNN, IPIV, CARR, NNN, INFO)
+      CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
+      IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
+      CALL DGESV(NNN, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
+      CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
+      IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
 
-  ARR = H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)
-  ARI = H_MINUS_E_AA_RI(CH_INDEX, IE, :, :)
-  AIR = H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)
-  AII = H_MINUS_E_AA_II(CH_INDEX, IE, :, :)
+      XRCOEFF(IAK,:) = CARR
+      XICOEFF(IAK,:) = CAII
+    ENDDO
 
-  AM = 0.D0
-  DO IAB = 1, NCH
-  DO IAK = 1, NCH
-    AM(IAB,IAK)=BD1(IAK,IAB)+BD1(IAB,IAK)+AII(IAB,IAK)+AII(IAK,IAB)
-    AN(IAB,IAK)=BD2(IAK,IAB)+BD3(IAB,IAK)+2.D0*AIR(IAB,IAK)
-  ENDDO
-  ENDDO
+    ! Calculating R coefficients
+    IF (PRINT_I) WRITE(*,*) NCH, NNN
 
-  AMM = AM
-  RMAT =-AN
-  IF (PRINT_I) THEN
-    CALL PRINT_DIVIDER
-    WRITE(*,*) "AMM = ", AMM
-    WRITE(*,*) "RMAT = ", RMAT
-    CALL PRINT_DIVIDER
-  ENDIF
+    ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
+    CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
+    CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD2, SIZE(BD2,1))
+    CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAR, SIZE(CAR,1), 0.0D0, BD3, SIZE(BD3,1))
+    CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), CAR, SIZE(CAR,1), 0.0D0, BD4, SIZE(BD4,1))
 
+    IF (PREPARE) THEN
+      IF (PRINT_I) CALL PRINT_DIVIDER
+      CALL PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
+      IF (PRINT_I) CALL PRINT_DIVIDER
+      PREPARE = .FALSE.
+    ENDIF
 
-! Evaluating the "R_{alpha, beta}" matrix elements
-  CALL DGESV(NCH, NCH, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
-  CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
-  IF (PRINT_I)  WRITE(*,*) "INFO: ", INFO
+    IF (USE_DYNAMIC .AND. NEW_LECS) THEN
+      WRITE(*,*) "Combining the AA potential (real part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
+      WRITE(*,*) "Combining the AA potential (real-imaginary part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
+      WRITE(*,*) "Combining the AA potential (imaginary-real part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
+      WRITE(*,*) "Combining the AA potential (imaginary part)"
+      CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
+      VM_AA_RR = VM_AA_RR / HTM
+      VM_AA_RI = VM_AA_RI / HTM
+      VM_AA_IR = VM_AA_IR / HTM
+      VM_AA_II = VM_AA_II / HTM
+      WRITE(*,*) "Finished combining potentials"    
+      H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
+      H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
+      H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
+      H_MINUS_E_AA_II = K_MINUS_E_AA_II + VM_AA_II
 
-  IF (PRINT_I) THEN
+      NEW_LECS = .FALSE.
+    ENDIF
+
+    ARR = H_MINUS_E_AA_RR(CH_INDEX, IE, :, :)
+    ARI = H_MINUS_E_AA_RI(CH_INDEX, IE, :, :)
+    AIR = H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)
+    AII = H_MINUS_E_AA_II(CH_INDEX, IE, :, :)
+
+    AM = 0.D0
     DO IAB = 1, NCH
     DO IAK = 1, NCH
-      WRITE(*,*)"COEFF R",RMAT(IAB,IAK)
+      AM(IAB,IAK)=BD1(IAK,IAB)+BD1(IAB,IAK)+AII(IAB,IAK)+AII(IAK,IAB)
+      AN(IAB,IAK)=BD2(IAK,IAB)+BD3(IAB,IAK)+2.D0*AIR(IAB,IAK)
     ENDDO
     ENDDO
-  ENDIF
 
-! Evaluating the "R_{alpha, beta}" matrix elements to the second order
-  CALL R_SECOND_ORDER()
-  IF (PRINT_I) THEN
-    WRITE(*,*)
-    DO IAB = 1, NCH
-    DO IAK = 1, NCH
-      WRITE(*,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
-    ENDDO
-    ENDDO
-  ENDIF
-
-! Writing the coefficients to a file in order torecreate the wave function
-  IF (PRESENT(PRINT_COEFFICIENTS)) THEN
-    IF (PRINT_COEFFICIENTS) THEN
-      CALL WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION()
+    AMM = AM
+    RMAT =-AN
+    IF (PRINT_I) THEN
+      CALL PRINT_DIVIDER
+      WRITE(*,*) "AMM = ", AMM
+      WRITE(*,*) "RMAT = ", RMAT
+      CALL PRINT_DIVIDER
     ENDIF
-  ENDIF
 
-! If energy is zero, return the R matrix
-  PHASE_SHIFT%R_BB(:NCH, :NCH) = RMAT2!/DOUBLE_FACTORIAL(2*L+1)/DOUBLE_FACTORIAL(2*L-1)
-  IF (E==0.0D0) THEN
-    PHASE_SHIFT%R_BB(1,1) = -PHASE_SHIFT%R_BB(1,1) / DOUBLE_FACTORIAL(2*L+1)**2
-    IF (NCH==2) THEN
-      PHASE_SHIFT%R_BB(1,2) = -PHASE_SHIFT%R_BB(1,2) / (2.D0*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
-      PHASE_SHIFT%R_BB(2,1) = -PHASE_SHIFT%R_BB(2,1) / (2.D0*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
-      PHASE_SHIFT%R_BB(2,2) = -PHASE_SHIFT%R_BB(2,2) / DOUBLE_FACTORIAL(2*L+5)**2 - PHASE_SHIFT%R_BB(1,2)**2 * PHASE_SHIFT%R_BB(1,1)
+
+    ! Evaluating the "R_{alpha, beta}" matrix elements
+    CALL DGESV(NCH, NCH, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
+    CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
+    IF (PRINT_I)  WRITE(*,*) "INFO: ", INFO
+
+    IF (PRINT_I) THEN
+      DO IAB = 1, NCH
+      DO IAK = 1, NCH
+        WRITE(*,*)"COEFF R",RMAT(IAB,IAK)
+      ENDDO
+      ENDDO
     ENDIF
+
+    ! Evaluating the "R_{alpha, beta}" matrix elements to the second order
+    CALL R_SECOND_ORDER()
+    IF (PRINT_I) THEN
+      WRITE(*,*)
+      DO IAB = 1, NCH
+      DO IAK = 1, NCH
+        WRITE(*,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
+      ENDDO
+      ENDDO
+    ENDIF
+
+    ! Writing the coefficients to a file in order torecreate the wave function
+    IF (PRESENT(PRINT_COEFFICIENTS)) THEN
+      IF (PRINT_COEFFICIENTS) THEN
+        CALL WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION()
+      ENDIF
+    ENDIF
+
+    ! If energy is zero, return the R matrix
+    PHASE_SHIFT%R_BB(:NCH, :NCH) = RMAT2!/DOUBLE_FACTORIAL(2*L+1)/DOUBLE_FACTORIAL(2*L-1)
+    IF (E==0.0D0) THEN
+      PHASE_SHIFT%R_BB(1,1) = -PHASE_SHIFT%R_BB(1,1) / DOUBLE_FACTORIAL(2*L+1)**2
+      IF (NCH==2) THEN
+        PHASE_SHIFT%R_BB(1,2) = -PHASE_SHIFT%R_BB(1,2) / (2.D0*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
+        PHASE_SHIFT%R_BB(2,1) = -PHASE_SHIFT%R_BB(2,1) / (2.D0*DOUBLE_FACTORIAL(2*L+1)*DOUBLE_FACTORIAL(2*L+5)*PHASE_SHIFT%R_BB(1,1))
+        PHASE_SHIFT%R_BB(2,2) = -PHASE_SHIFT%R_BB(2,2) / DOUBLE_FACTORIAL(2*L+5)**2 - PHASE_SHIFT%R_BB(1,2)**2 * PHASE_SHIFT%R_BB(1,1)
+      ENDIF
+      RETURN
+    ENDIF
+
+    ! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
+    CALL CALCULATE_PHASE_SHIFTS_BLATT(RMAT2, NCH, DELTA1, DELTA2, AMIXR)
+    DELTA1G = RAD_TO_DEG(DELTA1)
+    DELTA2G = RAD_TO_DEG(DELTA2)
+    AMIXG = RAD_TO_DEG(AMIXR)
+
+    IF (PRINT_I) THEN
+      WRITE(*,*)
+      WRITE(*,*)"BLATT-BIEDENHARN"
+      WRITE(*,*)"MIXING ANGLE=",AMIXG
+      WRITE(*,*)"SFASAMENTO1=",DELTA1G
+      WRITE(*,*)"SFASAMENTO2=",DELTA2G
+    ENDIF
+
+    PHASE_SHIFT%delta1_BB = DELTA1G
+    PHASE_SHIFT%delta2_BB = DELTA2G
+    PHASE_SHIFT%epsilon_BB = AMIXG
+
+    ! Calculating the S-matrix
+    CALL CALCULATE_S_MATRIX(SMAT, NCH, DELTA1, DELTA2, AMIXR)
+    PHASE_SHIFT%S(:NCH, :NCH) = SMAT
+
+    IF (PRINT_I) THEN
+      WRITE(*,*)
+      WRITE(*,*)"S-MATRIX"
+      WRITE(*,*) "S(1,1)=" , SMAT(1,1)
+      WRITE(*,*) "S(1,2)=" , SMAT(1,2)
+      WRITE(*,*) "S(2,2)=" , SMAT(2,2)
+    ENDIF
+
+    ! Calculating the phase shifts and mixing angles in the Stapp convention
+    CALL CALCULATE_PHASE_SHIFTS_STAPP(RMAT2, SMAT, DELTA1S, DELTA2S, AMIXGS)
+
+    IF (PRINT_I) THEN
+      WRITE(*,*)
+      WRITE(*,*)"STAPP"
+      WRITE(*,*) "MIXING ANGLE=",AMIXGS
+      WRITE(*,*) "SFASAMENTO1=",DELTA1S
+      WRITE(*,*) "SFASAMENTO2=",DELTA2S
+    ENDIF
+
+    PHASE_SHIFT%delta1_S = DELTA1S
+    PHASE_SHIFT%delta2_S = DELTA2S
+    PHASE_SHIFT%epsilon_S = AMIXGS
+
+    IF (PRINT_I) WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
+
     RETURN
-  ENDIF
-
-! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
-  CALL CALCULATE_PHASE_SHIFTS_BLATT(RMAT2, NCH, DELTA1, DELTA2, AMIXR)
-  DELTA1G = TO_DEGREES(DELTA1)
-  DELTA2G = TO_DEGREES(DELTA2)
-  AMIXG = TO_DEGREES(AMIXR)
-
-  IF (PRINT_I) THEN
-    WRITE(*,*)
-    WRITE(*,*)"BLATT-BIEDENHARN"
-    WRITE(*,*)"MIXING ANGLE=",AMIXG
-    WRITE(*,*)"SFASAMENTO1=",DELTA1G
-    WRITE(*,*)"SFASAMENTO2=",DELTA2G
-  ENDIF
-
-  PHASE_SHIFT%delta1_BB = DELTA1G
-  PHASE_SHIFT%delta2_BB = DELTA2G
-  PHASE_SHIFT%epsilon_BB = AMIXG
-  
-! Calculating the S-matrix
-  CALL CALCULATE_S_MATRIX(SMAT, NCH, DELTA1, DELTA2, AMIXR)
-  PHASE_SHIFT%S(:NCH, :NCH) = SMAT
-
-  IF (PRINT_I) THEN
-    WRITE(*,*)
-    WRITE(*,*)"S-MATRIX"
-    WRITE(*,*) "S(1,1)=" , SMAT(1,1)
-    WRITE(*,*) "S(1,2)=" , SMAT(1,2)
-    WRITE(*,*) "S(2,2)=" , SMAT(2,2)
-  ENDIF
-
-  ! Calculating the phase shifts and mixing angles in the Stapp convention
-  CALL CALCULATE_PHASE_SHIFTS_STAPP(RMAT2, SMAT, DELTA1S, DELTA2S, AMIXGS)
-
-  IF (PRINT_I) THEN
-    WRITE(*,*)
-    WRITE(*,*)"STAPP"
-    WRITE(*,*) "MIXING ANGLE=",AMIXGS
-    WRITE(*,*) "SFASAMENTO1=",DELTA1S
-    WRITE(*,*) "SFASAMENTO2=",DELTA2S
-  ENDIF
-  
-  PHASE_SHIFT%delta1_S = DELTA1S
-  PHASE_SHIFT%delta2_S = DELTA2S
-  PHASE_SHIFT%epsilon_S = AMIXGS
-  
-  IF (PRINT_I) WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
-  
-  RETURN
   
   CONTAINS
     !> \brief Handle LAPACK DGESV INFO error.
@@ -1083,14 +910,6 @@ CONTAINS
         ENDDO
       ENDDO
     END SUBROUTINE R_SECOND_ORDER
-
-    PURE FUNCTION TO_DEGREES(ANGLE_RADIANS) RESULT(ANGLE_DEGREES)
-      IMPLICIT NONE
-      DOUBLE PRECISION, PARAMETER :: PI_C = 4.D0*DATAN(1.D0)
-      DOUBLE PRECISION, INTENT(IN) :: ANGLE_RADIANS
-      DOUBLE PRECISION :: ANGLE_DEGREES
-      ANGLE_DEGREES = (ANGLE_RADIANS*180.D0)/PI_C
-    END FUNCTION TO_DEGREES
 
     !> \brief Write coefficients to file to recreate the wave function.
     !! \param[in] FILE (optional) Output file name
@@ -2051,7 +1870,8 @@ CONTAINS
       STOP
     ENDIF
     
-    CALL SET_M_T1Z_T2Z_HTM(VAR_P%TZ)
+    CALL SET_REDUCED_MASS_AND_HTM(VAR_P%TZ, M, HTM)
+    HTM_SET = .TRUE.
     IF (.NOT.GRID_SET) CALL PREPARE_GRID
 
     IF (BESSELS_SET) RETURN
@@ -2150,34 +1970,6 @@ CONTAINS
   END FUNCTION FIND_ENERGY_INDEX
 
   !> \ingroup scattering_nn_variational_mod
-  !> \brief Set mass and isospin projections for the calculation.
-  !! \param[in] TZ Isospin projection
-  SUBROUTINE SET_M_T1Z_T2Z_HTM(TZ)
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: TZ
-    SELECT CASE (TZ)
-      CASE (1)
-        M = MP
-        VAR_P%T1Z = 1
-        VAR_P%T2Z = 1
-      CASE (0)
-        M = MP * MN / (MP + MN)
-        VAR_P%T1Z = 1
-        VAR_P%T2Z =-1
-      CASE (-1)
-        M = MN
-        VAR_P%T1Z =-1
-        VAR_P%T2Z =-1
-      CASE DEFAULT
-        PRINT *, "Invalid TZ value"
-        STOP
-    END SELECT
-
-    HTM = HC**2 / (2 * M)
-    HTM_SET = .TRUE.
-  END SUBROUTINE SET_M_T1Z_T2Z_HTM
-
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the potential matrices for all channels.
   !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE PREPARE_POTENTIAL(CHANNELS)
@@ -2207,6 +1999,7 @@ CONTAINS
       V_AC = ZERO
       V_AA = ZERO
       DO ICH = 1, NC
+        CHANNEL_CURRENT = CHANNELS(ICH)
         CALL POT_PW_RVALUES(POT_PARAMS, CHANNEL_CURRENT, XX_CC, V_CC(ICH,:,:,:))
         CALL POT_PW_RVALUES(POT_PARAMS, CHANNEL_CURRENT, XX_AC, V_AC(ICH,:,:,:))
         CALL POT_PW_RVALUES(POT_PARAMS, CHANNEL_CURRENT, XX_AA, V_AA(ICH,:,:,:))
@@ -2480,6 +2273,157 @@ CONTAINS
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
 
+  SUBROUTINE PRINT_ALL_DATA_IN_MODULE(unit)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: unit
+    INTEGER :: i
+    CHARACTER(LEN=256) :: fname
+    
+    WRITE(fname, '(A,I0,A)') 'scattering_nn_variational_dump_unit', unit, '.txt'
+    OPEN(unit, FILE=TRIM(fname), STATUS='REPLACE', ACTION='WRITE')
+
+    WRITE(unit,*) '==== Module SCATTERING_NN_VARIATIONAL Dump ===='
+
+    ! Scalars
+    WRITE(unit,*) 'NCH =', NCH
+    WRITE(unit,*) 'NNN_MAX =', NNN_MAX
+    WRITE(unit,*) 'USE_DYNAMIC =', USE_DYNAMIC
+    WRITE(unit,*) 'HTM =', HTM
+    WRITE(unit,*) 'M =', M
+    WRITE(unit,*) 'HTM_SET =', HTM_SET
+    WRITE(unit,*) 'PRINT_I =', PRINT_I
+    WRITE(unit,*) 'LMAX =', LMAX
+    WRITE(unit,*) 'TZ_SET =', TZ_SET
+    WRITE(unit,*) 'LMAX_SET =', LMAX_SET
+    WRITE(unit,*) 'PREPARE =', PREPARE
+    WRITE(unit,*) 'NCHANNELS =', NCHANNELS
+    WRITE(unit,*) 'CHANNELS_SET =', CHANNELS_SET
+    WRITE(unit,*) 'GRID_SET =', GRID_SET
+    WRITE(unit,*) 'POTENTIAL_SET =', POTENTIAL_SET
+    WRITE(unit,*) 'IPOT_SET =', IPOT_SET
+    WRITE(unit,*) 'NE =', NE
+    WRITE(unit,*) 'ENERGIES_SET =', ENERGIES_SET
+    WRITE(unit,*) 'BESSELS_SET =', BESSELS_SET
+    WRITE(unit,*) 'LAGUERRE_SET =', LAGUERRE_SET
+    WRITE(unit,*) 'LECS_SET =', LECS_SET
+    WRITE(unit,*) 'NEW_LECS =', NEW_LECS
+    WRITE(unit,*) 'CH_INDEX =', CH_INDEX
+
+    ! Arrays and allocatables: print only sizes
+    WRITE(unit,*) 'LC: size =', SIZE(LC)
+
+    IF (ALLOCATED(CHANNELS_)) THEN
+      WRITE(unit,*) 'CHANNELS_ size =', SIZE(CHANNELS_)
+      DO i=1, SIZE(CHANNELS_)
+        WRITE(unit,*) '  CHANNELS_(',i,') = ', GET_CHANNEL_NAME(CHANNELS_(i))
+      END DO
+    END IF
+
+    WRITE(unit,*) 'CHANNEL: ', GET_CHANNEL_NAME(CHANNEL)
+
+    IF (ALLOCATED(XX_CC)) WRITE(unit,*) 'XX_CC size =', SIZE(XX_CC)
+    IF (ALLOCATED(YY_CC)) WRITE(unit,*) 'YY_CC size =', SIZE(YY_CC)
+    IF (ALLOCATED(XX_AC)) WRITE(unit,*) 'XX_AC size =', SIZE(XX_AC)
+    IF (ALLOCATED(XX_AA)) WRITE(unit,*) 'XX_AA size =', SIZE(XX_AA)
+    IF (ALLOCATED(A_CC))  WRITE(unit,*) 'A_CC size =', SIZE(A_CC)
+    IF (ALLOCATED(A_AC))  WRITE(unit,*) 'A_AC size =', SIZE(A_AC)
+    IF (ALLOCATED(A_AA))  WRITE(unit,*) 'A_AA size =', SIZE(A_AA)
+    IF (ALLOCATED(B_AA))  WRITE(unit,*) 'B_AA size =', SIZE(B_AA)
+    IF (ALLOCATED(AJ_AA)) WRITE(unit,*) 'AJ_AA size =', SIZE(AJ_AA)
+    IF (ALLOCATED(AJ_AC)) WRITE(unit,*) 'AJ_AC size =', SIZE(AJ_AC)
+    IF (ALLOCATED(YYL_AC))WRITE(unit,*) 'YYL_AC size =', SIZE(YYL_AC)
+
+    IF (ALLOCATED(V_CC))  WRITE(unit,*) 'V_CC size =', SHAPE(V_CC)
+    IF (ALLOCATED(V_AC))  WRITE(unit,*) 'V_AC size =', SHAPE(V_AC)
+    IF (ALLOCATED(V_AA))  WRITE(unit,*) 'V_AA size =', SHAPE(V_AA)
+
+    IF (ALLOCATED(ENERGIES_)) WRITE(unit,*) 'ENERGIES_ size =', SIZE(ENERGIES_)
+    IF (ALLOCATED(KK))       WRITE(unit,*) 'KK size =', SIZE(KK)
+    IF (ALLOCATED(K2))       WRITE(unit,*) 'K2 size =', SIZE(K2)
+
+    IF (ALLOCATED(FBES_AA))  WRITE(unit,*) 'FBES_AA size =', SHAPE(FBES_AA)
+    IF (ALLOCATED(FBES_AC))  WRITE(unit,*) 'FBES_AC size =', SHAPE(FBES_AC)
+    IF (ALLOCATED(GBES_AA))  WRITE(unit,*) 'GBES_AA size =', SHAPE(GBES_AA)
+    IF (ALLOCATED(GBES_AC))  WRITE(unit,*) 'GBES_AC size =', SHAPE(GBES_AC)
+    IF (ALLOCATED(GBES0_AA)) WRITE(unit,*) 'GBES0_AA size =', SHAPE(GBES0_AA)
+    IF (ALLOCATED(GBES1_AA)) WRITE(unit,*) 'GBES1_AA size =', SHAPE(GBES1_AA)
+    IF (ALLOCATED(GBES2_AA)) WRITE(unit,*) 'GBES2_AA size =', SHAPE(GBES2_AA)
+    IF (ALLOCATED(HNOR_AA))  WRITE(unit,*) 'HNOR_AA size =', SHAPE(HNOR_AA)
+
+    IF (ALLOCATED(V0_CC)) WRITE(unit,*) 'V0_CC size =', SHAPE(V0_CC)
+    IF (ALLOCATED(V1_CC)) WRITE(unit,*) 'V1_CC size =', SHAPE(V1_CC)
+    IF (ALLOCATED(V2_CC)) WRITE(unit,*) 'V2_CC size =', SHAPE(V2_CC)
+    IF (ALLOCATED(V0_AC)) WRITE(unit,*) 'V0_AC size =', SHAPE(V0_AC)
+    IF (ALLOCATED(V1_AC)) WRITE(unit,*) 'V1_AC size =', SHAPE(V1_AC)
+    IF (ALLOCATED(V2_AC)) WRITE(unit,*) 'V2_AC size =', SHAPE(V2_AC)
+
+    IF (ALLOCATED(H_MINUS_E_CC))    WRITE(unit,*) 'H_MINUS_E_CC size =', SHAPE(H_MINUS_E_CC)
+    IF (ALLOCATED(H_MINUS_E_AC_R))  WRITE(unit,*) 'H_MINUS_E_AC_R size =', SHAPE(H_MINUS_E_AC_R)
+    IF (ALLOCATED(H_MINUS_E_AC_I))  WRITE(unit,*) 'H_MINUS_E_AC_I size =', SHAPE(H_MINUS_E_AC_I)
+    IF (ALLOCATED(H_MINUS_E_AA_RR)) WRITE(unit,*) 'H_MINUS_E_AA_RR size =', SHAPE(H_MINUS_E_AA_RR)
+    IF (ALLOCATED(H_MINUS_E_AA_RI)) WRITE(unit,*) 'H_MINUS_E_AA_RI size =', SHAPE(H_MINUS_E_AA_RI)
+    IF (ALLOCATED(H_MINUS_E_AA_IR)) WRITE(unit,*) 'H_MINUS_E_AA_IR size =', SHAPE(H_MINUS_E_AA_IR)
+    IF (ALLOCATED(H_MINUS_E_AA_II)) WRITE(unit,*) 'H_MINUS_E_AA_II size =', SHAPE(H_MINUS_E_AA_II)
+
+    IF (ALLOCATED(K_MINUS_E_CC))    WRITE(unit,*) 'K_MINUS_E_CC size =', SHAPE(K_MINUS_E_CC)
+    IF (ALLOCATED(K_MINUS_E_AC_R))  WRITE(unit,*) 'K_MINUS_E_AC_R size =', SHAPE(K_MINUS_E_AC_R)
+    IF (ALLOCATED(K_MINUS_E_AC_I))  WRITE(unit,*) 'K_MINUS_E_AC_I size =', SHAPE(K_MINUS_E_AC_I)
+    IF (ALLOCATED(K_MINUS_E_AA_RR)) WRITE(unit,*) 'K_MINUS_E_AA_RR size =', SHAPE(K_MINUS_E_AA_RR)
+    IF (ALLOCATED(K_MINUS_E_AA_RI)) WRITE(unit,*) 'K_MINUS_E_AA_RI size =', SHAPE(K_MINUS_E_AA_RI)
+    IF (ALLOCATED(K_MINUS_E_AA_IR)) WRITE(unit,*) 'K_MINUS_E_AA_IR size =', SHAPE(K_MINUS_E_AA_IR)
+    IF (ALLOCATED(K_MINUS_E_AA_II)) WRITE(unit,*) 'K_MINUS_E_AA_II size =', SHAPE(K_MINUS_E_AA_II)
+
+    IF (ALLOCATED(VM_CC))    WRITE(unit,*) 'VM_CC size =', SHAPE(VM_CC)
+    IF (ALLOCATED(VM_AC_R))  WRITE(unit,*) 'VM_AC_R size =', SHAPE(VM_AC_R)
+    IF (ALLOCATED(VM_AC_I))  WRITE(unit,*) 'VM_AC_I size =', SHAPE(VM_AC_I)
+    IF (ALLOCATED(VM_AA_RR)) WRITE(unit,*) 'VM_AA_RR size =', SHAPE(VM_AA_RR)
+    IF (ALLOCATED(VM_AA_RI)) WRITE(unit,*) 'VM_AA_RI size =', SHAPE(VM_AA_RI)
+    IF (ALLOCATED(VM_AA_IR)) WRITE(unit,*) 'VM_AA_IR size =', SHAPE(VM_AA_IR)
+    IF (ALLOCATED(VM_AA_II)) WRITE(unit,*) 'VM_AA_II size =', SHAPE(VM_AA_II)
+
+    IF (ALLOCATED(FMAT_CC))    WRITE(unit,*) 'FMAT_CC size =', SHAPE(FMAT_CC)
+    IF (ALLOCATED(FMAT_AC_R))  WRITE(unit,*) 'FMAT_AC_R size =', SHAPE(FMAT_AC_R)
+    IF (ALLOCATED(FMAT_AC_I))  WRITE(unit,*) 'FMAT_AC_I size =', SHAPE(FMAT_AC_I)
+    IF (ALLOCATED(FMAT_AA_RR)) WRITE(unit,*) 'FMAT_AA_RR size =', SHAPE(FMAT_AA_RR)
+    IF (ALLOCATED(FMAT_AA_RI)) WRITE(unit,*) 'FMAT_AA_RI size =', SHAPE(FMAT_AA_RI)
+    IF (ALLOCATED(FMAT_AA_IR)) WRITE(unit,*) 'FMAT_AA_IR size =', SHAPE(FMAT_AA_IR)
+    IF (ALLOCATED(FMAT_AA_II)) WRITE(unit,*) 'FMAT_AA_II size =', SHAPE(FMAT_AA_II)
+
+    ! Dump types
+    WRITE(unit,*) 'VAR_P:'
+    WRITE(unit,*) '  J=', VAR_P%J, ' L=', VAR_P%L, ' S=', VAR_P%S, ' T=', VAR_P%T, ' TZ=', VAR_P%TZ
+    WRITE(unit,*) '  T1Z=', VAR_P%T1Z, ' T2Z=', VAR_P%T2Z, ' IPOT=', VAR_P%IPOT, ' ILB=', VAR_P%ILB, ' LEMP=', VAR_P%LEMP
+    WRITE(unit,*) '  E=', VAR_P%E, ' K=', VAR_P%K, ' HR1=', VAR_P%HR1, ' H=', VAR_P%H, ' RANGE=', VAR_P%RANGE
+    WRITE(unit,*) '  GAMMA=', VAR_P%GAMMA, ' EPS=', VAR_P%EPS, ' AF=', VAR_P%AF
+    WRITE(unit,*) '  NX_AA=', VAR_P%NX_AA, ' NX_AC=', VAR_P%NX_AC, ' NX_CC=', VAR_P%NX_CC, ' NNL=', VAR_P%NNL
+
+    WRITE(unit,*) 'LECS:'
+    WRITE(unit,*) '  ILB=', LECS%ILB, ' ORDER=', LECS%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    WRITE(unit,*) '  CLO(0:1)'
+    WRITE(unit,*) '  CNLO(7)'
+    WRITE(unit,*) '  CN3LO(11)'
+    WRITE(unit,*) '  CIT(0:4)'
+
+    WRITE(unit,*) 'EFT_RADIAL_CC:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_CC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_CC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_CC%FR_I)
+
+    WRITE(unit,*) 'EFT_RADIAL_AC:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_AC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AC%FR_I)
+
+    WRITE(unit,*) 'EFT_RADIAL_AA:'
+    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AA%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1)'
+    IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AA%FR_I)
+
+    CLOSE(unit)
+  END SUBROUTINE PRINT_ALL_DATA_IN_MODULE
+
+
   !> @brief Compute NN scattering phase shifts for multiple energies and channels using the variational method.
   !>
   !> @details
@@ -2662,6 +2606,7 @@ CONTAINS
   !> Array dimensions are described in the comment body above.
   SUBROUTINE FIT_CHANNEL_LOW_ENERGY(CHANNEL_TO_FIT, ENERGIES, PHASE_SHIFTS, FIT_CONSTANTS, ORDER_OF_THE_FIT, KSQUARED, K2L1COTD)
     USE FIT_MODULE
+    USE ANGLES
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL_TO_FIT
     DOUBLE PRECISION, INTENT(IN) :: ENERGIES(:)
@@ -2681,7 +2626,9 @@ CONTAINS
     NK2 = SIZE(ENERGIES)
     NEQ = GET_CHANNEL_NCH(CHANNEL_TO_FIT)
     CALL REALLOCATE_1D_2(X, Y, NK2)
-    CALL SET_M_T1Z_T2Z_HTM(GET_CHANNEL_TZ(CHANNEL_TO_FIT))
+    CALL SET_REDUCED_MASS_AND_HTM(GET_CHANNEL_TZ(CHANNEL_TO_FIT), M, HTM)
+    HTM_SET = .TRUE.
+    
     X = ENERGIES / HTM
     IF (PRESENT(KSQUARED)) THEN
       IF (SIZE(KSQUARED) /= NK2) THEN

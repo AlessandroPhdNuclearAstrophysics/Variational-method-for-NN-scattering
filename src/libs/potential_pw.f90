@@ -144,6 +144,22 @@ CONTAINS
     DOUBLE PRECISION, INTENT(OUT) :: VPW(:,:,:)
 
     INTEGER :: I
+    INTEGER :: NCH
+
+    ! Check that the first dimension of VPW matches the size of RVALS
+    IF (SIZE(VPW,1) /= SIZE(RVALS)) THEN
+      STOP "ERROR: First dimension of VPW must match size of RVALS"
+    END IF
+
+    ! Check that the last two dimensions of VPW are equal and either 1 or 2
+    NCH = SIZE(VPW,2)
+    IF (NCH /= SIZE(VPW,3)) THEN
+      STOP "ERROR: Last two dimensions of VPW must be equal"
+    END IF
+    IF ((NCH /= 1) .AND. (NCH /= 2)) THEN
+      STOP "ERROR: Last two dimensions of VPW must be size 1 or 2"
+    END IF
+
     DO I = 1, SIZE(RVALS)
       CALL POT_PW_PARAMS_CHANNEL(POTENTIAL_PARAMS, CHANNEL, RVALS(I), VPW(I,:,:))
     END DO

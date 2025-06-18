@@ -181,6 +181,7 @@ delete_doc:
 
 # Test target: build and run all test executables in $(TEST_DIR)
 test: $(TEST_EXECUTABLES)
+	@echo "\033[0;32mRunning all tests...\033[0m"
 	@for t in $(TEST_EXECUTABLES); do \
 		echo ; \
 		echo "\033[1;34mRunning $$t\033[0m"; \
