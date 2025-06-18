@@ -19,11 +19,6 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD
   USE QUANTUM_NUMBERS
   IMPLICIT NONE
 
-  !> \brief Maximum total angular momentum J to consider.
-  INTEGER, PARAMETER :: JMAX = 2
-  !> \brief Maximum orbital angular momentum L to consider.
-  INTEGER, PARAMETER :: LMAX = JMAX + 1
-
   !> \brief Number of energy points and number of channels.
   INTEGER :: NE = 200, NCH = 0
   INTEGER :: NEQ

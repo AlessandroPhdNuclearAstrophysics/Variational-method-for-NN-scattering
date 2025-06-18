@@ -18,9 +18,6 @@ OUT_DIR := output
 
 # Common flags
 COMMON_FLAGS = -fimplicit-none -ffree-line-length-none -Wall -Wextra
-COMMON_FLAGS+= -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-dummy-argument
-COMMON_FLAGS+= -Wno-implicit-interface -Wno-argument-mismatch
-COMMON_FLAGS+= -Wno-compare-reals -Wno-maybe-uninitialized
 COMMON_FLAGS+= -fdefault-real-8 -fdefault-double-8 -ffpe-trap=invalid,zero,overflow -finit-real=snan
 
 # Set the flags for the Fortran compiler

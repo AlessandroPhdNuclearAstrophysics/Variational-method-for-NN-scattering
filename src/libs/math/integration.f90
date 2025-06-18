@@ -212,7 +212,7 @@ CONTAINS
   ! APPROXIMATE THE ITH ROOT
       IF(I.EQ.1)THEN
         Z=(1.+ALF)*(3.+.92*ALF)/(1.+2.4*N+1.8*ALF)
-      ELSE IF(I.EQ.2)THEN
+      ELSEIF(I.EQ.2)THEN
         Z=Z+(15.+6.25*ALF)/(1.+.9*ALF+2.5*N)
       ELSE
         AI=I-2
