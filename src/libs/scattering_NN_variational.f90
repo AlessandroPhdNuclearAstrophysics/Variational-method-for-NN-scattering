@@ -758,7 +758,7 @@ CONTAINS
       PRINT 10, "J:     ",                VAR_P%J
       PRINT 10, "NCH:   ",                NCH
       PRINT 10, "L0:    ",                LC(1)
-      IF (NCH==2) PRINT 10, "L1:    ",  LC(2)
+      IF (NCH==2) PRINT 10, "L1:    ",    LC(2)
       PRINT 10, "S:     ",                VAR_P%S
       PRINT 10, "T:     ",                VAR_P%T
       PRINT 10, "TZ:    ",                VAR_P%TZ
@@ -939,18 +939,14 @@ CONTAINS
 
       WRITE(19,*)NCH,GAMMA,NNL
       WRITE(19,*)EPS
-
       DO IAK=1,NCH
         WRITE(19,*)LLA(IAK),LSA(IAK),LTA(IAK),LJA(IAK)
-
         DO I=1,NNN
           WRITE(19,*) XICOEFF(IAK,I)
         ENDDO
-
         DO I=1,NNN
           WRITE(19,*) XRCOEFF(IAK,I)
         ENDDO
-
       ENDDO
 
       DO IAK=1,NCH
