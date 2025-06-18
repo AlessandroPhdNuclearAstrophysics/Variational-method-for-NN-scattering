@@ -264,6 +264,7 @@
 			^2\epsilon \\
 		\end{array}
 		\right)\,.
+		\label{SBB}
 	\end{equation}
 	It is possible now to extract the phase shifts and mixing angle in the Stapp parametrization.
 	In this parametrization 
@@ -283,6 +284,7 @@
 	and therefore
 	\begin{equation}
 		\sin(2\epsilon) = \sqrt{-\frac{S_{12}^2}{\det S}}
+		\label{eq:epsStapp}
 	\end{equation}
 	and 
 	\begin{equation}
@@ -536,10 +538,10 @@
 				\right) & 
 				(2\ell+1)!!(2\ell+5)!!
 				\left(a_1-k^4\,a_2\right)
-				\dfrac{\sin2\epsilon}{k^2}\\
+				\dfrac{\sin2\epsilon}{2k^2}\\[2.ex]
 				(2\ell+1)!!(2\ell+5)!!
 				\left(a_1-k^4\,a_2\right)
-				\dfrac{\sin2\epsilon}{k^2} &
+				\dfrac{\sin2\epsilon}{2k^2} &
 				\left[(2\ell+5)!!\right]^2\left(
 				a_1\,\dfrac{\sin^2\epsilon}{k^4}
 				+a_2\,\cos^2\epsilon
@@ -563,21 +565,115 @@
 			\begin{pmatrix}
 				\left[(2\ell+1)!!\right]^2\,
 				a_1 & 
-				2(2\ell+1)!!(2\ell+5)!!\,
+				(2\ell+1)!!(2\ell+5)!!\,
 				a_1\,
-				e_1\\
-				2(2\ell+1)!!(2\ell+5)!!\,
+				e_J\\
+				(2\ell+1)!!(2\ell+5)!!\,
 				a_1\,
-				e_1 &
+				e_J &
 				\left[(2\ell+5)!!\right]^2\left(
-				a_1\,e_1^2
+				a_1\,e_J^2
 				+a_2
 				\right)
 			\end{pmatrix}\,.			
 		\end{empheq}
+		\textbf{Notice }that these results are in the BB parametrization! 
+		
+		\subsection{BB scattering lengths $a_i$ and mixing constant $e_J$}
+		In this case it is possible to solve for $a_1$, $a_2$ and $e_J$
+		\begin{equation}
+			\begin{cases}
+				a_1 &=- \dfrac{\tilde{R}_{\ell_1\ell_1}}{\left[(2\ell+1)!!\right]^2}\,,\\[2.5ex]
+				e_J &=	
+				\dfrac{(2\ell+1)!!\,\tilde{R}_{\ell_1\ell_2}}
+				{(2\ell+5)!!\,\tilde{R}_{\ell_1\ell_1}}\,,\\[2.5ex]
+				a_2 &=
+				\dfrac{\tilde{R}_{\ell_1\ell_2}^2-\tilde{R}_{\ell_1\ell_1}\tilde{R}_{\ell_2\ell_2}}{(2\ell+5)!!\,\tilde{R}_{\ell_1\ell_1}}\,,
+			\end{cases}
+			\mand
+			\begin{cases}
+				\delta_1 &\simeq -a_1 \,k^{2\ell_1+1}\,,\\
+				\epsilon &\simeq e_J\,k^2\,\\
+				\delta_2 & \simeq - a_2\,k^{2\ell_2+1}\,.
+			\end{cases}
+		\end{equation}
 		
 		
+		\subsection{Stapp scattering lengths $\tilde{a}_i$ and mixing constant $\tilde{e}_J$}
+		Inserting \eq{\eqref{SBB}} into \eq{\eqref{eq:epsStapp}} 
+		\begin{equation}
+			\sin2\tilde{\epsilon}
+			=
+			\frac{1}{2}\sqrt{- e^{-2 i \left(\delta _1+\delta _2\right)} \left(e^{2 i \delta _1}-e^{2 i \delta _2}\right){}^2 \sin ^2(2 \epsilon )}\,,
+		\end{equation}
+		where $\delta_1$, $\delta_2$ and $\epsilon$ are respectively the scattering length of the first and second channel, and the mixing angle in the BB parametrization. 
+		From now on the quantities in the Stapp parametrization will have a tilde on top of them.
+		To extract $\tilde{a}_i$ and $\tilde{e}_J$ it is necessary to expand this, obtaining
+		\begin{equation}
+			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{\ell_1+\ell_2+1}\,.
+		\end{equation}
+		Defining $\ell_2\equiv\ell_1+\Delta \ell$ and $\ell\equiv \ell_1$
+		\begin{equation}
+			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{2\ell+\Delta \ell +1}\,.
+		\end{equation}
+		or, using $\Delta\ell = 2$ 
+		\begin{equation}
+			\tilde{\epsilon} \simeq - \frac{a_1\sqrt{a_2^2\,e_J^2}}{a_2}\,k^{2\ell+3}\,.
+		\end{equation}
+		Therefore 
+		\begin{equation}
+			\tilde{e}_J = \frac{\tilde{\epsilon}}{k^{2\ell+3}}
+		\end{equation}
+		giving
+		\begin{equation}
+			\tilde{e}_J =
+			-a_1\,|e_J|\,\mtm{sign}(a_2)\,.
+		\end{equation}
 		
+		Doing the same procedure for 
+		\begin{equation}
+			\tilde{\delta}_1 = -\frac{i}{2}\,\log\left(\frac{S_{11}}{\cos\tilde{\epsilon}}\right)
+		\end{equation}
+		leads to
+		\begin{equation}
+			\tilde{\delta}_1 = -a_1\,k^{2\ell_1+1} 
+		\end{equation}
+		and therefore
+		\begin{equation}
+			\tilde{a}_1 = a_1\,.
+		\end{equation}
+		
+		Finally, repeating the procedure for $\tilde{\delta}_2$ 
+		\begin{equation}
+			\delta_2 = -\frac{i}{2}\,\sqrt{\frac{S_{22}}{\cos\tilde{\epsilon}}}
+		\end{equation}
+		one gets
+		\begin{equation}
+			\tilde{\delta}_2 \simeq
+			-(a_2+a_1\,e_J^2)k^{2\ell_2+1}
+		\end{equation}
+		and therefore
+		\begin{equation}
+			\tilde{a}_2 = a_2+a_1\,e_J^2\,.
+		\end{equation}
+		
+		To summarize
+		\begin{equation}
+			\begin{cases}
+				\tilde{a}_1 &= a_1\,,\\
+				\tilde{e}_J &=
+				-a_1\,|e_J|\,\mtm{sign}(a_2)\,,\\
+				\tilde{a}_2 &= a_2+a_1\,e_J^2\,,
+			\end{cases}
+			\mand
+			\begin{cases}
+				\tilde{\delta}_1 &\simeq - \tilde{a}_1\,k^{2\ell_1+1}\,,\\
+				\tilde{\epsilon} &	\simeq
+				\tilde{e}_J\,k^{\ell_1+\ell_2+1}\,,\\
+				\tilde{\delta}_2 & \simeq -
+				\tilde{a}_2\,k^{2\ell_2+1}\,.
+			\end{cases}
+		\end{equation}
 		
 		
 		
