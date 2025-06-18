@@ -6,13 +6,13 @@ MODULE SCATTERING
   !> \ingroup scattering_nn_variational_mod
   !> \brief Structure to store the results of phase shift calculations.
   !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
-  TYPE, PUBLIC :: PHASE_SHIFTS
+  TYPE, PUBLIC :: PHASE_SHIFTS_STRUCT
     DOUBLE PRECISION :: DELTA1 = 0.D0        !< Phase shift 1 [deg]
     DOUBLE PRECISION :: DELTA2 = 0.D0        !< Phase shift 2 [deg]
-    DOUBLE PRECISION :: MIXING = 0.D0       !< Mixing angle [deg]
-    LOGICAL :: DEGREES = .TRUE.                 !< Flag to indicate if angles are in degrees
-    LOGICAL :: STAPP = .TRUE.                   !< Flag to indicate if angles are in Stapp convention
-  END TYPE PHASE_SHIFTS
+    DOUBLE PRECISION :: MIXING = 0.D0        !< Mixing angle [deg]
+    LOGICAL :: DEGREES = .TRUE.              !< Flag to indicate if angles are in degrees
+    LOGICAL :: STAPP = .TRUE.                !< Flag to indicate if angles are in Stapp convention
+  END TYPE PHASE_SHIFTS_STRUCT
 
   DOUBLE COMPLEX, PARAMETER :: IM = (0.0D0, 1.0D0)  !< Imaginary unit
 
@@ -27,7 +27,7 @@ CONTAINS
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: DIM
       DOUBLE PRECISION, INTENT(IN) :: R_MATRIX(:,:)
-      TYPE(PHASE_SHIFTS) :: PS
+      TYPE(PHASE_SHIFTS_STRUCT) :: PS
       DOUBLE PRECISION :: AMIX_BB, DELTA_1BB, DELTA_2BB
       PS%DEGREES = .FALSE.
       PS%STAPP   = .FALSE.
@@ -66,7 +66,7 @@ CONTAINS
       IMPLICIT NONE 
       INTEGER, INTENT(IN) :: DIM
       DOUBLE PRECISION, INTENT(IN) :: R_MATRIX(:,:)
-      TYPE(PHASE_SHIFTS) :: PS
+      TYPE(PHASE_SHIFTS_STRUCT) :: PS
       PS = CALCULATE_PHASE_SHIFTS_BLATT_RAD(R_MATRIX, DIM)
       PS%DELTA1 = RAD_TO_DEG(PS%DELTA1)
       PS%DELTA2 = RAD_TO_DEG(PS%DELTA2)
@@ -78,7 +78,7 @@ CONTAINS
 
     SUBROUTINE CALCULATE_S_MATRIX_FROM_BLATT(PS_BB, DIM, S_MATRIX)
       IMPLICIT NONE
-      TYPE(PHASE_SHIFTS), INTENT(IN) :: PS_BB
+      TYPE(PHASE_SHIFTS_STRUCT), INTENT(IN) :: PS_BB
       INTEGER, INTENT(IN) :: DIM
       DOUBLE COMPLEX, INTENT(OUT) :: S_MATRIX(:,:)
       DOUBLE COMPLEX :: SM1, SM2
@@ -121,7 +121,7 @@ CONTAINS
       DOUBLE PRECISION, INTENT(IN) :: R_MATRIX_BB(:,:)
       DOUBLE COMPLEX, INTENT(IN) :: S_MATRIX(:,:)
       INTEGER, INTENT(IN) :: DIM
-      TYPE(PHASE_SHIFTS) :: PS_S
+      TYPE(PHASE_SHIFTS_STRUCT) :: PS_S
 
       DOUBLE PRECISION, PARAMETER :: TOL = 1.D-14
       DOUBLE COMPLEX :: SM1, SM2
@@ -212,7 +212,7 @@ CONTAINS
       DOUBLE PRECISION, INTENT(IN) :: R_MATRIX_BB(:,:)
       DOUBLE COMPLEX, INTENT(IN) :: S_MATRIX(:,:)
       INTEGER, INTENT(IN) :: DIM
-      TYPE(PHASE_SHIFTS) :: PS_S
+      TYPE(PHASE_SHIFTS_STRUCT) :: PS_S
 
       PS_S = CALCULATE_PHASE_SHIFTS_STAPP_RAD(R_MATRIX_BB, S_MATRIX, DIM)
       PS_S%DELTA1 = RAD_TO_DEG(PS_S%DELTA1)

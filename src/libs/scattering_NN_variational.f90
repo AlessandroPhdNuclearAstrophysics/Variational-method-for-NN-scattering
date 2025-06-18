@@ -16,6 +16,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   USE QUANTUM_NUMBERS
   USE EFT_PLESS
   USE PHYSICAL_CONSTANTS
+  USE SCATTERING
   IMPLICIT NONE
   PRIVATE
 
@@ -428,8 +429,9 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE, SAVE :: RMAT2(:,:)
 
     ! PHASE-SHIFTS AND MIXING ANGLES
-    DOUBLE PRECISION :: AMIXR, AMIXG, DELTA1, DELTA2, DELTA1G, DELTA2G
-    DOUBLE PRECISION :: AMIXGS, DELTA1S, DELTA2S
+    DOUBLE PRECISION :: AMIXR, AMIX_DEG, DELTA1, DELTA2, DELTA1_DEG, DELTA2_DEG
+    DOUBLE PRECISION :: AMIX_DEGS, DELTA1S, DELTA2S
+    TYPE(PHASE_SHIFTS_STRUCT) :: PS
 
     ! S-MATRIX
     DOUBLE COMPLEX, ALLOCATABLE, SAVE :: SMAT(:,:)
@@ -691,51 +693,48 @@ CONTAINS
     ENDIF
 
     ! Calculating the phase shifts and mixing angles in the Blatt-Biedenharn convention
-    CALL CALCULATE_PHASE_SHIFTS_BLATT(RMAT2, NCH, DELTA1, DELTA2, AMIXR)
-    DELTA1G = RAD_TO_DEG(DELTA1)
-    DELTA2G = RAD_TO_DEG(DELTA2)
-    AMIXG = RAD_TO_DEG(AMIXR)
+    PS = CALCULATE_PHASE_SHIFTS_BLATT_RAD(RMAT2, NCH)
 
+    PHASE_SHIFT%delta1_BB  = RAD_TO_DEG(PS%DELTA1)
+    PHASE_SHIFT%delta2_BB  = RAD_TO_DEG(PS%DELTA2)
+    PHASE_SHIFT%epsilon_BB = RAD_TO_DEG(PS%MIXING)
+    
     IF (PRINT_I) THEN
       WRITE(*,*)
       WRITE(*,*)"BLATT-BIEDENHARN"
-      WRITE(*,*)"MIXING ANGLE=",AMIXG
-      WRITE(*,*)"SFASAMENTO1=",DELTA1G
-      WRITE(*,*)"SFASAMENTO2=",DELTA2G
+      WRITE(*,*)"MIXING ANGLE=", PHASE_SHIFT%epsilon_BB
+      WRITE(*,*)"DELTA_1     =", PHASE_SHIFT%delta1_BB
+      WRITE(*,*)"DELTA_2     =", PHASE_SHIFT%delta2_BB
     ENDIF
 
-    PHASE_SHIFT%delta1_BB = DELTA1G
-    PHASE_SHIFT%delta2_BB = DELTA2G
-    PHASE_SHIFT%epsilon_BB = AMIXG
-
     ! Calculating the S-matrix
-    CALL CALCULATE_S_MATRIX(SMAT, NCH, DELTA1, DELTA2, AMIXR)
+    CALL CALCULATE_S_MATRIX_FROM_BLATT(PS, NCH, SMAT)
     PHASE_SHIFT%S(:NCH, :NCH) = SMAT
 
     IF (PRINT_I) THEN
       WRITE(*,*)
-      WRITE(*,*)"S-MATRIX"
+      WRITE(*,*) "S-MATRIX"
       WRITE(*,*) "S(1,1)=" , SMAT(1,1)
       WRITE(*,*) "S(1,2)=" , SMAT(1,2)
       WRITE(*,*) "S(2,2)=" , SMAT(2,2)
     ENDIF
 
     ! Calculating the phase shifts and mixing angles in the Stapp convention
-    CALL CALCULATE_PHASE_SHIFTS_STAPP(RMAT2, SMAT, DELTA1S, DELTA2S, AMIXGS)
+    PS = CALCULATE_PHASE_SHIFTS_STAPP_DEG(RMAT2, SMAT, NCH)
 
     IF (PRINT_I) THEN
       WRITE(*,*)
       WRITE(*,*)"STAPP"
-      WRITE(*,*) "MIXING ANGLE=",AMIXGS
-      WRITE(*,*) "SFASAMENTO1=",DELTA1S
-      WRITE(*,*) "SFASAMENTO2=",DELTA2S
+      WRITE(*,*) "MIXING ANGLE=", PS%MIXING
+      WRITE(*,*) "DELTA_1     =", PS%DELTA1
+      WRITE(*,*) "DELTA_2     =", PS%DELTA2
     ENDIF
 
-    PHASE_SHIFT%delta1_S = DELTA1S
-    PHASE_SHIFT%delta2_S = DELTA2S
-    PHASE_SHIFT%epsilon_S = AMIXGS
+    PHASE_SHIFT%delta1_S  = PS%DELTA1
+    PHASE_SHIFT%delta2_S  = PS%DELTA2
+    PHASE_SHIFT%epsilon_S = PS%MIXING
 
-    IF (PRINT_I) WRITE(*,*) DELTA1S, DELTA2S, AMIXGS
+    IF (PRINT_I) WRITE(*,*) PHASE_SHIFT%delta1_S, PHASE_SHIFT%delta2_S, PHASE_SHIFT%epsilon_S
 
     RETURN
   
@@ -956,147 +955,6 @@ CONTAINS
       ENDDO
       CLOSE(19)
     END SUBROUTINE WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION
-
-    !> \brief Calculate phase shifts and mixing angle in the Blatt-Biedenharn convention.
-    SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT(R, DIM, DELTA_1BB, DELTA_2BB, AMIX_BB)
-      IMPLICIT NONE
-      INTEGER, INTENT(IN) :: DIM
-      DOUBLE PRECISION, INTENT(IN) :: R(:,:)
-      DOUBLE PRECISION, INTENT(OUT) :: DELTA_1BB, DELTA_2BB, AMIX_BB
-      IF (DIM == 1) THEN
-        DELTA_1BB = ATAN((R(1,1)))
-        DELTA_2BB = 0.D0
-        AMIX_BB  = 0.D0
-        RETURN
-      ENDIF
-
-      IF (DIM > 2) THEN
-        PRINT *, "Error: R-matrix dimension is greater than 2 in CALCULATE_PHASE_SHIFTS_BLATT"
-        STOP
-      ENDIF
-      IF (R(1,2) /= ZERO .AND. R(1,1) == R(2,2)) THEN
-        PRINT *, "Error: R is singular in CALCULATE_PHASE_SHIFTS_BLATT"
-        STOP
-      ENDIF
-      AMIX_BB=0.5D0*ATAN(2.*R(1,2)/(R(1,1)-R(2,2)))
-
-      DELTA_1BB=ATAN((COS(AMIX_BB)*COS(AMIX_BB)*R(1,1)  &
-                   +SIN(AMIX_BB)*SIN(AMIX_BB)*R(2,2)  &
-                   +2*COS(AMIX_BB)*SIN(AMIX_BB)*R(1,2)))
-
-      DELTA_2BB=ATAN((SIN(AMIX_BB)*SIN(AMIX_BB)*R(1,1)  &
-                   +COS(AMIX_BB)*COS(AMIX_BB)*R(2,2)  &
-                   -2*COS(AMIX_BB)*SIN(AMIX_BB)*R(1,2)))
-
-    END SUBROUTINE CALCULATE_PHASE_SHIFTS_BLATT
-
-    !> \brief Calculate the S-matrix from the R-matrix.
-    SUBROUTINE CALCULATE_S_MATRIX(SM, DIM, DELTA_BB1, DELTA_BB2, MIXING_ANGLE_BB)
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: DELTA_BB1, DELTA_BB2, MIXING_ANGLE_BB
-      INTEGER, INTENT(IN) :: DIM
-      DOUBLE COMPLEX, INTENT(OUT) :: SM(:,:)
-
-      DOUBLE PRECISION :: COS1, SIN1
-      DOUBLE COMPLEX :: SM1, SM2
-      SM1  = CDEXP(2.D0*IM*DELTA_BB1)
-      SM2  = CDEXP(2.D0*IM*DELTA_BB2)
-      COS1 = COS(MIXING_ANGLE_BB)
-      SIN1 = SIN(MIXING_ANGLE_BB)
-      SM(1,1) = COS1*COS1*SM1 + SIN1*SIN1*SM2
-      IF ( DIM == 1 ) RETURN
-      SM(2,2) = COS1*COS1*SM2 + SIN1*SIN1*SM1
-      SM(1,2) = COS1*SIN1*(SM1 - SM2)
-      SM(2,1) = SM(1,2)
-    END SUBROUTINE CALCULATE_S_MATRIX
-
-    !> \brief Calculate phase shifts and mixing angle in the Stapp convention.
-    SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP(R, SM, DELTA1_S, DELTA2_S, AMIXG_S)
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: R(:,:)
-      DOUBLE COMPLEX, INTENT(IN) :: SM(:,:)
-      DOUBLE PRECISION, INTENT(OUT) :: DELTA1_S, DELTA2_S, AMIXG_S
-
-      DOUBLE PRECISION, PARAMETER :: TOL = 1.D-14
-      DOUBLE COMPLEX :: SM1, SM2
-      DOUBLE PRECISION :: SI2E, CI2E, CX, SX
-      IF (NCH == 1) THEN
-        DELTA1_S = ATAN((R(1,1)))
-        DELTA1_S = (DELTA1_S*180.D0)/PI
-        DELTA2_S = 0.D0
-        AMIXG_S  = 0.D0
-        RETURN
-      ENDIF
-      SM1  = REAL(SM(1,1)*SM(2,2)-SM(1,2)*SM(1,2))
-      SI2E =-REAL(SM(1,2)*SM(1,2)/SM1)
-      CI2E = ONE - SI2E
-      IF (CI2E.LT.ZERO) THEN
-        PRINT *, "Error: CI2E is negative in CALCULATE_PHASE_SHIFTS_STAPP", CI2E
-        STOP
-      ENDIF
-      IF (SI2E.LT.ZERO) THEN
-        PRINT *, "Error: SI2E is negative in CALCULATE_PHASE_SHIFTS_STAPP", SI2E
-        STOP
-      ENDIF
-      SI2E = DSQRT(SI2E)
-      CI2E = DSQRT(CI2E)
-
-    ! I MIXING ANGLES DELLE ONDE DISPARI (JP=0) VENGONO COL SEGNO SBAGLIATO!
-      SM1 = CDSQRT(SM(1,1)/CI2E)
-      SM2 = CDSQRT(SM(2,2)/CI2E)
-      CX  = DREAL(SM1)
-      SX  = DIMAG(SM1)
-      IF (ABS(CX).GT.ONE) THEN
-        IF (ABS(CX-1).LT.TOL) THEN
-          CX = CX/DABS(CX)
-        ELSE
-          PRINT *, "Error: CX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", CX, " CX - 1", CX-1
-          STOP
-        ENDIF 
-      ENDIF
-      IF (ABS(SX).GT.ONE) THEN
-        IF (ABS(SX-1).LT.TOL) THEN
-          SX = SX/DABS(SX)
-        ELSE
-          PRINT *, "Error: SX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SX, " SX - 1", SX-1
-          STOP
-        ENDIF
-      ENDIF
-      DELTA1_S = DACOS(CX)*180.D0/PI
-      IF(SX.LT.ZERO) DELTA1_S = -DELTA1_S
-
-      CX = DREAL(SM2)
-      SX = DIMAG(SM2)
-      IF (ABS(CX).GT.ONE) THEN
-        IF (ABS(CX-1).LT.TOL) THEN
-          CX = CX/DABS(CX)
-        ELSE
-          PRINT *, "Error: CX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", CX, " CX - 1", CX-1
-          STOP
-        ENDIF
-      ENDIF
-      IF (ABS(SX).GT.ONE) THEN
-        IF (ABS(SX-1).LT.TOL) THEN
-          SX = SX/DABS(SX)
-        ELSE
-          PRINT *, "Error: SX is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SX, " SX - 1", SX-1
-          STOP
-        ENDIF
-      ENDIF
-      DELTA2_S = DACOS(CX)*180.D0/PI
-      IF(SX.LT.ZERO) DELTA2_S = -DELTA2_S
-
-      IF (ABS(SI2E).GT.ONE) THEN
-        IF (ABS(SI2E-1).LT.TOL) THEN
-          SI2E = SI2E/DABS(SI2E)
-        ELSE
-          PRINT *, "Error: SI2E is out of bounds in CALCULATE_PHASE_SHIFTS_STAPP", SI2E, " SI2E - 1", SI2E-1
-          STOP
-        ENDIF
-      ENDIF
-      AMIXG_S = (0.5D0*DASIN(SI2E))*180.D0/PI
-    END SUBROUTINE CALCULATE_PHASE_SHIFTS_STAPP
-
   END SUBROUTINE NN_SCATTERING_VARIATIONAL
 
 
