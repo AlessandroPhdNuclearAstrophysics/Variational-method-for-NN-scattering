@@ -320,7 +320,7 @@
 	
 	
 	
-		\section{Asymptotic expansion and scattering length}
+		\section{Asymptotic expansion at low energies}
 		As seen in \eq{\eqref{eq:asymptotic_u}} it is possibly to write for non-coupled channels
 		\begin{equation}
 			\psi_\ell(r) = 
@@ -426,6 +426,7 @@
 			\dfrac{\tilde{R}_{\ell\ell}}{2\ell+1}
 			=
 			\frac{(2\ell+1)!!\,(2\ell-1)!!}{k^{2\ell+1}}\,R_{\ell\ell}
+			\label{eq:connectionRs}
 		\end{equation}
 		and therefore
 		\begin{equation}
@@ -645,6 +646,74 @@
 				\tilde{a}_2\,k^{2\ell_2+1}\,.
 			\end{cases}
 		\end{equation}
+		
+		
+		
+		
+	\subsection{The effective range}
+	Starting from the uncoupled channel and taking \eq{\eqref{eq:connectionRs}} one can write
+	\begin{equation}
+		\tilde{R}_{\ell\ell}=
+		\left[(2\ell+1)!!\right]^2\,
+		\frac{R_{\ell\ell}}{k^{2\ell+1}}
+		=
+		\left[(2\ell+1)!!\right]^2\,
+		\frac{1}{k^{2\ell+1}\,\cot \delta_\ell}
+		\,.
+	\end{equation}
+	Recalling the expansion
+	\begin{equation}
+		k^{2\ell+1}\,\cot \delta_\ell \simeq 
+		-\frac{1}{a} + \frac{1}{2}\,r_0\,k^2
+		+ b\,k^4 +\mathcal{O}(k^5)\,,
+	\end{equation}
+	it is easy to evaluate
+	\begin{equation}
+		\mathcal{R}(k)=-2\left[(2\ell+1)!!\right]^2\,\frac{\tilde{R}_{\ell}(k)-\tilde{R}_{\ell\ell}(0)}{k^2\,\tilde{R}_{\ell\ell}^2(0)}\,.
+	\end{equation}
+	To make things simpler it is better to define $f=(2\ell+1)!!$, 
+	\begin{equation}
+		\mathcal{R}(k)
+		=
+		-\frac{2\cancel{f^2}}{k^2}\frac{\cancel{f^2}\left(\dfrac{1}{-\dfrac{1}{a} + \dfrac{1}{2}\,r_0\,k^2
+		+ b\,k^4}-\dfrac{1}{-\dfrac{1}{a}}\right)}{\cancel{f^4}\,a^2}
+		=
+		-\frac{2}{a^2\,k^2}\,\left(
+		\dfrac{1}{-\dfrac{1}{a} + \dfrac{1}{2}\,r_0\,k^2
+			+ b\,k^4} +a
+		\right)\,.
+	\end{equation}
+	This can be further simplified to
+	\begin{equation}
+		\mathcal{R}(k)=
+		\frac{2}{a^2\,k^2}\,\left(
+		\frac{2a}{-2+a\,r_0\,k^2+2ab\,k^4}
+			+ a
+		\right)
+		=
+		-\frac{2}{\cancel{a^2}\,\cancel{k^2}}\,
+		\frac{\cancel{2a}-\cancel{2a}+\cancel{a^2}r_0\,\cancel{k^2}+2\cancel{a^2}b\,k^{\cancel{4}2}}{-2+a\,r_0\,k^2+2ab\,k^4}
+	\end{equation}
+	or
+	\begin{equation}
+		\mathcal{R}(k)
+		=
+		-2\,
+		\frac{r_0+2b\,k^2}{-2+a\,r_0\,k^2+2ab\,k^4}\,.
+	\end{equation}
+	For $k\rightarrow 0$ 
+	\begin{equation}
+		\mathcal{R}(k)= r_0\left(1+ \frac{1}{2}\left(a\,r_0+\frac{4b}{r_0}\right)k^2\right) +\mathcal{O}(k^4) = r_0 +\mathcal{O}(E)\,.
+	\end{equation}
+	Unfortunately so far the code seems to unstable to evaluate this or there is a problem with formulas/code.
+	
+	
+	
+	
+	
+	
+	
+	
 		
 	\begin{appendices}
 	\newcommand{\teps}{\tilde{\epsilon}}
