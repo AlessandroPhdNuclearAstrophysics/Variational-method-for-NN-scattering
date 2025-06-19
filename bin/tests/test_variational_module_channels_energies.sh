@@ -29,29 +29,39 @@ if [ $need_make -eq 1 ]; then
   $EXE
 fi
 
+
+echo 
+echo "=============== Testing AV18 ============================"
+echo
 for i in $AV18_2/delta_* ; do 
-  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/AV18/$(basename $i) -q
+  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/AV18/$(basename $i) -s -q
   if [ $? -eq 0 ]; then
     echo -e "\e[32m[PASSED]\e[0m No difference between $i and bin/tests/test_files/scattering_phase_shifts/AV18/$(basename $i)"
   else
-    echo -e "\e[31m[FAILED]\e[0m Difference found between $i and bin/tests/test_files/scattering_phase_shifts/AV18/$(basename $i)"
+    echo -e "\e[31m[FAILED]\e[0m Difference found between \e[31m$i\e[0m and \e[31mbin/tests/test_files/scattering_phase_shifts/AV18/$(basename $i)\e[0m"
   fi 
 done
 
+echo 
+echo "=============== Testing EFT_pless_15 ============================"
+echo
 for i in $EFT_pless_15_2/delta_* ; do 
-  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i) -q
+  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i) -s -q
   if [ $? -eq 0 ]; then
     echo -e "\e[32m[PASSED]\e[0m No difference between $i and bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)"
   else
-    echo -e "\e[31m[FAILED]\e[0m Difference found between $i and bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)"
+    echo -e "\e[31m[FAILED]\e[0m Difference found between \e[31m$i\e[0m and \e[31mbin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)\e[0m"
   fi 
 done
 
+echo 
+echo "=============== Testing EFT_pless_15_dynamic ============================"
+echo
 for i in $EFT_pless_15_dynamic_2/delta_* ; do 
-  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i) -q
+  diff-numerics $i bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i) -s -q
   if [ $? -eq 0 ]; then
     echo -e "\e[32m[PASSED]\e[0m No difference between $i and bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)"
   else
-    echo -e "\e[31m[FAILED]\e[0m Difference found between $i and bin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)"
+    echo -e "\e[31m[FAILED]\e[0m Difference found between \e[31m$i\e[0m and \e[31mbin/tests/test_files/scattering_phase_shifts/EFT_pless_15/$(basename $i)\e[0m"
   fi 
 done
