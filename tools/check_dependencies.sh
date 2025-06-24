@@ -3,6 +3,7 @@
 REQUIRED_DEPENDENCIES=(
     "git"
     "python3"
+    "pip"
     "diff-numerics"
     "grace"
     "fortran-module-interface-generator"
@@ -18,6 +19,9 @@ ask_install() {
                 ;;
             "python3")
                 sudo apt-get install python3
+                ;;
+            "pip")
+                sudo apt-get install python3-pip
                 ;;
             "diff-numerics")
                 git clone https://github.com/AlessandroPhdNuclearAstrophysics/diff-numerics
