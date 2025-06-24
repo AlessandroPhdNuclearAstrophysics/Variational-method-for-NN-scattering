@@ -38,7 +38,7 @@ ask_install() {
                 git clone https://github.com/AlessandroPhdNuclearAstrophysics/fortran-module-public-interface-generator
                 cd fortran-module-public-interface-generator
                 pip install -r requirements.txt
-                python3 setup.py install -e
+                pip install -e .
                 cd ..
                 rm -rf fortran-module-public-interface-generator
                 ;;
