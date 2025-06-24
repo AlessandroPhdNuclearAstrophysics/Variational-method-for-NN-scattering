@@ -1,5 +1,7 @@
 !> \file coulomb_FG.f90
 !! \brief Fortran interface to GSL Coulomb wave functions F and G.
+!! \defgroup gsl_coulomb Coulomb Wave Functions
+!! \ingroup math
 !!
 !! This module provides a Fortran interface to the GNU Scientific Library (GSL)
 !! routines for computing regular (F) and irregular (G) Coulomb wave functions,
@@ -7,7 +9,8 @@
 !!
 !! \author Alessandro
 !! \date 2025
-
+!!
+!! \note This module requires the GSL library to be installed and linked with your Fortran project.
 module gsl_coulomb
   use, intrinsic :: iso_c_binding
   implicit none
@@ -17,6 +20,7 @@ module gsl_coulomb
   public :: coulomb_wave_FG, gsl_sf_result
 
   !> \brief Fortran type matching GSL's gsl_sf_result struct.
+  !! \ingroup gsl_coulomb
   !! Holds a value and an absolute error estimate.
   type, bind(C), public :: gsl_sf_result
     real(c_double) :: val  !< Function value
@@ -24,6 +28,7 @@ module gsl_coulomb
   end type gsl_sf_result
 
   !> \brief Fortran interface to GSL's gsl_sf_coulomb_wave_fg_e.
+  !! \ingroup gsl_coulomb
   !! \param[in] eta Sommerfeld parameter
   !! \param[in] x   Radial coordinate
   !! \param[in] L   Orbital angular momentum
@@ -51,6 +56,7 @@ module gsl_coulomb
 contains
 
   !> \brief Compute regular and irregular Coulomb wave functions and their derivatives.
+  !! \ingroup gsl_coulomb
   !!
   !! This is a Fortran wrapper for GSL's gsl_sf_coulomb_wave_FG_e.
   !! Computes F_L(η,ρ), F'_L(η,ρ), G_L(η,ρ), G'_L(η,ρ) and their scaling exponents.

@@ -1,4 +1,7 @@
 !> \file scattering.f90
+!! \defgroup nn_scattering Scattering NN
+!! \defgroup nn_scattering_utils Scattering NN Utilities
+!! \ingroup nn_scattering
 !! \brief Utilities for phase shift and scattering calculations in nuclear/particle physics.
 !!
 !! This module provides types and routines for phase shift calculations, S-matrix construction,
@@ -12,6 +15,7 @@ MODULE SCATTERING
   PRIVATE
 
   !> \brief Structure to store the results of phase shift calculations.
+  !! \ingroup nn_scattering
   !! Contains phase shifts and mixing angles in both Blatt-Biedenharn and Stapp conventions.
   TYPE, PUBLIC :: PHASE_SHIFTS_STRUCT
     DOUBLE PRECISION :: DELTA1 = 0.D0        !< Phase shift 1 [deg]
@@ -22,6 +26,7 @@ MODULE SCATTERING
   END TYPE PHASE_SHIFTS_STRUCT
 
   !> \brief Structure to store zero-energy scattering observables.
+  !! \ingroup nn_scattering
   !! Contains scattering lengths and mixing angle in both conventions.
   TYPE, PUBLIC :: ZERO_ENERGY_OBSERVABLES
     DOUBLE PRECISION :: a1 = 0.D0         !< Scattering length a_1 [fm^(2l_1+1)]
@@ -45,6 +50,7 @@ MODULE SCATTERING
 CONTAINS
 
   !> \brief Calculate phase shifts in Blatt-Biedenharn convention (radians).
+  !! \ingroup nn_scattering
   !! Given an R-matrix and its dimension, computes the phase shifts and mixing angle
   !! in the Blatt-Biedenharn convention (in radians).
   !! \param[in] R_MATRIX The R-matrix (1x1 or 2x2)
@@ -90,6 +96,7 @@ CONTAINS
   END FUNCTION CALCULATE_PHASE_SHIFTS_BLATT_RAD
 
   !> \brief Calculate phase shifts in Blatt-Biedenharn convention (degrees).
+  !! \ingroup nn_scattering
   !! Converts the output of CALCULATE_PHASE_SHIFTS_BLATT_RAD to degrees.
   !! \param[in] R_MATRIX The R-matrix (1x1 or 2x2)
   !! \param[in] DIM Dimension of the matrix (1 or 2)
@@ -109,6 +116,7 @@ CONTAINS
   END FUNCTION CALCULATE_PHASE_SHIFTS_BLATT_DEG
 
   !> \brief Construct S-matrix from Blatt-Biedenharn phase shifts.
+  !! \ingroup nn_scattering
   !! Given phase shifts and mixing angle in Blatt-Biedenharn convention, constructs the S-matrix.
   !! \param[in] PS_BB Phase shifts structure (Blatt-Biedenharn)
   !! \param[in] DIM Dimension (1 or 2)
@@ -152,6 +160,7 @@ CONTAINS
   END SUBROUTINE CALCULATE_S_MATRIX_FROM_BLATT
 
   !> \brief Calculate phase shifts in Stapp convention (radians).
+  !! \ingroup nn_scattering
   !! Computes phase shifts and mixing angle in the Stapp convention (radians) from
   !! a given R-matrix and S-matrix.
   !! \param[in] R_MATRIX_BB The R-matrix (Blatt-Biedenharn)
@@ -250,6 +259,7 @@ CONTAINS
   END FUNCTION CALCULATE_PHASE_SHIFTS_STAPP_RAD
 
   !> \brief Calculate phase shifts in Stapp convention (degrees).
+  !! \ingroup nn_scattering
   !! Converts the output of CALCULATE_PHASE_SHIFTS_STAPP_RAD to degrees.
   !! \param[in] R_MATRIX_BB The R-matrix (Blatt-Biedenharn)
   !! \param[in] S_MATRIX The S-matrix
@@ -271,13 +281,14 @@ CONTAINS
     PS_S%STAPP   = .TRUE.
   END FUNCTION CALCULATE_PHASE_SHIFTS_STAPP_DEG
 
-!> \brief Evaluate zero-energy observables in Blatt-Biedenharn convention.
-!! Computes zero-energy scattering observables (scattering lengths, mixing) in the Blatt-Biedenharn convention.
-!! \param[in] R_MATRIX The R-matrix (1x1 or 2x2)
-!! \param[in] DIM Dimension (1 or 2)
-!! \param[in] LMIN Minimum orbital angular momentum
-!! \return ZERO_ENERGY_OBSERVABLES structure
-FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R_MATRIX, DIM, LMIN) RESULT(OBS)
+  !> \brief Evaluate zero-energy observables in Blatt-Biedenharn convention.
+  !! \ingroup nn_scattering
+  !! Computes zero-energy scattering observables (scattering lengths, mixing) in the Blatt-Biedenharn convention.
+  !! \param[in] R_MATRIX The R-matrix (1x1 or 2x2)
+  !! \param[in] DIM Dimension of the matrix (1 or 2)
+  !! \param[in] LMIN Minimum orbital angular momentum
+  !! \return ZERO_ENERGY_OBSERVABLES structure
+  FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R_MATRIX, DIM, LMIN) RESULT(OBS)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: R_MATRIX(:,:)
     INTEGER, INTENT(IN) :: DIM, LMIN
@@ -301,6 +312,7 @@ FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R_MATRIX, DIM, LMIN) RESULT(OBS)
   END FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB
 
   !> \brief Evaluate zero-energy observables in Stapp convention.
+  !! \ingroup nn_scattering
   !! Computes zero-energy scattering observables (scattering lengths, mixing) in the Stapp convention.
   !! \param[in] R_MATRIX The R-matrix (1x1 or 2x2)
   !! \param[in] DIM Dimension (1 or 2)
@@ -318,6 +330,7 @@ FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R_MATRIX, DIM, LMIN) RESULT(OBS)
   END FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP
 
   !> \brief Transform zero-energy observables to Stapp convention.
+  !! \ingroup nn_scattering
   !! Converts zero-energy observables from Blatt-Biedenharn to Stapp convention.
   !! \param[in] OBS_BB Observables in Blatt-Biedenharn convention
   !! \return Observables in Stapp convention
@@ -338,6 +351,7 @@ FUNCTION EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R_MATRIX, DIM, LMIN) RESULT(OBS)
   END FUNCTION TRANSFORM_OBSERVABLES_TO_STAPP
 
   !> \brief Transform zero-energy observables to Blatt-Biedenharn convention.
+  !! \ingroup nn_scattering
   !! Converts zero-energy observables from Stapp to Blatt-Biedenharn convention.
   !! \param[in] OBS_S Observables in Stapp convention
   !! \return Observables in Blatt-Biedenharn convention

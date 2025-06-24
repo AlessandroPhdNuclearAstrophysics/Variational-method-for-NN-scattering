@@ -1,5 +1,7 @@
 !> \file Laguerre_polynomials.f90
 !! \brief Laguerre polynomial evaluation utilities for variational calculations.
+!! \defgroup laguerre Laguerre Polynomials
+!! \ingroup math
 !!
 !! This module provides routines to compute Laguerre polynomials and their first and
 !! second derivatives for use in basis expansions and quadrature.
@@ -10,6 +12,7 @@ MODULE LAGUERRE_POLYNOMIAL_MOD
 CONTAINS
 
   !> \brief Compute Laguerre polynomials and their derivatives.
+  !! \ingroup laguerre
   !!
   !! This subroutine evaluates the generalized Laguerre polynomials L_n^{(α)}(x)
   !! and their first and second derivatives for a set of points.

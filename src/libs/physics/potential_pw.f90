@@ -1,4 +1,6 @@
 !> \file potential_pw.f90
+!! \defgroup nn_potentials N-N Potentials
+!! \ingroup physics
 !! \brief Interface for the calculation of partial-wave nuclear potentials.
 !!
 !! This module provides interfaces and routines to compute the nucleon-nucleon
@@ -19,6 +21,13 @@ MODULE POTENTIALS
   PUBLIC :: SET_POTENTIAL_PARAMETERS
   PUBLIC :: POT_PW_RVALUES
 
+
+  !> \brief Generic interface for partial-wave potential calculation.
+  !! \ingroup nn_potentials
+  !! This interface allows the user to call POT_PW with different argument lists:
+  !! - All parameters specified individually (see POT_PW_PARAMS_ALL)
+  !! - Using a parameter structure (see POT_PW_PARAMS)
+  !! - Using a parameter structure and a channel object (see POT_PW_PARAMS_CHANNEL)
   INTERFACE POT_PW
     MODULE PROCEDURE POT_PW_PARAMS_ALL
     MODULE PROCEDURE POT_PW_PARAMS
@@ -26,6 +35,7 @@ MODULE POTENTIALS
   END INTERFACE
 
   !> Structure containing all parameters needed to specify a nuclear potential.
+  !! \ingroup nn_potentials
   TYPE:: POTENTIAL_PARAMETERS
     INTEGER :: POT_MODEL      = 0   !< Potential identifier (14=AV14, 18=AV18, 19=EFT_PLESS, 21=EFT_PLESS_FITTED)
     INTEGER :: POT_SUBMODEL   = 0   !< Channel index (used by some potentials)
@@ -35,6 +45,7 @@ MODULE POTENTIALS
 CONTAINS
 
   !> Computes the partial-wave nuclear potential matrix for different models.
+  !! \ingroup nn_potentials
   !! Selects the desired potential model based on IPOT and calls the corresponding routine.
   !! \param[in] IPOT Potential identifier (14=AV14, 18=AV18, 19=EFT_PLESS, 21=EFT_PLESS_FITTED)
   !! \param[in] ILB Channel index (used by some potentials)
@@ -80,6 +91,7 @@ CONTAINS
   END SUBROUTINE POT_PW_PARAMS_ALL
 
   !> Computes the partial-wave potential matrix using a parameter structure.
+  !! \ingroup nn_potentials
   !! \param[in] POTENTIAL_PARAMS Structure containing all potential parameters
   !! \param[in] L Orbital angular momentum
   !! \param[in] S Total spin
@@ -100,6 +112,7 @@ CONTAINS
   END SUBROUTINE POT_PW_PARAMS
 
   !> Computes the partial-wave potential matrix for a given scattering channel.
+  !! \ingroup nn_potentials
   !! \param[in] POTENTIAL_PARAMS Structure containing all potential parameters
   !! \param[in] CHANNEL Scattering channel structure
   !! \param[in] R Interparticle distance (fm)
@@ -137,6 +150,7 @@ CONTAINS
   END SUBROUTINE POT_PW_PARAMS_CHANNEL
 
   !> Computes the potential matrix for a set of R values for a given channel.
+  !! \ingroup nn_potentials
   !! \param[in] POTENTIAL_PARAMS Structure containing all potential parameters
   !! \param[in] CHANNEL Scattering channel structure
   !! \param[in] RVALS Array of interparticle distances (fm)
@@ -170,8 +184,8 @@ CONTAINS
     END DO
   END SUBROUTINE POT_PW_RVALUES
 
-
   !> Sets the potential parameters structure.
+  !! \ingroup nn_potentials
   !! \param[in] IPOT Potential identifier (14=AV14, 18=AV18, 19=EFT_PLESS)
   !! \param[in] ILB Channel index (used by some potentials)
   !! \param[in] LEMP Type of electromagnetic interaction (0=Coulomb, >0=see AV18 EMPOT)

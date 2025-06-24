@@ -1,4 +1,6 @@
 !> \file quantum_operators.f90
+!! \defgroup quantum_op Quantum Operators
+!! \ingroup physics
 !! \brief Module providing quantum mechanical operators for nuclear physics calculations
 !!
 !! This module implements various quantum mechanical operators commonly used in nuclear physics,
@@ -14,10 +16,10 @@ MODULE QUANTUM_OPERATORS
   PRIVATE
 
   !> \brief Interface for the S12 operator.
-  !! 
+  !! \ingroup quantum_op
   !! This interface provides overloaded procedures for the S12 operator,
   !! allowing usage with either quantum numbers or channel representations.
-  !! 
+  !!
   !! \par Overloads:
   !! - S12_OPERATOR_QUANTUM_NUMBERS(L, S, J): 
   !!     \arg[in] L Orbital angular momentum (integer)
@@ -31,10 +33,10 @@ MODULE QUANTUM_OPERATORS
   END INTERFACE
 
   !> \brief Interface for the LS operator.
-  !!
+  !! \ingroup quantum_op
   !! This interface provides overloaded procedures for the LS operator,
   !! supporting both quantum numbers and channel representations.
-  !! 
+  !!
   !! \par Overloads:
   !! - LS_OPERATOR_QUANTUM_NUMBERS(LMIN, S, J): 
   !!     \arg[in] LMIN Minimum orbital angular momentum (integer)
@@ -48,10 +50,10 @@ MODULE QUANTUM_OPERATORS
   END INTERFACE
 
   !> \brief Interface for the L2 operator.
-  !!
+  !! \ingroup quantum_op
   !! This interface provides overloaded procedures for the L2 operator,
   !! supporting both quantum numbers and channel representations.
-  !! 
+  !!
   !! \par Overloads:
   !! - L2_OPERATOR_QUANTUM_NUMBERS(L, COUPLED): 
   !!     \arg[in] L Orbital angular momentum (integer)
@@ -64,10 +66,10 @@ MODULE QUANTUM_OPERATORS
   END INTERFACE
 
   !> \brief Interface for the T12 operator.
-  !!
+  !! \ingroup quantum_op
   !! This interface provides overloaded procedures for the T12 operator,
   !! supporting both quantum numbers and channel representations.
-  !! 
+  !!
   !! \par Overloads:
   !! - T12_OPERATOR_QUANTUM_NUMBERS(T, TZ): 
   !!     \arg[in] T Total isospin (integer)
@@ -79,7 +81,6 @@ MODULE QUANTUM_OPERATORS
     MODULE PROCEDURE T12_OPERATOR_CHANNEL
   END INTERFACE
 
-  
   ! Public interfaces for the operators
   PUBLIC :: IDENTITY_MATRIX
   PUBLIC :: S12_OPERATOR, LS_OPERATOR, L2_OPERATOR, T12_OPERATOR
@@ -91,6 +92,7 @@ MODULE QUANTUM_OPERATORS
 CONTAINS
 
   !> \brief Identity operator
+  !! \ingroup quantum_op
   !! \param[in] N Dimension of the identity matrix (default 2)
   !! \return Identity matrix of dimension N×N
   FUNCTION IDENTITY_MATRIX(N) RESULT(I_MAT)
@@ -104,16 +106,15 @@ CONTAINS
     ELSE
       DIM = 2  ! Default dimension
     END IF
-    
     ALLOCATE(I_MAT(DIM,DIM))
     I_MAT = 0.0D0
-    
     DO I = 1, DIM
       I_MAT(I,I) = 1.0D0
     END DO
   END FUNCTION IDENTITY_MATRIX
 
   !> \brief Tensor operator S₁₂ = 3(σ₁·r̂)(σ₂·r̂) - σ₁·σ₂
+  !! \ingroup quantum_op
   !! \param[in] L Orbital angular momentum
   !! \param[in] S Spin
   !! \param[in] J Total angular momentum
@@ -157,6 +158,7 @@ CONTAINS
   END FUNCTION S12_OPERATOR_QUANTUM_NUMBERS
 
   !> \brief Tensor operator S₁₂ for a specific scattering channel
+  !! \ingroup quantum_op
   !! \param[in] CHANNEL Scattering channel object
   !! \return S₁₂ matrix representation for the given channel
   FUNCTION S12_OPERATOR_CHANNEL(CHANNEL) RESULT(S12_RES)
@@ -173,6 +175,7 @@ CONTAINS
   END FUNCTION S12_OPERATOR_CHANNEL
 
   !> \brief Spin-orbit operator L·S
+  !! \ingroup quantum_op
   !! \param[in] LMIN Minimum orbital angular momentum
   !! \param[in] S Spin
   !! \param[in] J Total angular momentum
@@ -198,6 +201,7 @@ CONTAINS
   END FUNCTION LS_OPERATOR_QUANTUM_NUMBERS
 
   !> \brief Spin-orbit operator L·S for a specific scattering channel
+  !! \ingroup quantum_op
   !! \param[in] CHANNEL Scattering channel object
   !! \return L·S matrix representation for the given channel
   FUNCTION LS_OPERATOR_CHANNEL(CHANNEL) RESULT(LS_OP)
@@ -214,6 +218,7 @@ CONTAINS
   END FUNCTION LS_OPERATOR_CHANNEL
 
   !> \brief Orbital angular momentum squared operator L²
+  !! \ingroup quantum_op
   !! \param[in] L Orbital angular momentum
   !! \param[in] COUPLED Flag indicating if channels are coupled
   !! \return L² matrix representation in |L> or coupled |LSJ> basis
@@ -238,6 +243,7 @@ CONTAINS
   END FUNCTION L2_OPERATOR_QUANTUM_NUMBERS
 
   !> \brief L² operator for a specific scattering channel
+  !! \ingroup quantum_op
   !! \param[in] CHANNEL Scattering channel object
   !! \return L² matrix representation for the given channel
   FUNCTION L2_OPERATOR_CHANNEL(CHANNEL) RESULT(L2_MAT)
@@ -253,6 +259,7 @@ CONTAINS
   END FUNCTION L2_OPERATOR_CHANNEL
 
   !> \brief Isospin operator T₁₂ = τ₁·τ₂
+  !! \ingroup quantum_op
   !! \param[in] T Total isospin
   !! \param[in] TZ Isospin projection
   !! \return T₁₂ value (scalar for two-nucleon system)
@@ -277,6 +284,7 @@ CONTAINS
   END FUNCTION T12_OPERATOR_QUANTUM_NUMBERS
 
   !> \brief Isospin operator T₁₂ for a specific scattering channel
+  !! \ingroup quantum_op
   !! \param[in] CHANNEL Scattering channel object
   !! \return T₁₂ value for the given channel
   FUNCTION T12_OPERATOR_CHANNEL(CHANNEL) RESULT(CD)

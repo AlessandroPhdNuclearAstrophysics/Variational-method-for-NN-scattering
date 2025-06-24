@@ -1,5 +1,6 @@
 !> \file scattering_NN_variational.f90
-!! \defgroup scattering_nn_variational_mod Scattering NN Variational Module
+!! \defgroup scattering_nn_variational_mod Scattering NN Variational Method
+!! \ingroup nn_scattering
 !! \brief Module for evaluating nucleon-nucleon (NN) scattering wave functions and phase shifts
 !!        using the variational and Kohn principles.
 !! This module provides routines to compute the scattering wave function and phase shifts
@@ -10,6 +11,9 @@
 !!
 !! \author Alessandro
 !! \date 2025
+!!
+!! \note This module must be compiled with OpenMP support enabled for parallel processing.
+!! \note This module must be linked with Lapacke and BLAS libraries for matrix operations.
 MODULE SCATTERING_NN_VARIATIONAL
   USE REALLOCATE_UTILS
   USE QUANTUM_NUMBERS

@@ -1,12 +1,15 @@
 !> \file fit_module.f90
 !! \brief Polynomial and linear regression utilities for scattering analysis.
+!! \defgroup fit_module Polynomial and Linear Regression
+!! \ingroup math
 !!
 !! This module provides routines for linear, quadratic, cubic, and general polynomial
 !! regression, including versions with and without constant terms, using LAPACK.
 !!
 !! \author Alessandro
 !! \date 2025
-
+!!
+!! \note This module requires LAPACK to be installed and linked with your Fortran project.
 MODULE FIT_MODULE
   IMPLICIT NONE
   PRIVATE
@@ -21,6 +24,7 @@ MODULE FIT_MODULE
 CONTAINS
 
   !> \brief Perform linear regression (y = m*x + q).
+  !! \ingroup fit_module
   !! \param[in]  Y, X   Data arrays
   !! \param[in]  NMIN, NMAX Range of indices to use
   !! \param[out] M, Q   Slope and intercept
@@ -78,6 +82,7 @@ CONTAINS
   END SUBROUTINE LINEAR_REGRESSION
 
   !> \brief Perform quadratic regression (y = a*x^2 + b*x + c).
+  !! \ingroup fit_module
   !! \param[in]  Y, X   Data arrays
   !! \param[in]  NMIN, NMAX Range of indices to use
   !! \param[out] A, B, C Quadratic coefficients
@@ -141,6 +146,7 @@ CONTAINS
   END SUBROUTINE QUADRATIC_REGRESSION
 
   !> \brief Perform cubic regression (y = a*x^3 + b*x^2 + c*x + d).
+  !! \ingroup fit_module
   !! \param[in]  Y, X   Data arrays
   !! \param[in]  NMIN, NMAX Range of indices to use
   !! \param[out] A, B, C, D Cubic coefficients
@@ -257,6 +263,7 @@ CONTAINS
   END SUBROUTINE CUBIC_REGRESSION
 
   !> \brief Perform general polynomial regression (with constant term).
+  !! \ingroup fit_module
   !! \param[in]  y, x   Data arrays
   !! \param[in]  degree Degree of polynomial
   !! \param[in]  n_points Number of data points
@@ -315,6 +322,7 @@ CONTAINS
   END SUBROUTINE POLYNOMIAL_REGRESSION
 
   !> \brief Perform polynomial regression without constant term.
+  !! \ingroup fit_module
   !! \param[in]  y, x   Data arrays
   !! \param[in]  degree Degree of polynomial
   !! \param[in]  n_points Number of data points

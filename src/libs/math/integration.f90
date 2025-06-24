@@ -1,17 +1,21 @@
 !> \file integration.f90
 !! \brief Numerical integration utilities for variational scattering codes.
+!! \defgroup integration Numerical Integration
+!! \ingroup math
 !!
 !! This module provides routines for block-adaptive integration, Gauss-Laguerre quadrature,
 !! and exponentially growing grids, with OpenMP support for parallelism.
 !!
 !! \author Alessandro
 !! \date 2025
-
+!!
+!! \note This module must be compiled with OpenMP support enabled.
 MODULE INTEGRATION_MOD
   USE OMP_LIB ! OpenMP library for parallel processing
 CONTAINS
 
   !> \brief Block-adaptive numerical integration over up to 3 blocks.
+  !! \ingroup integration
   !! \param[in] JB    Number of blocks (1-3)
   !! \param[in] M1,M2,M3 Number of steps in each block
   !! \param[in] H1,H2,H3 Step sizes for each block
@@ -113,6 +117,7 @@ CONTAINS
   END FUNCTION B5
 
   !> \brief Numerical integration over a single block using a high-order rule.
+  !! \ingroup integration
   !! \param[in]  M    Number of steps in the block (>=4)
   !! \param[in]  H    Step size for the block
   !! \param[in]  A    Data array to integrate
@@ -188,6 +193,7 @@ CONTAINS
   END FUNCTION B5_SINGLE
 
   !> \brief Computes Gauss-Laguerre quadrature points and weights.
+  !! \ingroup integration
   !! \param[in]  N        Number of quadrature points (1 ≤ N ≤ 600)
   !! \param[out] XPNT     Array(N) of quadrature points (roots)
   !! \param[out] PWEIGHT  Array(N) of quadrature weights
@@ -245,6 +251,7 @@ CONTAINS
   END SUBROUTINE GAULAG
 
   !> \brief Generate an exponentially growing radial grid and weights.
+  !! \ingroup integration
   !! \param[in]  H     Initial step size
   !! \param[in]  AF    Exponential growth factor (>1)
   !! \param[inout] RANGE  Maximum range (may be updated)

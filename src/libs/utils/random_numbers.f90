@@ -1,5 +1,7 @@
 !> \file random_numbers.f90
 !! \brief Utilities for generating random numbers in a given interval for various types.
+!! \defgroup random_numbers Random Number Generators
+!! \ingroup utils
 !!
 !! This module provides functions to generate random numbers of type integer, real,
 !! double precision, and complex (real/imaginary parts) in a specified interval.
@@ -15,6 +17,7 @@ MODULE RANDOM_NUMBERS
 CONTAINS
 
   !> \brief Generate a random integer in [MIN, MAX] (inclusive).
+  !! \ingroup random_numbers
   !! \param[in] MIN Minimum integer value
   !! \param[in] MAX Maximum integer value
   !! \return Random integer in [MIN, MAX]
@@ -32,6 +35,7 @@ CONTAINS
   END FUNCTION RANDOM_INT
 
   !> \brief Generate a random real in [MIN, MAX].
+  !! \ingroup random_numbers
   !! \param[in] MIN Minimum real value
   !! \param[in] MAX Maximum real value
   !! \return Random real in [MIN, MAX]
@@ -43,6 +47,7 @@ CONTAINS
   END FUNCTION RANDOM_REAL
 
   !> \brief Generate a random double precision number in [MIN, MAX].
+  !! \ingroup random_numbers
   !! \param[in] MIN Minimum double value
   !! \param[in] MAX Maximum double value
   !! \return Random double in [MIN, MAX]
@@ -54,6 +59,7 @@ CONTAINS
   END FUNCTION RANDOM_DOUBLE
 
   !> \brief Generate a random complex number in [MIN, MAX] for both real and imaginary parts.
+  !! \ingroup random_numbers
   !! \param[in] MIN Minimum value for real and imaginary parts
   !! \param[in] MAX Maximum value for real and imaginary parts
   !! \return Random complex number with real and imaginary parts in [MIN, MAX]

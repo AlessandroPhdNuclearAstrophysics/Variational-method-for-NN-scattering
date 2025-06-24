@@ -1,5 +1,7 @@
 !> \file operating_system.f90
 !! \brief Utilities for interacting with the operating system (Linux).
+!! \defgroup operating_system Operating System
+!! \ingroup utils
 !!
 !! Provides routines for directory and file management, listing files, and
 !! basic string operations, designed for use in scientific Fortran codes.
@@ -12,6 +14,7 @@ MODULE OPERATING_SYSTEM_LINUX
 
 CONTAINS
   !> \brief Create a directory if it does not exist.
+  !! \ingroup operating_system
   !! \param[in] OUT_DIR Directory path to create
   SUBROUTINE CREATE_DIRECTORY(OUT_DIR)
     CHARACTER(LEN=*), INTENT(IN) :: OUT_DIR
@@ -21,6 +24,11 @@ CONTAINS
     CALL SYSTEM(command)
   END SUBROUTINE CREATE_DIRECTORY
 
+  !> \brief Delete a directory and its contents.
+  !! \ingroup operating_system
+  !! \param[in] OUT_DIR Directory path to delete
+  !! \note This will remove the directory and all its contents recursively.
+  !!       Use with caution as it cannot be undone.
   SUBROUTINE DELETE_DIRECTORY(OUT_DIR)
     CHARACTER(LEN=*), INTENT(IN) :: OUT_DIR
     CHARACTER(LEN=256) :: command
@@ -34,6 +42,7 @@ CONTAINS
   END SUBROUTINE DELETE_DIRECTORY
 
   !> \brief Check if a file exists.
+  !! \ingroup operating_system
   !! \param[in] filename File path to check
   !! \return .TRUE. if file exists, .FALSE. otherwise
   LOGICAL FUNCTION FILE_EXISTS(filename)
@@ -50,6 +59,7 @@ CONTAINS
   END FUNCTION FILE_EXISTS
 
   !> \brief Remove a file if it exists.
+  !! \ingroup operating_system
   !! \param[in] filename File path to remove
   SUBROUTINE REMOVE_FILE(filename)
     CHARACTER(LEN=*), INTENT(IN) :: filename
@@ -62,6 +72,7 @@ CONTAINS
   END SUBROUTINE REMOVE_FILE
 
   !> \brief List files in a directory. Optionally filter by extension.
+  !! \ingroup operating_system
   !! \param[in]  dir_path  Directory to list
   !! \param[out] files     Array of file names
   !! \param[out] count     Number of files found
@@ -103,6 +114,7 @@ CONTAINS
   END SUBROUTINE LIST_FILES_IN_DIRECTORY
 
   !> \brief Get the current working directory.
+  !! \ingroup operating_system
   !! \param[out] current_dir Path of current directory
   SUBROUTINE GET_CURRENT_DIRECTORY(current_dir)
     CHARACTER(LEN=*), INTENT(OUT) :: current_dir
@@ -123,6 +135,7 @@ CONTAINS
   END SUBROUTINE GET_CURRENT_DIRECTORY
 
   !> \brief Get the operating system name.
+  !! \ingroup operating_system
   !! \return OS name string
   CHARACTER(LEN=256) FUNCTION GET_OS_NAME()
     CHARACTER(LEN=256) :: command
@@ -142,6 +155,7 @@ CONTAINS
   END FUNCTION GET_OS_NAME
 
   !> \brief Find all case-insensitive substring matches in a string.
+  !! \ingroup operating_system
   !! \param[in]  input_string String to search
   !! \param[in]  pattern      Pattern to match
   !! \param[out] matches      Array of matches found
@@ -198,6 +212,7 @@ CONTAINS
   END SUBROUTINE FIND_STRING_CASE_INSENSITIVE
 
   !> \brief Convert a string to lowercase (in-place).
+  !! \ingroup operating_system
   !! \param[inout] string String to convert
   SUBROUTINE TO_LOWERCASE(string)
     CHARACTER(LEN=*), INTENT(INOUT) :: string
@@ -212,6 +227,7 @@ CONTAINS
   END SUBROUTINE TO_LOWERCASE
 
   !> \brief Find a file by name within a directory (recursively).
+  !! \ingroup operating_system
   !! \param[in] FILENAME Name of the file to search for
   !! \param[in] DIRECTORY Directory path to search in
   !! \return FILE_NAME_WITH_RELATIVE_PATH Relative path to the found file, or empty string if not found
@@ -244,6 +260,7 @@ CONTAINS
   END FUNCTION FIND_FILE
 
   !> \brief Get the current working directory as a string.
+  !! \ingroup operating_system
   !! \return current_dir The current working directory path
   FUNCTION GET_CURRENT_WORKING_DIRECTORY() RESULT(current_dir)
     CHARACTER(LEN=256) :: current_dir

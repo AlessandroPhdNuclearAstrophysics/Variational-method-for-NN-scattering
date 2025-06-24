@@ -1,5 +1,7 @@
 !> \file spherical_Bessel_functions.f90
 !! \brief Fortran interface and helpers for spherical Bessel functions using GSL.
+!! \defgroup gsl_bessel Spherical Bessel Functions
+!! \ingroup math
 !!
 !! This module provides Fortran interfaces to the GNU Scientific Library (GSL) routines
 !! for regular and irregular spherical Bessel functions, as well as convenient Fortran
@@ -7,14 +9,17 @@
 !!
 !! \author Alessandro
 !! \date 2025
+!!
+!! \note This module requires the GSL library to be installed and linked with your Fortran project.
 module gsl_bessel
   use iso_c_binding
   implicit none
+  private
 
   !> \brief Interface to GSL's spherical Bessel functions.
   interface
     !> \brief Regular spherical Bessel function j_l(x) from GSL.
-    function gsl_sf_bessel_jl(l, x) bind(C, name="gsl_sf_bessel_jl")
+    function gsl_sf_bessel_jl(l, x) bind(C, name="gsl_sf_bessel_jl") result(gsl_sf_bessel_jl)
       import c_int, c_double
       integer(c_int), value :: l
       real(c_double), value :: x
@@ -22,7 +27,7 @@ module gsl_bessel
     end function
 
     !> \brief Irregular spherical Bessel function y_l(x) from GSL.
-    function gsl_sf_bessel_yl(l, x) bind(C, name="gsl_sf_bessel_yl")
+    function gsl_sf_bessel_yl(l, x) bind(C, name="gsl_sf_bessel_yl") result(gsl_sf_bessel_yl)
       import c_int, c_double
       integer(c_int), value :: l
       real(c_double), value :: x
@@ -30,9 +35,14 @@ module gsl_bessel
     end function
   end interface
 
+  public :: spherical_j, spherical_y
+  public :: spherical_jp, spherical_jpp
+  public :: spherical_yp, spherical_ypp
+
 contains
 
   !> \brief Compute the regular spherical Bessel function j_l(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return j Value of j_l(x)
@@ -44,6 +54,7 @@ contains
   end function
 
   !> \brief Compute the irregular spherical Bessel function y_l(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return y Value of y_l(x)
@@ -55,6 +66,7 @@ contains
   end function
 
   !> \brief Compute the derivative of the regular spherical Bessel function j_l'(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return dj Value of j_l'(x)
@@ -70,6 +82,7 @@ contains
   end function
 
   !> \brief Compute the second derivative of the regular spherical Bessel function j_l''(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return d2j Value of j_l''(x)
@@ -90,6 +103,7 @@ contains
   end function
 
   !> \brief Compute the derivative of the irregular spherical Bessel function y_l'(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return dy Value of y_l'(x)
@@ -110,6 +124,7 @@ contains
   end function
 
   !> \brief Compute the second derivative of the irregular spherical Bessel function y_l''(x).
+  !! \ingroup gsl_bessel
   !! \param[in] l Angular momentum quantum number
   !! \param[in] x Argument
   !! \return d2y Value of y_l''(x)

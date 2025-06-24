@@ -5,6 +5,7 @@
 !> For example, 7!! = 7 * 5 * 3 * 1, 8!! = 8 * 6 * 4 * 2.
 !> By definition, (-1)!! = 1 and 0!! = 1.
 !> If N < -1, the function stops with an error.
+!> \ingroup math
 !>
 !> @param[in] N Integer input value. Must be greater than or equal to -1.
 !> @return DFACT The double factorial of N as an integer.

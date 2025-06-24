@@ -1,9 +1,11 @@
 !> \file av14.f90
-!! \brief Modulo per il potenziale nucleare Argonne v14 (AV14).
+!! \defgroup av14 Argonne v14
+!! \ingroup nn_potentials
+!! \brief Module for the Argonne v14 nuclear potential.
 !!
-!! Questo modulo fornisce la funzione di potenziale nucleare AV14
-!! per il calcolo delle interazioni nucleone-nucleone in diversi canali
-!! di onde parziali, includendo effetti isospinici e termini elettromagnetici.
+!! This module provides the AV14 nuclear potential function
+!! for the calculation of nucleon-nucleon interactions in different partial-wave channels,
+!! including isospin effects and electromagnetic terms.
 !!
 !! \author Alessandro Grassi
 !! \date 2025
@@ -12,44 +14,44 @@ MODULE AV14
   IMPLICIT NONE
   PRIVATE
 
-  !> Momento angolare totale (J) del sistema nucleone-nucleone.
+  !> Total angular momentum (J) of the nucleon-nucleon system.
   INTEGER, PRIVATE :: J_
-  !> Tipo di interazione elettromagnetica (0=nessuna, >0=presente).
+  !> Type of electromagnetic interaction (0=none, >0=present).
   INTEGER, PRIVATE :: LEMP_
-  !> Flag per includere il termine tensoriale elettromagnetico.
+  !> Flag to include the electromagnetic tensor term.
   INTEGER, PRIVATE :: IPTE
-  !> Flag per includere il termine spin-orbita.
+  !> Flag to include the spin-orbit term.
   INTEGER, PRIVATE :: IPLS
-  !> Flag per includere il termine quadrupolare.
+  !> Flag to include the quadrupole term.
   INTEGER, PRIVATE :: IPQQ
-  !> Flag per includere il termine di Breit.
+  !> Flag to include the Breit term.
   INTEGER, PRIVATE :: IPBB
-  !> Flag per includere il termine spin-bremsstrahlung.
+  !> Flag to include the spin-bremsstrahlung term.
   INTEGER, PRIVATE :: IPSB
-  !> Distanza interparticellare (fm).
+  !> Interparticle distance (fm).
   DOUBLE PRECISION, PRIVATE :: R_
-  !> Inverso della distanza interparticellare (1/fm).
+  !> Inverse interparticle distance (1/fm).
   DOUBLE PRECISION, PRIVATE :: UR
 
-  !> Subroutine pubblica per il calcolo del potenziale AV14 nei canali a onde parziali.
+  !> Public subroutine for AV14 potential calculation in partial-wave channels.
+  !! \ingroup av14
   PUBLIC :: AV14PW
-  !> Subroutine private di supporto.
+  !> Private support subroutines.
   PRIVATE:: POTL, POT
 CONTAINS
 
-  !> \brief Calcola la matrice del potenziale AV14 per dati numeri quantici e distanza.
-  !>
-  !> \param[in] LEMP Tipo di interazione elettromagnetica (0=nessuna, >0=presente)
-  !> \param[in] L Momento angolare orbitale
-  !> \param[in] S Momento di spin totale (0 o 1)
-  !> \param[in] J Momento angolare totale
-  !> \param[in] T1Z Proiezione isospin nucleone 1 (+1=protone, -1=neutrone)
-  !> \param[in] T2Z Proiezione isospin nucleone 2 (+1=protone, -1=neutrone)
-  !> \param[in] R Distanza interparticellare (fm)
-  !> \param[out] VPW Matrice 2x2 del potenziale in base accoppiata (canali misti)
-  !>
-  !> La matrice VPW contiene i valori del potenziale per i diversi canali
-  !> di accoppiamento di spin e momento angolare.
+  !> \brief Compute the AV14 potential matrix for given quantum numbers and distance.
+  !! \ingroup av14
+  !! \param[in] LEMP Type of electromagnetic interaction (0=Coulomb, >0=submodel from AV18)
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Total spin (0 or 1)
+  !! \param[in] J Total angular momentum
+  !! \param[in] T1Z Isospin projection nucleon 1 (+1=proton, -1=neutron)
+  !! \param[in] T2Z Isospin projection nucleon 2 (+1=proton, -1=neutron)
+  !! \param[in] R Interparticle distance (fm)
+  !! \param[out] VPW 2x2 potential matrix in coupled basis (mixed channels)
+  !!
+  !! The VPW matrix contains the potential values for the different spin and angular momentum coupling channels.
   SUBROUTINE AV14PW(LEMP, L, S, J, T1Z, T2Z, R, VPW)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: LEMP
@@ -118,26 +120,26 @@ CONTAINS
     END IF
   END SUBROUTINE AV14PW
 
-  !> \brief Calcola i termini del potenziale AV14 per tutte le combinazioni isospin.
-  !>
-  !> \param[out] VPP1,VPP2,VPP3,VPP4,VPP5 Termini per proton-proton (pp)
-  !> \param[out] VPN1,VPN2,VPN3,VPN4,VPN5 Termini per proton-neutron (pn)
-  !> \param[out] VNN1,VNN2,VNN3,VNN4,VNN5 Termini per neutron-neutron (nn)
-  !>
-  !> Ogni termine corrisponde a un diverso canale di accoppiamento di spin e momento angolare.
+  !> \brief Compute the AV14 potential terms for all isospin combinations.
+  !! \ingroup av14
+  !! \param[out] VPP1,VPP2,VPP3,VPP4,VPP5 Terms for proton-proton (pp)
+  !! \param[out] VPN1,VPN2,VPN3,VPN4,VPN5 Terms for proton-neutron (pn)
+  !! \param[out] VNN1,VNN2,VNN3,VNN4,VNN5 Terms for neutron-neutron (nn)
+  !!
+  !! Each term corresponds to a different spin and angular momentum coupling channel.
   SUBROUTINE POTL(VPP1, VPP2, VPP3, VPP4, VPP5, VPN1, VPN2, VPN3, VPN4, VPN5, &
                   VNN1, VNN2, VNN3, VNN4, VNN5)
     IMPLICIT NONE
-    !> Fattore di conversione per il termine coulombiano (MeV*fm)
+    !> Conversion factor for the Coulomb term (MeV*fm)
     DOUBLE PRECISION, PARAMETER :: EQMF=197.327053D0/137.035989D0
-    !> Termini di output per i diversi canali e interazioni
+    !> Output terms for the different channels and interactions
     DOUBLE PRECISION, INTENT(OUT) :: VPP1, VPP2, VPP3, VPP4, VPP5, VPN1, VPN2, VPN3, VPN4, VPN5, &
                   VNN1, VNN2, VNN3, VNN4, VNN5
-    !> Termini base del potenziale
+    !> Basic potential terms
     DOUBLE PRECISION :: POTC, POTT, POTS, POTM, PTEC, PTET
     DOUBLE PRECISION :: PLSC, PLST, PQQC, PQQT, PQQS, PQQM, PBBC, PBBT
     DOUBLE PRECISION :: PSB1, PSB2, PSB3, PSB4
-    !> Termini elettromagnetici e variabili temporanee
+    !> Electromagnetic terms and temporary variables
     DOUBLE PRECISION :: VCOUL, VEM(14), P1, P2, P3, P4
     DOUBLE PRECISION :: VEMPP, VEMPN, VEMNN
     DOUBLE PRECISION :: XTE, XLS, XLL, XLS2, UJ, XJJ
@@ -340,36 +342,36 @@ CONTAINS
     RETURN
   END SUBROUTINE POTL
 
-  !> \brief Calcola i termini base del potenziale AV14 per una data distanza.
-  !>
-  !> \param[out] POTC Termine centrale
-  !> \param[out] POTT Termine tensoriale
-  !> \param[out] POTS Termine spin-spin
-  !> \param[out] POTM Termine spin-orbita
-  !> \param[out] PTEC Termine tensoriale elettromagnetico
-  !> \param[out] PTET Termine tensoriale trasverso
-  !> \param[out] PLSC Termine spin-orbita centrale
-  !> \param[out] PLST Termine spin-orbita trasverso
-  !> \param[out] PQQC Termine quadrupolare centrale
-  !> \param[out] PQQT Termine quadrupolare tensoriale
-  !> \param[out] PQQS Termine quadrupolare spin-spin
-  !> \param[out] PQQM Termine quadrupolare misto
-  !> \param[out] PBBC Termine di Breit centrale
-  !> \param[out] PBBT Termine di Breit tensoriale
-  !> \param[out] PSB1, PSB2, PSB3, PSB4 Termini spin-bremsstrahlung
-  !>
-  !> Ogni termine rappresenta un contributo fisico specifico al potenziale nucleare.
+  !> \brief Compute the basic AV14 potential terms for a given distance.
+  !! \ingroup av14
+  !! \param[out] POTC Central term
+  !! \param[out] POTT Tensor term
+  !! \param[out] POTS Spin-spin term
+  !! \param[out] POTM Spin-orbit term
+  !! \param[out] PTEC Electromagnetic tensor term
+  !! \param[out] PTET Transverse tensor term
+  !! \param[out] PLSC Central spin-orbit term
+  !! \param[out] PLST Transverse spin-orbit term
+  !! \param[out] PQQC Central quadrupole term
+  !! \param[out] PQQT Tensor quadrupole term
+  !! \param[out] PQQS Spin-spin quadrupole term
+  !! \param[out] PQQM Mixed quadrupole term
+  !! \param[out] PBBC Central Breit term
+  !! \param[out] PBBT Tensor Breit term
+  !! \param[out] PSB1, PSB2, PSB3, PSB4 Spin-bremsstrahlung terms
+  !!
+  !! Each term represents a specific physical contribution to the nuclear potential.
   SUBROUTINE POT(POTC, POTT, POTS, POTM, PTEC, PTET, PLSC, PLST, &
           PQQC, PQQT, PQQS, PQQM, PBBC, PBBT, PSB1, PSB2, PSB3, PSB4)
       IMPLICIT NONE
-      !> Costanti fisiche e parametri del modello
+      !> Physical constants and model parameters
       DOUBLE PRECISION, PARAMETER :: DMU2  = 0.699488167D0
       DOUBLE PRECISION, PARAMETER :: UDMU2 = 1.D0 / DMU2
-      !> Termini di output
+      !> Output terms
       DOUBLE PRECISION, INTENT(OUT) :: POTC, POTT, POTS, POTM, PTEC, PTET
       DOUBLE PRECISION, INTENT(OUT) :: PLSC, PLST, PQQC, PQQT, PQQS, PQQM, PBBC, PBBT
       DOUBLE PRECISION, INTENT(OUT) :: PSB1, PSB2, PSB3, PSB4
-      !> Variabili temporanee per il calcolo dei termini
+      !> Temporary variables for the calculation of the terms
       DOUBLE PRECISION :: X, UX, X2, CUTOFF, YX, YP, TP, TP2, WW
 
 

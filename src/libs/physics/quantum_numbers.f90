@@ -1,4 +1,8 @@
+!> \defgroup physics Physics Utilities
+!! \brief All physics-related utilities.
 !> \file quantum_numbers.f90
+!! \defgroup quantum_numbers Quantum Numbers
+!! \ingroup physics
 !! \brief Quantum number utilities and SCATTERING_CHANNEL type for nuclear/particle physics.
 !!
 !! This module defines the SCATTERING_CHANNEL type and provides helper routines
@@ -12,15 +16,21 @@ MODULE QUANTUM_NUMBERS
   USE REALLOCATE_UTILS
   IMPLICIT NONE
 
+  !> \brief Data type representing a scattering channel in quantum physics.
+  !> \ingroup quantum_numbers
+  !>
+  !> This type stores quantum numbers and properties associated with a scattering channel,
+  !> including total angular momentum, orbital angular momentum, spin, isospin, and coupling information.
   TYPE, PUBLIC :: SCATTERING_CHANNEL
-    INTEGER, PRIVATE :: J
-    INTEGER, ALLOCATABLE, PRIVATE :: L(:)
-    INTEGER, ALLOCATABLE, PRIVATE :: S(:)
-    INTEGER, ALLOCATABLE, PRIVATE :: T(:)
-    INTEGER, PRIVATE :: TZ
-    INTEGER, PRIVATE :: NCH
-    LOGICAL, PRIVATE :: COUPLED = .FALSE.
+    INTEGER, PRIVATE :: J !< Total angular momentum quantum number
+    INTEGER, ALLOCATABLE, PRIVATE :: L(:) !< Orbital angular momentum quantum numbers (allocatable array)
+    INTEGER, ALLOCATABLE, PRIVATE :: S(:) !< Spin quantum numbers (allocatable array)
+    INTEGER, ALLOCATABLE, PRIVATE :: T(:) !< Isospin quantum numbers (allocatable array)
+    INTEGER, PRIVATE :: TZ !< Isospin projection quantum number
+    INTEGER, PRIVATE :: NCH !< Number of channels
+    LOGICAL, PRIVATE :: COUPLED = .FALSE. !< Logical flag indicating if the channel is coupled (default: .FALSE.)
   ENDTYPE SCATTERING_CHANNEL
+
 
   INTERFACE GET_CHANNEL_NAME
     MODULE PROCEDURE GET_CHANNEL_NAME_LSJ
@@ -48,6 +58,7 @@ MODULE QUANTUM_NUMBERS
   
 CONTAINS
   !> \brief Constructor for SCATTERING_CHANNEL.
+  !! \ingroup quantum_numbers
   !! \param[in] J Total angular momentum
   !! \param[in] IS_EVEN Logical for parity
   !! \param[in] TZ Isospin projection
@@ -165,7 +176,7 @@ CONTAINS
   END FUNCTION IS_LSJ_PHYSICAL
 
   !> \brief Set the quantum numbers of a SCATTERING_CHANNEL.
-  !! \brief Set the quantum numbers for a scattering channel.
+  !! \ingroup quantum_numbers
   !! Sets the J, L, S, TZ quantum numbers and determines if the channel is coupled or not.
   !! Allocates and fills the L, S, T arrays for the channel.
   !! \param[inout] CHANNEL Scattering channel object to set
@@ -218,6 +229,7 @@ CONTAINS
   END SUBROUTINE SET_CHANNEL
 
   !> \brief Get the spectroscopic name for a channel from L, S, J.
+  !! \ingroup quantum_numbers
   !! \param[in] L Orbital angular momentum
   !! \param[in] S Spin
   !! \param[in] J Total angular momentum
@@ -249,6 +261,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_NAME_LSJ
 
   !> \brief Get the spectroscopic name for a SCATTERING_CHANNEL object.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \return Name as CHARACTER(LEN=16)
   FUNCTION GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL) RESULT(NAME)
@@ -268,6 +281,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_NAME_FROM_OBJECT
 
   !> \brief Get the number of channels (NCH).
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \return Number of channels
   FUNCTION GET_CHANNEL_NCH(CHANNEL) RESULT (NCH)
@@ -277,6 +291,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_NCH
 
   !> \brief Get the L quantum number for a given channel index.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \param[in] I Channel index
   !! \return L quantum number
@@ -293,6 +308,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_L
 
   !> \brief Get the S quantum number for a given channel index.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \param[in] I Channel index
   !! \return S quantum number
@@ -309,6 +325,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_S
 
   !> \brief Get the T quantum number for a given channel index.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \param[in] I Channel index
   !! \return T quantum number
@@ -325,6 +342,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_T
 
   !> \brief Get the J quantum number for a channel.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \return J quantum number
   FUNCTION GET_CHANNEL_J(CHANNEL) RESULT(J)
@@ -334,6 +352,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_J
 
   !> \brief Get the TZ quantum number for a channel.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \return TZ quantum number
   FUNCTION GET_CHANNEL_TZ(CHANNEL) RESULT(TZ)
@@ -343,6 +362,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_TZ
 
   !> \brief Check if the channel is coupled.
+  !! \ingroup quantum_numbers
   !! \param[in] CHANNEL The channel object
   !! \return .TRUE. if coupled, .FALSE. otherwise
   FUNCTION IS_CHANNEL_COUPLED(CHANNEL) RESULT(COUPLED)
@@ -352,6 +372,7 @@ CONTAINS
   END FUNCTION IS_CHANNEL_COUPLED
 
   !> \brief Check if two channels are the same.
+  !! \ingroup quantum_numbers 
   !! \param[in] CHANNEL1 First channel
   !! \param[in] CHANNEL2 Second channel
   !! \return .TRUE. if the channels are the same, .FALSE. otherwise
@@ -376,6 +397,10 @@ CONTAINS
     ENDDO
   END FUNCTION IS_SAME_CHANNEL
 
+  !> \brief Get a SCATTERING_CHANNEL object from its spectroscopic name.
+  !! \ingroup quantum_numbers
+  !! \param[in] NAME Spectroscopic name (e.g., '3SD-1SD' or '3F2')
+  !! \return SCATTERING_CHANNEL object
   FUNCTION GET_CHANNEL_FROM_NAME(NAME) RESULT(CHANNEL)
     CHARACTER(LEN=*), INTENT(IN) :: NAME
     TYPE(SCATTERING_CHANNEL) :: CHANNEL
@@ -508,6 +533,7 @@ CONTAINS
   END FUNCTION GET_CHANNEL_FROM_NAME
 
   !> @brief Prepares the list of physical scattering channels up to given quantum number limits.
+  !! \ingroup quantum_numbers
   !!
   !! This subroutine generates all possible physical scattering channels for given maximum
   !! orbital angular momentum (LMAX), total angular momentum (JMAX), and isospin projection (TZ).
@@ -605,6 +631,7 @@ CONTAINS
   ! END FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
 
   !> \brief Print all quantum numbers and info for a SCATTERING_CHANNEL object.
+  !! \ingroup quantum_numbers
   !! \brief Print information about a scattering channel.
   !! Prints all quantum numbers and spectroscopic name for the given channel.
   !! \param[in] CHANNEL Scattering channel to print
@@ -627,6 +654,7 @@ CONTAINS
   END SUBROUTINE PRINT_SCATTERING_CHANNEL
 
   !> \brief Reset a scattering channel to default/uninitialized state.
+  !! \ingroup quantum_numbers
   !! Deallocates arrays and resets all quantum numbers.
   !! \param[inout] CHANNEL Scattering channel to reset
   SUBROUTINE RESET_CHANNEL(CHANNEL)
@@ -643,6 +671,7 @@ CONTAINS
 
 
   !> \brief Compute all unique (L1, L2) combinations for a set of channels.
+  !! \ingroup quantum_numbers
   !! Fills LEFT_RIGHT_L_COMBINATIONS with all unique pairs of L quantum numbers from CHANNELS.
   !! \param[in] CHANNELS Array of scattering channels
   !! \param[inout] LEFT_RIGHT_L_COMBINATIONS Output array of unique (L1, L2) pairs
@@ -691,6 +720,7 @@ CONTAINS
   END SUBROUTINE L_COMBINATIONS
 
   !> \brief Convert isospin projection TZ to individual nucleon projections T1Z, T2Z.
+  !! \ingroup quantum_numbers
   !! \param[in] TZ Total isospin projection
   !! \param[out] T1Z Isospin projection of nucleon 1
   !! \param[out] T2Z Isospin projection of nucleon 2
@@ -709,6 +739,7 @@ CONTAINS
   END SUBROUTINE TZ_TO_T1Z_T2Z
 
   !> \brief Convert individual nucleon isospin projections to total TZ.
+  !! \ingroup quantum_numbers
   !! \param[in] T1Z Isospin projection of nucleon 1
   !! \param[in] T2Z Isospin projection of nucleon 2
   !! \param[out] TZ Total isospin projection
@@ -725,6 +756,7 @@ CONTAINS
   END SUBROUTINE T1Z_T2Z_TO_TZ
 
   !> @brief Evaluates T from L and S quantum numbers assuming (-1)^(L+S+T)==-1.
+  !! \ingroup quantum_numbers
   !>
   !> @param[in] L Orbital angular momentum quantum number
   !> @param[in] S Spin quantum number

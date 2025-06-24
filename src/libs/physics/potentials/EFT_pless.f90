@@ -1,8 +1,10 @@
 !> \file EFT_pless.f90
 !! \brief Effective Field Theory (EFT) potential module for NN scattering.
+!! \defgroup eft_pless EFT-pionless
+!! \ingroup nn_potentials
 !!
 !! This module defines the low-energy constants (LECs) and radial functions for
-!! the Plesset-style EFT potential, and provides routines to evaluate the
+!! the pionless EFT potential, and provides routines to evaluate the
 !! potential matrix elements for use in variational and Numerov solvers.
 !!
 !! \details
@@ -40,6 +42,13 @@ MODULE EFT_PLESS
     DOUBLE PRECISION, ALLOCATABLE :: FR_I(:,:,:,:)  ! FR_I(S, T, I, R)
   END TYPE EFT_RADIAL_FUNCTIONS
 
+  !> \brief Generic interface to set the Low-Energy Constants (LECs) for the EFT pionless potential.
+  !! \ingroup eft_pless
+  !!
+  !! This interface allows setting the LECs using different argument types:
+  !! - From another LECS_EFT_PLESS structure (\ref SET_LECS_FROM_LECS)
+  !! - By specifying individual LEC values (\ref SET_LECS_SINGLE)
+  !! - By model index (ILB) (\ref SET_LECS_ILB)
   INTERFACE SET_LECS
     MODULE PROCEDURE SET_LECS_FROM_LECS
     MODULE PROCEDURE SET_LECS_SINGLE
@@ -78,7 +87,7 @@ CONTAINS
     LECS_SET = .TRUE.
   END SUBROUTINE SET_LECS_FROM_LECS
 
-  !> @brief Set the low-energy constants (LECs) for the EFT Plesset potential using individual values.
+  !> @brief Set the low-energy constants (LECs) for the EFT pionless potential using individual values.
   !>
   !> @details
   !> Sets the values of the LECs in the global LECS structure. Each argument corresponds to a specific LEC or radial cutoff.
@@ -368,7 +377,8 @@ CONTAINS
     IF (SUM(ABS(LECS%RC)) < MINR) STOP "RC not set"
   END SUBROUTINE PREPARE
 
-  !> \brief Evaluate the EFT Plesset potential matrix elements for given quantum numbers and radius.
+  !> \brief Evaluate the EFT pionless potential matrix elements for given quantum numbers and radius.
+  !! \ingroup eft_pless
   !! Computes the 2x2 potential matrix VPW for the specified channel and radius R using the current LECs.
   !! Handles all spin/isospin channels and EFT orders (LO, NLO, N3LO).
   !! \param[in] ILB Interaction label
@@ -569,6 +579,18 @@ CONTAINS
   END FUNCTION EFT_RADIAL_7
 
 
+  !> \brief Transform LECs from the operator basis to the S,T-coupled basis.
+  !! \ingroup eft_pless
+  !!
+  !! This function converts a LECS_EFT_PLESS structure containing Low-Energy Constants (LECs)
+  !! in the operator basis (used for constructing the EFT pionless potential) into the S,T-coupled basis
+  !! (used for fitting or storage).
+  !!
+  !! The transformation applies the appropriate linear combinations to the CNLO, CN3LO,
+  !! and CIT arrays, following the mapping between operator and S,T representations.
+  !!
+  !! \param[in]  LECS_OLD  LECs in the operator basis
+  !! \return     ST_LECS   LECs in the S,T-coupled basis, ready for fitting or storage
   PURE FUNCTION LECS_TO_ST_LECS(LECS_OLD) RESULT(ST_LECS)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_OLD
@@ -609,6 +631,18 @@ CONTAINS
     ST_LECS%CIT(4)    = CIT(4)
   END FUNCTION LECS_TO_ST_LECS
 
+  !> \brief Transform LECs from the S,T-coupled basis to the operator basis.
+  !! \ingroup eft_pless
+  !!
+  !! This function converts a LECS_EFT_PLESS structure containing Low-Energy Constants (LECs)
+  !! in the S,T-coupled basis (used for fitting or storage) into the operator basis
+  !! used for constructing the EFT pionless potential.
+  !!
+  !! The transformation applies the appropriate linear combinations to the CNLO, CN3LO,
+  !! and CIT arrays, following the mapping between S,T and operator representations.
+  !!
+  !! \param[in]  ST_LECS  LECs in the S,T-coupled basis
+  !! \return     OP_LECS  LECs in the operator basis, ready for use in the potential
   FUNCTION ST_LECTS_TO_LECS(ST_LECS) RESULT(OP_LECS)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: ST_LECS
@@ -649,6 +683,15 @@ CONTAINS
     OP_LECS%CIT(4)    = CIT(4)
   END FUNCTION ST_LECTS_TO_LECS
 
+  !> \brief Retrieve the Low-Energy Constants (LECs) for a given model index.
+  !! \ingroup eft_pless
+  !!
+  !! Returns the LECS_EFT_PLESS structure corresponding to the specified model index (ILB).
+  !! If the LECs have not been set, they are loaded from file.
+  !! If the index is invalid, the routine stops with an error.
+  !!
+  !! \param[in] ILB Model index for which to retrieve the LECs
+  !! \return LECS_OUT Structure containing the LECs for the specified model
   FUNCTION GET_LECS(ILB) RESULT(LECS_OUT)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ILB
@@ -664,6 +707,7 @@ CONTAINS
   END FUNCTION GET_LECS
 
   !> @brief Prints the contents of a LECS_EFT_PLESS structure.
+  !! \ingroup eft_pless
   !>
   !> @details It prints the potential submodel (ILB), order of the potential (ORDER),
   !> the cutoff parameters (RC), and the coefficients for the LO, NLO, and N3LO potentials.
@@ -706,7 +750,8 @@ CONTAINS
 
 
   !> @brief It returns all the possible radial function multiplying the LECS in 
-  !> the EFT Plesset potential.
+  !> the EFT pionless potential.
+  !! \ingroup eft_pless
   !>
   !> @details The possible radial functions are of 8 kind. At LO there is only one radial function (I=0),
   !> at NLO there are 5 radial functions (I=0,1,2,3,4), and at N3LO there are 8 radial functions (I=0,1,2,3,4,5,6,7).
@@ -788,6 +833,7 @@ CONTAINS
   END FUNCTION EFT_RADIAL
 
   !> \brief Combine operator radial matrix elements with LECs to form the full potential.
+  !! \ingroup eft_pless
   !! \param[in] CHANNELS Array of channels
   !! \param[in] FR_MATRIX_EL Operator radial matrix elements with dimensions (NOPERATOR, NCHANNELS, NR, NALPHAL, NALPHAR)
   !!                        <left| FR_i(r) |right> for each operator i, channel, subchannel

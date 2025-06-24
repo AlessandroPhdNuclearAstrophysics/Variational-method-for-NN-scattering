@@ -1,131 +1,92 @@
 !> **********************************************************************
 !! Argonne v18 and vn' and Super-Soft Core (C) potential package
+!! \ingroup nn_potentials
+!! \defgroup av18 Argonne v18
+!> \file av18.f90
+!! \defgroup av18 Argonne v18
+!! \ingroup nn_potentials
+!! \brief Module for the Argonne v18 nuclear potential.
 !!
-!! prepared 1 Sep 1994 by R. B. Wiringa, Physics Division,
-!! Argonne National Laboratory, Argonne, IL 60439
+!! Prepared 1 Sep 1994 by R. B. Wiringa, Physics Division,  
+!! Argonne National Laboratory, Argonne, IL 60439  
 !! e-mail: wiringa@theory.phy.anl.gov
 !!
-!! reference:
-!!  "Accurate nucleon-nucleon potential with charge-independence breaking"
-!!   R. B. Wiringa, V. G. J. Stoks, and R. Schiavilla,
-!!   Physical Review C51, 38 (1995) - WSS95.
+!! This modular implementation has been prepared by A. Grassi (May 2025)   
+!! e-mail: alessandro.grassi@df.unipi.it
 !!
-!! option for v8' reprojection of v18 potential added 10 Jan 2001
+!! \par References:
+!! - "Accurate nucleon-nucleon potential with charge-independence breaking",  R. B. Wiringa, V. G. J. Stoks, and R. Schiavilla,  Physical Review C51, 38 (1995) - WSS95.
+!! - "Quantum Monte Carlo calculations of nuclei with A<=7",  B. S. Pudliner, V. R. Pandharipande, J. Carlson, Steven C. Pieper,  and R. B. Wiringa, Physical Review C56, 1720 (1997) - PPCPW97
+!! - "Evolution of Nuclear Spectra with Nuclear Forces",  R. B. Wiringa and Steven C. Pieper, Physical Review Letters 89, 182501 (2002) - WP02
+!! - "Construction d'un potentiel nucleon-nucleon a coeur tres mou (SSC)",  R. de Tourreil and D. W. L. Sprung, 
+!>   Nuclear Physics A201, 193 (1973) - TS73
 !!
-!! reference:
-!!  "Quantum Monte Carlo calculations of nuclei with A<=7"
-!!   B. S. Pudliner, V. R. Pandharipande, J. Carlson, Steven C. Pieper,
-!!   and R. B. Wiringa, Physical Review C56, 1720 (1997) - PPCPW97
+!! \par Options:
+!! - v8' reprojection of v18 potential (added 10 Jan 2001)
+!! - v6', v4', vx', v2', v1' potentials (added 16 Jul 2002)
+!! - Super-Soft Core (C) (added 14 Feb 2007)
+!! - Modified Argonne v8' and modified SSCC v8' (added 14 Feb 2007, corrected 4 Apr 2007)
 !!
-!! option for v6', v4', vx', v2', v1' potentials added 16 Jul 2002
+!! \par Contents:
+!! This module contains 4 subroutines:
+!!   - \ref AV18PW : full potential in a particular partial wave
+!!   - \ref AV18OP : strong interaction part in operator format
+!!   - \ref EMPOT  : electromagnetic part in operator format
+!!   - \ref CONSTS : values of fundamental constants and masses used
 !!
-!! reference:
-!!  "Evolution of Nuclear Spectra with Nuclear Forces"
-!!   R. B. Wiringa and Steven C. Pieper,
-!!   Physical Review Letters 89, 182501 (2002) - WP02
+!! The variable \c lpot selects between v18, v8' and other options.
 !!
-!! option for Super-Soft Core (C) added 14 Feb 2007
-!!
-!! reference:
-!!  "Construction d'un potentiel nucleon-nucleon a coeur tres mou (SSC)"
-!!   R. de Tourreil and D. W. L. Sprung,
-!!   Nuclear Physics A201, 193 (1973) - TS73
-!!
-!! option for modfied Argonne v8' and modified SSCC v8' added 14 Feb 2007
-!!   modifications selected by Steve Pieper
-!!   correction to modified SSCC v8' on 4 Apr 2007
-!!
-!! this file contains 4 subroutines:
-!!   subroutine av18pw90(lpot,l,s,j,t,t1z,t2z,r,vpw)
-!!   subroutine av18op90(lpot,r,vnn)
-!!   subroutine empot90(lpot,r,vem)
-!!   subroutine consts90(lpot,hc,mpi0,mpic,mp,mn,alpha,mup,mun)
-!!
-!! the variable lpot selects between v18, v8' and other options
-!!
-!! av18pw90 gives the full potential in a particular partial wave
-!! av18op90 gives the strong interaction part in operator format
-!! empot90  gives the electromagnetic part in operator format
-!! consts90 gives values of fundamental constants and masses used
-!!
-!! notes:
-!! 1) av18pw90 includes full EM interaction for lpot=1;
-!!    for lpot>1 it includes only C1(pp), i.e.,
-!!    Coulomb with a form factor for pp channels.
-!!
-!! 2) empot90 does not include the energy-dependence of the Coulomb
-!!    interaction used in eq.(4) of WSS95, i.e., it uses alpha,
-!!    not alpha'.
-!!
-!! 3) the vacuum polarization in empot90 is a short-range approximation
-!!    to eq.(7) suitable for bound states, but not for scattering.
-!!    it is taken from eq.(3.13) of Rev. Mod. Phys. 44, 48 (1972)
-!!
-!!    8/28/97 error in this formula detected and corrected:
-!!    should be -(gamma+5/6) instead of printed (-gamma+5/6)
-!!
-!! 4) these subroutines should be compiled with a compiler option
-!!    that forces all floating point constants to be evaluated at
-!!    DOUBLE PRECISION significance, e.g., on an IBM RS6000 the xlf compiler
-!!    option qdpc=e should be used; on SGI machines, the -r8 option
-!!    should be used; on a Cray no action is needed.
-!!    if such an option is not available and the default precision is
-!!    real*4 (32 bits), then all constants should be explicitly
-!!    converted to double precision by appending a D0.
-!!
-!! 5) consts90 now (14 Feb 2007) depend upon potential:
-!!    need to call to generate appropriate hbar**2/M
+!! \par Notes:
+!! 1. av18pw90 includes full EM interaction for lpot=1; for lpot>1 it includes only C1(pp), i.e., Coulomb with a form factor for pp channels.
+!! 2. empot90 does not include the energy-dependence of the Coulomb interaction used in eq.(4) of WSS95, i.e., it uses alpha, not alpha'.
+!! 3. The vacuum polarization in empot90 is a short-range approximation to eq.(7) suitable for bound states, but not for scattering. It is taken from eq.(3.13) of Rev. Mod. Phys. 44, 48 (1972).  
+!!    (8/28/97: error in this formula detected and corrected: should be -(gamma+5/6) instead of printed (-gamma+5/6))
+!! 4. These subroutines should be compiled with a compiler option that forces all floating point constants to be evaluated at DOUBLE PRECISION significance.  
+!!    For example: on IBM RS6000 use xlf option qdpc=e; on SGI use -r8; on Cray no action is needed.  
+!!    If such an option is not available and the default precision is real*4 (32 bits), then all constants should be explicitly converted to double precision by appending a D0.
+!! 5. consts90 now (14 Feb 2007) depends upon potential: need to call to generate appropriate hbar**2/M.
 MODULE AV18
   IMPLICIT NONE
   PUBLIC :: AV18PW, EMPOT
   PRIVATE:: AV18OP, CONSTS
   CONTAINS
-  !! *id* av18pw90 **********************************************************
-  !! subroutine for partial-wave projection of argonne v18 potential
-  !! or super-soft core (C) v14 potential
-  !! or reprojected vn' potential
-  !! calls subroutines av18op90, empot90
-  !! ----------------------------------------------------------------------
-  !! arguments for av18pw90
-  !! lpot: switch for potential choice
-  !!     -----------------------------------------------
-  !!         Argonne                Super-Soft Core (C)
-  !!       = 1 : av18              = 101 : sscc v14
-  !!       = 2 : av8'              = 102 : sscc v8'
-  !!       = 3 : av6'
-  !!       = 4 : av4'
-  !!       = 5 : avx'
-  !!       = 6 : av2'
-  !!       = 7 : av1'
-  !!       = 8 : modified av8'     = 108 : modified sscc v8'
-  !!     -----------------------------------------------
-  !! l:    orbital angular momentum of pair (0,1,2,...)
-  !! s:    total spin of pair (0 or 1)
-  !! j:    total angular momentum of pair (0,1,2,...)
-  !! t:    total isospin of pair (0 or 1)
-  !! t1z:  isospin of particle 1 (1 for p, -1 for n)
-  !! t2z:     "    "     "     2 (1 for p, -1 for n)
-  !! r:    separation in fm
-  !! v:    returned potential in MeV (2x2 array)
-  !!       (includes all strong and em terms)
-  !! ----------------------------------------------------------------------
-  !! order of terms in v(l,m):
-  !!      single channel                 coupled channel (l=j-1,s=1)
-  !!      v(1,1) = v(l,s,j,t,t1z,t2z)    v(1,1) = v(l,s,j,t,t1z,t2z)
-  !!      v(2,1) = 0                     v(2,1) = v(l<->l+2)
-  !!      v(1,2) = 0                     v(1,2) = v(l<->l+2)
-  !!      v(2,2) = 0                     v(2,2) = v(l+2,s,j,t,t1z,t2z)
-  !! ----------------------------------------------------------------------
-  !! \param[in] lpot switch for potential choice
-  !! \param[in] l    orbital angular momentum of pair (0,1,2,...)
-  !! \param[in] s    total spin of pair (0 or 1)
-  !! \param[in] j    total angular momentum of pair (0,1,2,...)
-  !! \param[in] t    total isospin of pair (0 or 1)
-  !! \param[in] t1z  isospin of particle 1 (1 for p, -1 for n)
-  !! \param[in] t2z  isospin of particle 2 (1 for p, -1 for n)
-  !! \param[inout] r separation in fm
-  !! \param[out] vpw returned potential in MeV (2x2 array)
-  !! \param[in] lemp electromagnetic potential flag
+  !> \brief Partial-wave projection of the Argonne v18 (or related) potential.
+  !! \ingroup av18
+  !!
+  !! Computes the nucleon-nucleon potential matrix for a given partial wave,
+  !! including strong and electromagnetic terms, for Argonne v18, v8', v6', v4', vx', v2', v1', and Super-Soft Core (C) models.
+  !!
+  !! Calls subroutines \ref AV18OP and \ref EMPOT.
+  !!
+  !! \par Potential choice (\a lpot):
+  !! \code
+  !!   -----------------------------------------------
+  !!       Argonne                Super-Soft Core (C)
+  !!     = 1 : av18              = 101 : sscc v14
+  !!     = 2 : av8'              = 102 : sscc v8'
+  !!     = 3 : av6'
+  !!     = 4 : av4'
+  !!     = 5 : avx'
+  !!     = 6 : av2'
+  !!     = 7 : av1'
+  !!     = 8 : modified av8'     = 108 : modified sscc v8'
+  !!   -----------------------------------------------
+  !! \endcode
+  !!
+  !! \par Matrix structure:
+  !! \li Single channel: v(1,1) = V( l, s, j, t, t1z, t2z ); others zero
+  !! \li Coupled channel (l=j-1, s=1): v(1,1), v(2,2), v(1,2), v(2,1) as described in documentation
+  !!
+  !! \param[in]  lpot  Switch for potential choice
+  !! \param[in]  l     Orbital angular momentum of pair (0,1,2,...)
+  !! \param[in]  s     Total spin of pair (0 or 1)
+  !! \param[in]  j     Total angular momentum of pair (0,1,2,...)
+  !! \param[in]  t     Total isospin of pair (0 or 1)
+  !! \param[in]  t1z   Isospin of particle 1 (1 for p, -1 for n)
+  !! \param[in]  t2z   Isospin of particle 2 (1 for p, -1 for n)
+  !! \param[in]  r     Separation in fm
+  !! \param[out] vpw   Returned potential in MeV (2x2 array, includes all strong and EM terms)
+  !! \param[in]  lemp  Electromagnetic potential flag
   SUBROUTINE AV18PW(LPOT,L,S,J,T,T1Z,T2Z,R,VPW,LEMP)
     IMPLICIT NONE
     DOUBLE PRECISION, PARAMETER :: ALPHA = 1.D0 / 137.035989D0
@@ -498,33 +459,35 @@ MODULE AV18
       END FUNCTION YL2
   END SUBROUTINE AV18OP
 
-  !> *id* empot90 ***********************************************************
-  !! subroutine for electromagnetic part of Argonne v18 potential
-  !! for avn' models returns pp Coulomb only
-  !! calls subroutine consts90
-  !! ----------------------------------------------------------------------
-  !! \param[in] lpot switch for potential choice
-  !! \param[in] r    input separation in fm
-  !! \param[out] vem output potential in MeV (14 component array)
-  !! arguments for empot90
-  !! lpot: switch for potential choice
-  !!       = 1 : full EM potential
-  !!       > 1 : C1(pp) only
-  !! r:    input separation in fm
-  !! vem:  output potential in MeV (14 component array)
-  !! ----------------------------------------------------------------------
-  !! order of operators in vem(l)
-  !! l:    1=C1    (pp)          2=DF    (pp)          3=C2      (pp)
-  !!       4=VP    (pp)                                5=C1      (np)
-  !!       6=s1.s2 (pp)          7=s1.s2 (nn)          8=s1.s2   (np)
-  !!       9=S12   (pp)         10=S12   (nn)         11=S12     (np)
-  !!      12=L.S   (pp)         13=L.S   (nn)         14=L.S     (np)
-  !! C1 = one-photon-exchange Coulomb with form factor
-  !! C2 = two-photon-exchange Coulomb
-  !! DF = Darwin-Foldy
-  !! VP = vacuum polarization (short-range approximation)
-  !! all other terms from magnetic moment (MM) interactions
-  !! ----------------------------------------------------------------------
+  !> \brief Electromagnetic part of the Argonne v18 potential.
+  !! \ingroup av18
+  !!
+  !! Computes the electromagnetic part of the Argonne v18 potential.
+  !! For avn' models, returns pp Coulomb only.
+  !! Calls subroutine \ref CONSTS.
+  !!
+  !! \par Potential choice (\a lpot):
+  !!   - \c lpot = 1 : full EM potential
+  !!   - \c lpot > 1 : C1(pp) only
+  !!
+  !! \param[in]  lpot  Switch for potential choice
+  !! \param[in]  r     Input separation in fm
+  !! \param[out] vem   Output potential in MeV (14 component array)
+  !!
+  !! \par Order of operators in \a vem(l):
+  !! \code
+  !! l:  1=C1    (pp)          2=DF    (pp)           3=C2      (pp)
+  !!     4=VP    (pp)                             5=C1      (np)
+  !!     6=s1.s2 (pp)       7=s1.s2 (nn)        8=s1.s2   (np)
+  !!     9=S12   (pp)         10=S12   (nn)         11=S12     (np)
+  !!    12=L.S   (pp)         13=L.S   (nn)         14=L.S     (np)
+  !! \endcode
+  !!
+  !! - C1 = one-photon-exchange Coulomb with form factor
+  !! - C2 = two-photon-exchange Coulomb
+  !! - DF = Darwin-Foldy
+  !! - VP = vacuum polarization (short-range approximation)
+  !! - All other terms from magnetic moment (MM) interactions
   SUBROUTINE EMPOT(LPOT, R, VEM)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: LPOT
