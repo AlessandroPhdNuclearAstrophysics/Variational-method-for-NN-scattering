@@ -132,7 +132,7 @@ doc:
 	@echo "GENERATE_HTML          = YES" >> Doxyfile
 	@echo "GENERATE_LATEX         = NO" >> Doxyfile
 	@echo "RECURSIVE              = YES" >> Doxyfile
-	@echo "INPUT                  = src" >> Doxyfile
+	@echo "INPUT                  = src/ .Readme.dox" >> Doxyfile
 	@echo "FILE_PATTERNS          = *.f90" >> Doxyfile
 	@echo "EXTRACT_ALL            = YES" >> Doxyfile
 	@echo "OPTIMIZE_FOR_FORTRAN   = YES" >> Doxyfile
@@ -189,6 +189,11 @@ test: $(TEST_EXECUTABLES)
 	@./bin/tests/test_library.sh || (echo "\033[1;31mERROR:Something went wrong\033[0m")
 	@echo "\033[1;34mRunning test_variational_module_channels_energies.x \033[0m"
 	@./bin/tests/test_variational_module_channels_energies.sh || (echo "\033[1;31mERROR:Something went wrong\033[0m")
+
+
+open_doc: doc
+	@echo "\033[0;32mOpening Doxygen documentation...\033[0m"
+	@xdg-open doc/html/index.html || open doc/html/index.html || echo "Could not open documentation in a web browser."
 
 
 # Make static library from all the modules
