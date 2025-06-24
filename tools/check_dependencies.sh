@@ -2,7 +2,7 @@
 # This script checks if the required dependencies are installed.
 REQUIRED_DEPENDENCIES=(
     "git"
-    "python3"
+    "python3-full"
     "pip"
     "diff-numerics"
     "grace"
@@ -17,8 +17,8 @@ ask_install() {
             "git")
                 sudo apt-get install git
                 ;;
-            "python3")
-                sudo apt-get install python3
+            "python3-full")
+                sudo apt-get install python3-full
                 ;;
             "pip")
                 sudo apt-get install python3-pip --fix-missing
