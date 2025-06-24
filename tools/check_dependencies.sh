@@ -19,7 +19,12 @@ ask_install() {
                 sudo apt-get install python3
                 ;;
             "diff-numerics")
-                sudo apt-get install diff-numerics
+                git clone https://github.com/AlessandroPhdNuclearAstrophysics/diff-numerics
+                cd diff-numerics
+                make -j
+                sudo make install
+                cd ..
+                rm -rf diff-numerics
                 ;;
             "grace")
                 sudo apt-get install grace
