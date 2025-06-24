@@ -5,6 +5,7 @@ REQUIRED_DEPENDENCIES=(
     "python3"
     "diff-numerics"
     "grace"
+    "fortran-module-interface-generator"
 )
 
 ask_install() {
@@ -29,6 +30,13 @@ ask_install() {
             "grace")
                 sudo apt-get install grace
                 ;;
+            "fortran-module-interface-generator")
+                git clone https://github.com/AlessandroPhdNuclearAstrophysics/fortran-module-interface-generator
+                cd fortran-module-interface-generator
+                make -j
+                sudo make install
+                cd ..
+                rm -rf fortran-module-interface-generator
             *)  
                 echo "Unknown dependency: $1"
                 ;;
