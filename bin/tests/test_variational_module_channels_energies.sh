@@ -4,6 +4,12 @@ echo "============================================================"
 echo "      Testing variational module channels energies"
 echo "============================================================"
 
+# Check if diff-numerics is installed
+if ! command -v diff-numerics &> /dev/null; then
+  echo "Error: diff-numerics is not installed."
+  exit 1
+fi
+
 if [ "$1" == "--debug" ]; then
   BUILD_DIR="build/debug"
 else
