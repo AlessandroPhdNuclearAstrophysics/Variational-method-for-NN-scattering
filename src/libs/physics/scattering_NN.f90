@@ -1,4 +1,4 @@
-!> \file scattering.f90
+!> \file scattering_NN.f90
 !! \defgroup nn_scattering Scattering NN
 !! \defgroup nn_scattering_utils Scattering NN Utilities
 !! \ingroup nn_scattering

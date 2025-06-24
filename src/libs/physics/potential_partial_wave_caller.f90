@@ -1,4 +1,4 @@
-!> \file potential_pw.f90
+!> \file potential_partial_wave_caller.f90
 !! \defgroup nn_potentials N-N Potentials
 !! \ingroup physics
 !! \brief Interface for the calculation of partial-wave nuclear potentials.

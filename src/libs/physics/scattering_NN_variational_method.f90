@@ -1,4 +1,4 @@
-!> \file scattering_NN_variational.f90
+!> \file scattering_NN_variational_method.f90
 !! \defgroup scattering_nn_variational_mod Scattering NN Variational Method
 !! \ingroup nn_scattering
 !! \brief Module for evaluating nucleon-nucleon (NN) scattering wave functions and phase shifts
