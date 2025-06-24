@@ -1,8 +1,6 @@
 !> **********************************************************************
+!! \file av18.f90
 !! Argonne v18 and vn' and Super-Soft Core (C) potential package
-!! \ingroup nn_potentials
-!! \defgroup av18 Argonne v18
-!> \file av18.f90
 !! \defgroup av18 Argonne v18
 !! \ingroup nn_potentials
 !! \brief Module for the Argonne v18 nuclear potential.
@@ -29,22 +27,22 @@
 !!
 !! \par Contents:
 !! This module contains 4 subroutines:
-!!   - \ref AV18PW : full potential in a particular partial wave
-!!   - \ref AV18OP : strong interaction part in operator format
-!!   - \ref EMPOT  : electromagnetic part in operator format
-!!   - \ref CONSTS : values of fundamental constants and masses used
+!!   - AV18PW : full potential in a particular partial wave
+!!   - AV18OP : strong interaction part in operator format
+!!   - EMPOT  : electromagnetic part in operator format
+!!   - CONSTS : values of fundamental constants and masses used
 !!
 !! The variable \c lpot selects between v18, v8' and other options.
 !!
 !! \par Notes:
-!! 1. av18pw90 includes full EM interaction for lpot=1; for lpot>1 it includes only C1(pp), i.e., Coulomb with a form factor for pp channels.
-!! 2. empot90 does not include the energy-dependence of the Coulomb interaction used in eq.(4) of WSS95, i.e., it uses alpha, not alpha'.
-!! 3. The vacuum polarization in empot90 is a short-range approximation to eq.(7) suitable for bound states, but not for scattering. It is taken from eq.(3.13) of Rev. Mod. Phys. 44, 48 (1972).  
+!! - av18pw90 includes full EM interaction for lpot=1; for lpot>1 it includes only C1(pp), i.e., Coulomb with a form factor for pp channels.
+!! - empot90 does not include the energy-dependence of the Coulomb interaction used in eq.(4) of WSS95, i.e., it uses alpha, not alpha'.
+!! - The vacuum polarization in empot90 is a short-range approximation to eq.(7) suitable for bound states, but not for scattering. It is taken from eq.(3.13) of Rev. Mod. Phys. 44, 48 (1972).  
 !!    (8/28/97: error in this formula detected and corrected: should be -(gamma+5/6) instead of printed (-gamma+5/6))
-!! 4. These subroutines should be compiled with a compiler option that forces all floating point constants to be evaluated at DOUBLE PRECISION significance.  
+!! - These subroutines should be compiled with a compiler option that forces all floating point constants to be evaluated at DOUBLE PRECISION significance.  
 !!    For example: on IBM RS6000 use xlf option qdpc=e; on SGI use -r8; on Cray no action is needed.  
 !!    If such an option is not available and the default precision is real*4 (32 bits), then all constants should be explicitly converted to double precision by appending a D0.
-!! 5. consts90 now (14 Feb 2007) depends upon potential: need to call to generate appropriate hbar**2/M.
+!! - consts90 now (14 Feb 2007) depends upon potential: need to call to generate appropriate hbar**2/M.
 MODULE AV18
   IMPLICIT NONE
   PUBLIC :: AV18PW, EMPOT
@@ -56,7 +54,7 @@ MODULE AV18
   !! Computes the nucleon-nucleon potential matrix for a given partial wave,
   !! including strong and electromagnetic terms, for Argonne v18, v8', v6', v4', vx', v2', v1', and Super-Soft Core (C) models.
   !!
-  !! Calls subroutines \ref AV18OP and \ref EMPOT.
+  !! Calls subroutines AV18OP and EMPOT.
   !!
   !! \par Potential choice (\a lpot):
   !! \code
@@ -464,7 +462,7 @@ MODULE AV18
   !!
   !! Computes the electromagnetic part of the Argonne v18 potential.
   !! For avn' models, returns pp Coulomb only.
-  !! Calls subroutine \ref CONSTS.
+  !! Calls subroutine CONSTS.
   !!
   !! \par Potential choice (\a lpot):
   !!   - \c lpot = 1 : full EM potential

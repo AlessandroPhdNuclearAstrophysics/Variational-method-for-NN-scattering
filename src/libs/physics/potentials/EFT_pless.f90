@@ -46,9 +46,9 @@ MODULE EFT_PLESS
   !! \ingroup eft_pless
   !!
   !! This interface allows setting the LECs using different argument types:
-  !! - From another LECS_EFT_PLESS structure (\ref SET_LECS_FROM_LECS)
-  !! - By specifying individual LEC values (\ref SET_LECS_SINGLE)
-  !! - By model index (ILB) (\ref SET_LECS_ILB)
+  !! - From another LECS_EFT_PLESS structure (SET_LECS_FROM_LECS)
+  !! - By specifying individual LEC values (SET_LECS_SINGLE)
+  !! - By model index (ILB) (SET_LECS_ILB)
   INTERFACE SET_LECS
     MODULE PROCEDURE SET_LECS_FROM_LECS
     MODULE PROCEDURE SET_LECS_SINGLE
