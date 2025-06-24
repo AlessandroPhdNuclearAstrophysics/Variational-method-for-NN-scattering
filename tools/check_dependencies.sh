@@ -21,7 +21,7 @@ ask_install() {
                 sudo apt-get install python3
                 ;;
             "pip")
-                sudo apt-get install python3-pip
+                sudo apt-get install python3-pip --fix-missing
                 ;;
             "diff-numerics")
                 git clone https://github.com/AlessandroPhdNuclearAstrophysics/diff-numerics
