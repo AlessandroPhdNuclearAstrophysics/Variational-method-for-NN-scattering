@@ -2110,10 +2110,27 @@ CONTAINS
 
     CALL NN_SCATTERING_VARIATIONAL(0.D0, 0, 0, 0, 0, 0, 0, 0, PSR, .FALSE., .FALSE., .TRUE.)
     TMP = IS_FIRST_CALL(0,0,0,0,0,0,0,.TRUE.)
-
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
-
+  !> @brief Print all relevant data and internal state of the SCATTERING_NN_VARIATIONAL module to a file.
+  !>
+  !> @details
+  !> This subroutine writes the values of all key scalars, logical flags, and the sizes of all allocatable arrays
+  !> in the module to a text file named "scattering_nn_variational_dump_unit<unit>.txt". It also prints the contents
+  !> or sizes of important derived types and arrays, such as channels, energies, potentials, and matrix elements.
+  !> This is useful for debugging and for recording the state of the module at a given point in a calculation.
+  !>
+  !> @param[in] unit  Fortran unit number to use for file output.
+  !>
+  !> The output includes:
+  !>   - Scalar variables and logical flags (e.g., NCH, HTM, LMAX, etc.)
+  !>   - Sizes of all allocatable arrays (e.g., potentials, grids, Bessel functions, etc.)
+  !>   - Names of all channels, if allocated
+  !>   - Selected contents of derived types (e.g., VAR_P, LECS, EFT_RADIAL_CC/AC/AA)
+  !>
+  !> @note
+  !> The subroutine creates a new file or overwrites an existing one for the specified unit.
+  !> Only the sizes of large arrays are printed, not their full contents.
   SUBROUTINE PRINT_ALL_DATA_IN_MODULE(unit)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: unit
@@ -2390,19 +2407,23 @@ CONTAINS
   !> The fit is performed up to the specified order for each channel.
   !> Optional arguments: none.
   !>
-  !> CHANNELS_TO_FIT is an array of type SCATTERING_CHANNEL of size (NCH_TO_FIT).
-  !> ENERGIES is a real array of size (NK2).
-  !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NCH_TO_FIT, NK2).
-  !> FIT_CONSTANTS is a real array of size (NCH_TO_FIT, ORDER_OF_THE_FIT+1).
+  !> Arguments:
+  !>   - CHANNELS_TO_FIT: array of type SCATTERING_CHANNEL (size NCH_TO_FIT), the channels to fit.
+  !>   - ENERGIES: real array (size NK2), energies used in the fit [MeV].
+  !>   - PHASE_SHIFTS: array of type PHASE_SHIFT_RESULT (size NCH_TO_FIT, NK2), phase shift results for each channel.
+  !>   - FIT_CONSTANTS: real array (size NCH_TO_FIT, ORDER_OF_THE_FIT+1), output fit constants for each channel.
+  !>   - ORDER_OF_THE_FIT: integer, order of the polynomial fit.
   !>
-  !> @param[in] CHANNELS_TO_FIT Array of channels to fit.
-  !> @param[in] ENERGIES        Array of energies used in the fit.
-  !> @param[in] PHASE_SHIFTS    Array of phase shift results.
-  !> @param[out] FIT_CONSTANTS  Output fit constants for each channel.
-  !> @param[in] ORDER_OF_THE_FIT Order of the polynomial fit.
+  !> @param[in]  CHANNELS_TO_FIT   Array of channels to fit.
+  !> @param[in]  ENERGIES          Array of energies used in the fit [MeV].
+  !> @param[in]  PHASE_SHIFTS      Array of phase shift results.
+  !> @param[out] FIT_CONSTANTS     Output fit constants for each channel.
+  !> @param[in]  ORDER_OF_THE_FIT  Order of the polynomial fit.
+  !>
+  !> @return FITTED Logical flag: .TRUE. if the fit was successful, .FALSE. otherwise.
   !>
   !> @note
-  !> Array dimensions are described in the comment
+  !> Array dimensions are
   FUNCTION FIT_CHANNELS_LOW_ENERGY(CHANNELS_TO_FIT, ENERGIES, PHASE_SHIFTS, FIT_CONSTANTS, ORDER_OF_THE_FIT) RESULT(FITTED)
     USE FIT_MODULE
     IMPLICIT NONE
@@ -2430,27 +2451,31 @@ CONTAINS
   !>
   !> @details
   !> Performs a polynomial fit of the low-energy expansion for the specified channel using the provided phase shift data.
-  !> The fit is performed up to the specified order using the Stapp phase shifts. Optionally, returns arrays of squared momenta and k^{2L+1}cot(delta).
+  !> The fit is performed up to the specified order using the Stapp phase shifts. Optionally, returns arrays of squared momenta (k^2) and k^{2L+1}cot(delta).
   !> Optional arguments: KSQUARED, K2L1COTD.
   !>
-  !> CHANNEL_TO_FIT is of type SCATTERING_CHANNEL.
-  !> ENERGIES is a real array of size (NK2).
-  !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NK2).
-  !> FIT_CONSTANTS is a real array of size (NCH, ORDER_OF_THE_FIT+1).
-  !> KSQUARED, if present, is a real array of size (NK2).
-  !> K2L1COTD, if present, is a real array of size (NCH, NK2).
+  !> Arguments:
+  !>   - CHANNEL_TO_FIT: type(SCATTERING_CHANNEL), the scattering channel to fit.
+  !>   - ENERGIES: real array (size NK2), energies used in the fit [MeV].
+  !>   - PHASE_SHIFTS: array of type PHASE_SHIFT_RESULT (size NK2), phase shift results for the channel.
+  !>   - FIT_CONSTANTS: real array (size NCH, ORDER_OF_THE_FIT+1), output fit constants for the channel.
+  !>   - ORDER_OF_THE_FIT: integer, order of the polynomial fit.
+  !>   - KSQUARED: (optional) real array (size NK2), output array of squared momenta (k^2) [fm^-2].
+  !>   - K2L1COTD: (optional) real array (size NCH, NK2), output array for k^{2L+1}cot(delta).
   !>
-  !> @param[in] CHANNEL_TO_FIT Scattering channel to fit.
-  !> @param[in] ENERGIES       Array of energies used in the fit.
-  !> @param[in] PHASE_SHIFTS   Array of phase shift results for the channel.
-  !> @param[out] FIT_CONSTANTS Output fit constants for the channel.
-  !> @param[in] ORDER_OF_THE_FIT Order of the polynomial fit.
-  !> @param[out] KSQUARED      (Optional) Output array of squared momenta.
-  !> @param[out] K2L1COTD      (Optional) Output array for k^{2L+1}cot(delta).
+  !> @param[in]  CHANNEL_TO_FIT   Scattering channel to fit.
+  !> @param[in]  ENERGIES         Array of energies used in the fit [MeV].
+  !> @param[in]  PHASE_SHIFTS     Array of phase shift results for the channel.
+  !> @param[out] FIT_CONSTANTS    Output fit constants for the channel.
+  !> @param[in]  ORDER_OF_THE_FIT Order of the polynomial fit.
+  !> @param[out] KSQUARED         (Optional) Output array of squared momenta (k^2).
+  !> @param[out] K2L1COTD         (Optional) Output array for k^{2L+1}cot(delta).
+  !>
+  !> @return FITTED Logical flag: .TRUE. if the fit was successful, .FALSE. otherwise.
   !>
   !> @note
   !> Optional arguments are indicated as (Optional) in the parameter description.
-  !> Array dimensions are described in the comment body above.
+  !> Array dimensions are described above.
   FUNCTION FIT_CHANNEL_LOW_ENERGY(CHANNEL_TO_FIT, ENERGIES, PHASE_SHIFTS, FIT_CONSTANTS, ORDER_OF_THE_FIT, KSQUARED, K2L1COTD) &
         RESULT(FITTED)
     USE FIT_MODULE
@@ -2519,4 +2544,5 @@ CONTAINS
     ENDDO
     FITTED = .TRUE.
   END FUNCTION FIT_CHANNEL_LOW_ENERGY
+
 END MODULE SCATTERING_NN_VARIATIONAL
