@@ -423,14 +423,23 @@ CONTAINS
       READ(NAME(3:3), '(I1)') J
 
       NCH = 1
-      CHANNEL = init_scattering_channel(J, MOD(L(1), 2) == 0, TZ)
-      CALL SET_CHANNEL(CHANNEL, J, L(1), S(1), TZ)
+      CHANNEL%COUPLED = .FALSE.
+      CHANNEL%NCH = 1
+      ALLOCATE(CHANNEL%L(1))
+      ALLOCATE(CHANNEL%S(1))
+      ALLOCATE(CHANNEL%T(1))
+      CHANNEL%L(1) = L(1)
+      CHANNEL%S(1) = S(1)
+      CHANNEL%T(1) = EVALUATE_T(L(1), S(1))
+      CHANNEL%J = J
+      CHANNEL%TZ = TZ
     ELSE
       ! Coupled channel: split at '-'
       LEN1 = POS - 1
       LEN2 = LEN_TRIM(NAME) - POS
       TMPNAME = '                '
       TMPNAME(1:LEN1) = NAME(1:LEN1)
+
       ! First part
       IF (LEN1 < 3) THEN
         PRINT *, "Error: First channel name too short."
