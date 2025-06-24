@@ -31,12 +31,12 @@ ask_install() {
                 sudo apt-get install grace
                 ;;
             "fortran-module-interface-generator")
-                git clone https://github.com/AlessandroPhdNuclearAstrophysics/fortran-module-interface-generator
-                cd fortran-module-interface-generator
+                git clone https://github.com/AlessandroPhdNuclearAstrophysics/fortran-module-public-interface-generator
+                cd fortran-module-public-interface-generator
                 make -j
                 sudo make install
                 cd ..
-                rm -rf fortran-module-interface-generator
+                rm -rf fortran-module-public-interface-generator
                 ;;
             *)  
                 echo "Unknown dependency: $1"
