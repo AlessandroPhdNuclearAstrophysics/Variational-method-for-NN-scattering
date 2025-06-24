@@ -13,8 +13,6 @@ PROGRAM test_quantum_numbers_full
   CALL print_status("Comprehensive Test of QUANTUM_NUMBERS Module", .TRUE.)
 
   ! Test 1: Test initialization with different parameters
-  CALL print_status("Test 1: Testing init_scattering_channel with various parameters", .TRUE.)
-
   ! Test 1.1: Even parity J=0 channel
   ch = init_scattering_channel(0, .TRUE., 0)
   CALL test_channel(ch, 0, 0, 0, 0, 1, .FALSE., "1S0", "Test 1.1: Even parity J=0 channel")
@@ -36,8 +34,6 @@ PROGRAM test_quantum_numbers_full
   CALL test_channel(ch, 2, 2, 0, 0, 2, .FALSE., "1D2-3D2", "Test 1.5: Different TZ value")
 
   ! Test 2: Test SET_CHANNEL functionality
-  CALL print_status("Test 2: Testing SET_CHANNEL functionality", .TRUE.)
-
   ! Test 2.1: Set single-channel parameters
   CALL SET_CHANNEL(ch, 3, 3, 0, 0)
   CALL test_channel(ch, 3, 3, 0, 0, 1, .FALSE., "1F3", "Test 2.1: Set single-channel parameters")
@@ -47,8 +43,6 @@ PROGRAM test_quantum_numbers_full
   CALL test_channel(ch, 2, 1, 1, 0, 2, .TRUE., "3P2-3F2", "Test 2.2: Set coupled-channel parameters")
 
   ! Test 3: Test GET_CHANNEL_FROM_NAME functionality
-  CALL print_status("Test 3: Testing GET_CHANNEL_FROM_NAME functionality", .TRUE.)
-
   ! Test 3.1: Parse uncoupled channel name
   ch = GET_CHANNEL_FROM_NAME("1S0")
   CALL test_channel(ch, 0, 0, 0, 0, 1, .FALSE., "1S0", "Test 3.1: Parse uncoupled channel name")
@@ -62,8 +56,6 @@ PROGRAM test_quantum_numbers_full
   CALL test_channel(ch, 4, 4, 1, 0, 1, .FALSE., "3G4", "Test 3.3: High angular momentum")
 
   ! Test 4: Test IS_SAME_CHANNEL functionality
-  CALL print_status("Test 4: Testing IS_SAME_CHANNEL functionality", .TRUE.)
-
   ! Test 4.1: Compare identical channels
   ch = GET_CHANNEL_FROM_NAME("3P2-3F2")
   ch2 = GET_CHANNEL_FROM_NAME("3P2-3F2")
@@ -87,7 +79,6 @@ PROGRAM test_quantum_numbers_full
   END IF
 
   ! Test 5: Test IS_PHYSICAL_CHANNEL functionality
-  CALL print_status("Test 5: Testing IS_PHYSICAL_CHANNEL functionality", .TRUE.)
 
   ! Test 5.1: Test with valid channel
   ch = GET_CHANNEL_FROM_NAME("3F3")
@@ -105,7 +96,6 @@ PROGRAM test_quantum_numbers_full
   ! Not directly testable for failure here, so skip status print
 
   ! Test 6: Test all quantum number getters
-  CALL print_status("Test 6: Testing quantum number getters", .TRUE.)
   ch = GET_CHANNEL_FROM_NAME("3D2-3G2")
 
   J = GET_CHANNEL_J(ch)
@@ -153,7 +143,6 @@ PROGRAM test_quantum_numbers_full
   END IF
 
   ! Test 7: Round-trip name conversion
-  CALL print_status("Test 7: Testing round-trip name conversion", .TRUE.)
   name = "3P2-3F2"
   ch = GET_CHANNEL_FROM_NAME(name)
   name2 = GET_CHANNEL_NAME(ch)
@@ -165,13 +154,16 @@ PROGRAM test_quantum_numbers_full
   END IF
 
   ! Test 8: Prepare channels up to LMAX=3 and JMAX=3
-  CALL print_status("Test 8: Testing PREPARE_CHANNELS with LMAX=3, JMAX=3", .TRUE.)
   CALL test_prepare_channels(0)
   CALL test_prepare_channels(1)
 
   ! Test 9: L combinations for TZ=0, LMAX=3, JMAX=3
-  CALL print_status("Test 9: Testing L_COMBINATIONS for TZ=0, LMAX=3, JMAX=3", .TRUE.)
   CALL test_l_combinations
+
+  ! Test 10: Create a channel from name
+  name = "3P2"
+  ch = GET_CHANNEL_FROM_NAME(name)
+  CALL test_channel(ch, 2, 1, 1, 0, 1, .FALSE., "3P2", "Test 10: Create channel from name")
 
 CONTAINS
 

@@ -524,7 +524,7 @@ CONTAINS
 
       CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
       CH_INDEX = FIND_CHANNEL_INDEX()
-      WRITE(*,*) "CH_INDEX", CH_INDEX
+      ! WRITE(*,*) "CH_INDEX", CH_INDEX
     ELSE
       VAR_P%E = E
       VAR_P%K = DSQRT(2*E*MR) / HC
@@ -546,11 +546,11 @@ CONTAINS
     IE = FIND_ENERGY_INDEX(E)
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      WRITE(*,*) "Combining the CC potential"
+      ! WRITE(*,*) "Combining the CC potential"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
-      WRITE(*,*) "Combining the AC potential (real part)"
+      ! WRITE(*,*) "Combining the AC potential (real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
-      WRITE(*,*) "Combining the AC potential (imaginary part)"
+      ! WRITE(*,*) "Combining the AC potential (imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
       VM_CC = VM_CC / HTM
       VM_AC_R = VM_AC_R / HTM
@@ -604,19 +604,19 @@ CONTAINS
     ENDIF
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      WRITE(*,*) "Combining the AA potential (real part)"
+      ! WRITE(*,*) "Combining the AA potential (real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-      WRITE(*,*) "Combining the AA potential (real-imaginary part)"
+      ! WRITE(*,*) "Combining the AA potential (real-imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-      WRITE(*,*) "Combining the AA potential (imaginary-real part)"
+      ! WRITE(*,*) "Combining the AA potential (imaginary-real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-      WRITE(*,*) "Combining the AA potential (imaginary part)"
+      ! WRITE(*,*) "Combining the AA potential (imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
       VM_AA_RR = VM_AA_RR / HTM
       VM_AA_RI = VM_AA_RI / HTM
       VM_AA_IR = VM_AA_IR / HTM
       VM_AA_II = VM_AA_II / HTM
-      WRITE(*,*) "Finished combining potentials"    
+      ! WRITE(*,*) "Finished combining potentials"    
       H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
       H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
       H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
@@ -2461,8 +2461,8 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: X(:), Y(:)
     DOUBLE PRECISION :: DELTA
     DOUBLE PRECISION :: FIT_CONSTANTS_(ORDER_OF_THE_FIT +1)
-    WRITE(*,*) "Fitting channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", GET_CHANNEL_L(CHANNEL_TO_FIT, 1), &
-        " and order of the fit: ", ORDER_OF_THE_FIT
+    ! WRITE(*,*) "Fitting channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", GET_CHANNEL_L(CHANNEL_TO_FIT, 1), &
+        ! " and order of the fit: ", ORDER_OF_THE_FIT
 
     NK2 = SIZE(ENERGIES)
     NEQ = GET_CHANNEL_NCH(CHANNEL_TO_FIT)
@@ -2485,7 +2485,8 @@ CONTAINS
       DO I = 1, NK2
         IF (IEQ==1) DELTA = PHASE_SHIFTS(I)%delta1_S
         IF (IEQ==2) DELTA = PHASE_SHIFTS(I)%delta2_S
-        IF (ABS(DELTA) > 2.5D-5 .OR. L == 3 .AND. I > 2*NK2/3) THEN
+        IF (ABS(DELTA) > 2.5D-5) THEN
+          IF (L == 3 .AND. I < 2*NK2/3) CYCLE
           IF (PRESENT(K2L1COTD)) THEN
             K2L1COTD(IEQ,I) = X(I)**((2.D0*L + 1.D0)/2.D0) / DTAN(DELTA*PI/180.D0)
           ENDIF
@@ -2501,8 +2502,8 @@ CONTAINS
         FIT_CONSTANTS(IEQ,:) = 0.D0
         CYCLE
       ENDIF
-      WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points, ", &
-          "using htm: ", HTM
+      ! WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points, ", &
+          ! "using htm: ", HTM
       FIT_CONSTANTS_ = 0.D0
       CALL POLYNOMIAL_REGRESSION(Y(IMIN:), X(IMIN:), ORDER_OF_THE_FIT, NK2-IMIN, FIT_CONSTANTS_)
       FIT_CONSTANTS(IEQ,:) = FIT_CONSTANTS_
