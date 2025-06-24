@@ -52,14 +52,17 @@ ask_install() {
 }
 
 check_dependencies() {
+    ALL_DEPENDENCIES_INSTALLED=true
     for dependency in "${REQUIRED_DEPENDENCIES[@]}"; do
         if ! command -v "$dependency" &> /dev/null; then
             echo "Error: $dependency is not installed."
             ask_install "$dependency"
-            return 1
+            ALL_DEPENDENCIES_INSTALLED=false
         fi
     done
-    echo "All required dependencies are installed."
+    if [ "$ALL_DEPENDENCIES_INSTALLED" = true ]; then
+        echo "All required dependencies are installed."
+    fi
     return 0
 }
 
