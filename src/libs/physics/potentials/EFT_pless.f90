@@ -70,7 +70,7 @@ MODULE EFT_PLESS
 
 CONTAINS
   !> \brief Set LECs from another LECS_EFT_PLESS structure.
-  !! \param[in] LECS_IN Input LECs structure
+  !! \param[in] LECS_IN Structure containing all LECs for the EFT potential
   SUBROUTINE SET_LECS_FROM_LECS(LECS_IN)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
@@ -368,9 +368,18 @@ CONTAINS
     IF (SUM(ABS(LECS%RC)) < MINR) STOP "RC not set"
   END SUBROUTINE PREPARE
 
-  !> \brief Evaluate the EFT Plesset potential for a given channel and radius.
-  !! \param[in] ILB, L, S, J, T1Z, T2Z, R, LEMP
-  !! \param[out] VPW(2,2) Potential matrix
+  !> \brief Evaluate the EFT Plesset potential matrix elements for given quantum numbers and radius.
+  !! Computes the 2x2 potential matrix VPW for the specified channel and radius R using the current LECs.
+  !! Handles all spin/isospin channels and EFT orders (LO, NLO, N3LO).
+  !! \param[in] ILB Interaction label
+  !! \param[in] L Orbital angular momentum
+  !! \param[in] S Spin
+  !! \param[in] J Total angular momentum
+  !! \param[in] T1Z Isospin projection of nucleon 1
+  !! \param[in] T2Z Isospin projection of nucleon 2
+  !! \param[in] R Radial distance [fm]
+  !! \param[out] VPW 2x2 potential matrix
+  !! \param[in] LEMP Electromagnetic flag
   SUBROUTINE EFT_PLESS_PW(ILB, L, S, J, T1Z, T2Z, R, VPW, LEMP)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ILB, L, S, J, T1Z, T2Z, LEMP
@@ -654,6 +663,12 @@ CONTAINS
     LECS_OUT = LECS_ALL(ILB)
   END FUNCTION GET_LECS
 
+  !> @brief Prints the contents of a LECS_EFT_PLESS structure.
+  !>
+  !> @details It prints the potential submodel (ILB), order of the potential (ORDER),
+  !> the cutoff parameters (RC), and the coefficients for the LO, NLO, and N3LO potentials.
+  !>
+  !> @param[in] LECS_IN Input LECS_EFT_PLESS structure.
   SUBROUTINE PRINT_LECS(LECS_IN)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_IN
@@ -689,6 +704,18 @@ CONTAINS
     WRITE(*,'(A,5ES18.8E2)') "    ", (LECS_IN%CIT(J), J=0,4)
   END SUBROUTINE PRINT_LECS
 
+
+  !> @brief It returns all the possible radial function multiplying the LECS in 
+  !> the EFT Plesset potential.
+  !>
+  !> @details The possible radial functions are of 8 kind. At LO there is only one radial function (I=0),
+  !> at NLO there are 5 radial functions (I=0,1,2,3,4), and at N3LO there are 8 radial functions (I=0,1,2,3,4,5,6,7).
+  !>
+  !> @param[in] R_ARRAY Array of radial points (in fm).
+  !> @param[in] RC Cutoff parameters for the radial functions (2x2 array).
+  !> @param[out] FUNCTIONS Structure containing the radial functions.
+  !> @param[in] ORDER_POTENTIAL (optional) Order of the potential (0 for LO, 1 for NLO, 3 for N3LO).
+  !> If not specified, defaults to 3 (N3LO).
   SUBROUTINE GET_EFT_RADIAL_FUNCTIONS(R_ARRAY, RC, FUNCTIONS, ORDER_POTENTIAL)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: RC(0:1,0:1)
@@ -760,11 +787,12 @@ CONTAINS
     FI = FI * CR(R, RC)
   END FUNCTION EFT_RADIAL
 
-  !> \brief Combine operator matrix elements with LECs to form the full potential.
+  !> \brief Combine operator radial matrix elements with LECs to form the full potential.
   !! \param[in] CHANNELS Array of channels
-  !! \param[in] FR_MATRIX_EL Operator matrix elements
+  !! \param[in] FR_MATRIX_EL Operator radial matrix elements with dimensions (NOPERATOR, NCHANNELS, NR, NALPHAL, NALPHAR)
+  !!                        <left| FR_i(r) |right> for each operator i, channel, subchannel
   !! \param[in] LECS_IN LECs structure
-  !! \param[out] POTENTIAL_OUT Output potential matrix
+  !! \param[out] POTENTIAL_OUT Output potential matrix elements with dimensions (NCHANNELS, NOPERATOR, NALPHAL, NALPHAR)
   SUBROUTINE COMBINE_POTENTIAL(CHANNELS, FR_MATRIX_EL, LECS_IN, POTENTIAL_OUT)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)

@@ -165,7 +165,10 @@ CONTAINS
   END FUNCTION IS_LSJ_PHYSICAL
 
   !> \brief Set the quantum numbers of a SCATTERING_CHANNEL.
-  !! \param[inout] CHANNEL The channel to set
+  !! \brief Set the quantum numbers for a scattering channel.
+  !! Sets the J, L, S, TZ quantum numbers and determines if the channel is coupled or not.
+  !! Allocates and fills the L, S, T arrays for the channel.
+  !! \param[inout] CHANNEL Scattering channel object to set
   !! \param[in] J Total angular momentum
   !! \param[in] L Orbital angular momentum
   !! \param[in] S Spin
@@ -511,15 +514,10 @@ CONTAINS
   !! It allocates and fills the output array CHANNELS with all valid channels, filtering out
   !! unphysical combinations according to selection rules.
   !!
-  !! @param[in]  LMAX      Maximum orbital angular momentum quantum number (L)
-  !! @param[in]  JMAX      Maximum total angular momentum quantum number (J)
-  !! @param[in]  TZ        Isospin projection quantum number
-  !! @param[out] CHANNELS  Allocated array of valid SCATTERING_CHANNEL objects
-  !!
-  !! The subroutine uses SET_CHANNEL to construct each channel and IS_PHYSICAL_CHANNEL to
-  !! filter out unphysical channels. Additional selection rules are applied to exclude
-  !! certain spin-triplet channels with L > J.
-  
+  !! \param[in] LMAX Maximum orbital angular momentum
+  !! \param[in] JMAX Maximum total angular momentum
+  !! \param[in] TZ Isospin projection
+  !! \param[out] CHANNELS Array of physical scattering channels
   SUBROUTINE PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: LMAX, JMAX, TZ
@@ -604,12 +602,12 @@ CONTAINS
   !   ELSE
   !     ALLOCATE(CHANNELS(0))
   !   END IF
-
-
-
   ! END FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
 
   !> \brief Print all quantum numbers and info for a SCATTERING_CHANNEL object.
+  !! \brief Print information about a scattering channel.
+  !! Prints all quantum numbers and spectroscopic name for the given channel.
+  !! \param[in] CHANNEL Scattering channel to print
   SUBROUTINE PRINT_SCATTERING_CHANNEL(CHANNEL)
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: ICH
@@ -628,6 +626,9 @@ CONTAINS
     PRINT *, '------------------------------'
   END SUBROUTINE PRINT_SCATTERING_CHANNEL
 
+  !> \brief Reset a scattering channel to default/uninitialized state.
+  !! Deallocates arrays and resets all quantum numbers.
+  !! \param[inout] CHANNEL Scattering channel to reset
   SUBROUTINE RESET_CHANNEL(CHANNEL)
     TYPE(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
 
@@ -641,6 +642,10 @@ CONTAINS
   END SUBROUTINE RESET_CHANNEL
 
 
+  !> \brief Compute all unique (L1, L2) combinations for a set of channels.
+  !! Fills LEFT_RIGHT_L_COMBINATIONS with all unique pairs of L quantum numbers from CHANNELS.
+  !! \param[in] CHANNELS Array of scattering channels
+  !! \param[inout] LEFT_RIGHT_L_COMBINATIONS Output array of unique (L1, L2) pairs
   SUBROUTINE L_COMBINATIONS(CHANNELS, LEFT_RIGHT_L_COMBINATIONS)
     IMPLICIT NONE
     TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNELS(:)
@@ -685,6 +690,10 @@ CONTAINS
     LEFT_RIGHT_L_COMBINATIONS = TMP(1:N_COMB, :)
   END SUBROUTINE L_COMBINATIONS
 
+  !> \brief Convert isospin projection TZ to individual nucleon projections T1Z, T2Z.
+  !! \param[in] TZ Total isospin projection
+  !! \param[out] T1Z Isospin projection of nucleon 1
+  !! \param[out] T2Z Isospin projection of nucleon 2
   SUBROUTINE TZ_TO_T1Z_T2Z(TZ, T1Z, T2Z)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: TZ
@@ -699,6 +708,10 @@ CONTAINS
     END IF
   END SUBROUTINE TZ_TO_T1Z_T2Z
 
+  !> \brief Convert individual nucleon isospin projections to total TZ.
+  !! \param[in] T1Z Isospin projection of nucleon 1
+  !! \param[in] T2Z Isospin projection of nucleon 2
+  !! \param[out] TZ Total isospin projection
   SUBROUTINE T1Z_T2Z_TO_TZ(T1Z, T2Z, TZ)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: T1Z, T2Z
@@ -711,6 +724,11 @@ CONTAINS
     END IF
   END SUBROUTINE T1Z_T2Z_TO_TZ
 
+  !> @brief Evaluates T from L and S quantum numbers assuming (-1)^(L+S+T)==-1.
+  !>
+  !> @param[in] L Orbital angular momentum quantum number
+  !> @param[in] S Spin quantum number
+  !> @param[out] T Total angular momentum quantum number
   FUNCTION T_FROM_L_S(L, S) RESULT(T)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: L, S
