@@ -23,16 +23,28 @@ module gsl_coulomb
     real(c_double) :: err  !< Absolute error estimate
   end type gsl_sf_result
 
-  !> \brief Interface to GSL's coulomb_wave_FG_e C function.
+  !> \brief Fortran interface to GSL's gsl_sf_coulomb_wave_fg_e.
+  !! \param[in] eta Sommerfeld parameter
+  !! \param[in] x   Radial coordinate
+  !! \param[in] L   Orbital angular momentum
+  !! \param[in] k   Coulomb parameter
+  !! \param[out] F  Regular Coulomb function result
+  !! \param[out] FP Derivative of regular Coulomb function
+  !! \param[out] G  Irregular Coulomb function result
+  !! \param[out] GP Derivative of irregular Coulomb function
+  !! \param[out] F_exp Exponential scaling for F
+  !! \param[out] G_exp Exponential scaling for G
+  !!
+  !> \return Status code (0 = success)
   interface
     function gsl_sf_coulomb_wave_FG_e(eta, x, L, k, F, FP, G, GP, F_exp, G_exp) &
-        bind(C, name='gsl_sf_coulomb_wave_FG_e')
+        bind(C, name='gsl_sf_coulomb_wave_FG_e') result(gsl_sf_coulomb_wave_FG_e)
       import :: c_int, c_double, gsl_sf_result
-      integer(c_int) :: gsl_sf_coulomb_wave_FG_e  !< Return status (0 = success)
-      real(c_double), value :: eta, x, L          !< Input parameters
-      integer(c_int), value :: k                  !< Boundary condition flag
-      type(gsl_sf_result) :: F, FP, G, GP         !< Output structures
-      real(c_double) :: F_exp, G_exp              !< Scaling exponents
+      integer(c_int) :: gsl_sf_coulomb_wave_FG_e  
+      real(c_double), value :: eta, x, L          
+      integer(c_int), value :: k                  
+      type(gsl_sf_result) :: F, FP, G, GP         
+      real(c_double) :: F_exp, G_exp              
     end function
   end interface
 

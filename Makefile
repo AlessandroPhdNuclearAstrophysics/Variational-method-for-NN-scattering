@@ -146,7 +146,6 @@ doc:
 	@echo "CALLER_GRAPH       		= YES" >> Doxyfile
 	@echo "DOT_GRAPH_MAX_NODES		= 100" >> Doxyfile
 	@echo "DOT_CLEANUP        		= YES" >> Doxyfile
-	@echo "DOT_GROUP_GRAPHS   		= YES" >> Doxyfile
 	@doxygen Doxyfile
 	@rm -vf Doxyfile
 	@echo "Doxygen documentation generated in doc/"

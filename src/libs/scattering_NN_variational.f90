@@ -2,7 +2,6 @@
 !! \defgroup scattering_nn_variational_mod Scattering NN Variational Module
 !! \brief Module for evaluating nucleon-nucleon (NN) scattering wave functions and phase shifts
 !!        using the variational and Kohn principles.
-!! \ingroup scattering_nn_variational_mod
 !! This module provides routines to compute the scattering wave function and phase shifts
 !! for a given set of energies and channels (partial waves) in nucleon-nucleon scattering.
 !! The calculations are based on the variational principle and the Kohn variational method.
@@ -205,8 +204,8 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
-!> \ingroup scattering_nn_variational_mod
-!> \brief Set all variational parameters at once.
+  !> \ingroup scattering_nn_variational_mod
+  !> \brief Set all variational parameters at once.
   !! \param[in] J    Total angular momentum
   !! \param[in] L    Orbital angular momentum
   !! \param[in] S    Spin
@@ -902,6 +901,7 @@ CONTAINS
       ENDDO
     END SUBROUTINE R_SECOND_ORDER
 
+    !> \ingroup scattering_nn_variational_mod
     !> \brief Write coefficients to file to recreate the wave function.
     !! \param[in] FILE (optional) Output file name
     SUBROUTINE WRITE_COEFFICIENTS_TO_RECREATE_THE_WAVE_FUNCTION(FILE)
@@ -1401,7 +1401,6 @@ CONTAINS
 
 
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare asymptotic-asymptotic matrix elements for the variational calculation.
   SUBROUTINE PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
     USE gsl_bessel
@@ -1604,14 +1603,12 @@ CONTAINS
     END SELECT
   END FUNCTION ORDER_TO_NMAX
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Print a divider line to the output.
   SUBROUTINE PRINT_DIVIDER()
     IMPLICIT NONE
       WRITE(*,*) '====================================================================================='
   END SUBROUTINE PRINT_DIVIDER
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
   !! \param[in] J, L, S, TZ, IPOT, ILB, LEMP
   !! \return .TRUE. if first call, .FALSE. otherwise
@@ -1650,7 +1647,6 @@ CONTAINS
     ENDIF
   END FUNCTION IS_FIRST_CALL
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the radial grids for the calculation.
   SUBROUTINE PREPARE_GRID()
     USE INTEGRATION_MOD
@@ -1692,7 +1688,6 @@ CONTAINS
     CALL PREPARE_LAGUERRE
   END SUBROUTINE PREPARE_GRID
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare Bessel functions for the asymptotic region.
   SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
     USE gsl_bessel
@@ -1790,7 +1785,6 @@ CONTAINS
     WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Find the index of a given energy in the ENERGIES array.
   !! \param[in] E Energy value
   !! \return Index in ENERGIES_ array
@@ -1812,7 +1806,6 @@ CONTAINS
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare the potential matrices for all channels.
   !! \param[in] CHANNELS Array of SCATTERING_CHANNEL structures
   SUBROUTINE PREPARE_POTENTIAL(CHANNELS)
@@ -1859,7 +1852,6 @@ CONTAINS
     POTENTIAL_SET = .TRUE.
   END SUBROUTINE PREPARE_POTENTIAL
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Prepare Laguerre basis functions and their derivatives.
   SUBROUTINE PREPARE_LAGUERRE()
     USE LAGUERRE_POLYNOMIAL_MOD
@@ -1913,7 +1905,6 @@ CONTAINS
   END SUBROUTINE PREPARE_LAGUERRE
 
 
-  !> \ingroup scattering_nn_variational_mod
   !> \brief Find the index of the current channel in the CHANNELS array.
   !! \return Index in CHANNELS_ array
   FUNCTION FIND_CHANNEL_INDEX() RESULT(INDX)
@@ -1933,6 +1924,7 @@ CONTAINS
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Returns hbar^2 / (2 * M)
   !>
   !> This function retrieves the value of hbar^2 / (2 * M).
@@ -1951,6 +1943,7 @@ CONTAINS
     HTM_VALUE = HTM
   END FUNCTION GET_HTM
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Sets the dynamic flag for the calculation.
   !>
   !> This subroutine assigns the value of the input logical variable FLAG to the module variable USE_DYNAMIC,
@@ -1963,6 +1956,7 @@ CONTAINS
     USE_DYNAMIC = FLAG
   END SUBROUTINE SET_DYNAMIC
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Sets new Low Energy Constants (LECs) for the EFT potential.
   !>
   !> This subroutine updates the global LECs variable with the provided values.
@@ -1993,6 +1987,7 @@ CONTAINS
   END SUBROUTINE SET_NEW_LECS
   
 
+  !> \ingroup scattering_nn_variational_mod
   !> \brief Reset the SCATTERING_NN_VARIATIONAL module to its initial state.
   !! This subroutine deallocates all allocatable arrays, resets logical flags,
   !! and restores all module variables to their default values.
@@ -2112,6 +2107,7 @@ CONTAINS
     TMP = IS_FIRST_CALL(0,0,0,0,0,0,0,.TRUE.)
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Print all relevant data and internal state of the SCATTERING_NN_VARIATIONAL module to a file.
   !>
   !> @details
@@ -2282,13 +2278,14 @@ CONTAINS
   END SUBROUTINE PRINT_ALL_DATA_IN_MODULE
 
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Compute NN scattering phase shifts for multiple energies and channels using the variational method.
   !>
   !> @details
   !> Computes phase shifts for all specified energies and channels, using either a standard potential
   !> (specified by IPOT and ILB) or a custom EFT potential (specified by LECS_FOR_PLESS).
   !> Optionally, fits low-energy constants for the channels using the computed phase shifts.
-  !> Optional arguments: IPOT, ILB, LECS_FOR_PLESS, FIT_CONSTANTS, ORDER_OF_THE_FIT.
+  !> Optional arguments: IPOT, ILB, LECS_FOR_PLESS, FIT_CONSTANTS, ORDER_OF_THE_FIT, FITTED.
   !> Either IPOT/ILB or LECS_FOR_PLESS must be provided, but not both.
   !>
   !> ENERGIES is a real array of size (NE).
@@ -2296,19 +2293,20 @@ CONTAINS
   !> PHASE_SHIFTS is an array of type PHASE_SHIFT_RESULT of size (NCHANNELS, NE).
   !> FIT_CONSTANTS, if present, is a real array of size (NCHANNELS, ORDER_OF_THE_FIT+1).
   !>
-  !> @param[in] ENERGIES      Array of energies at which to compute phase shifts.
-  !> @param[in] CHANNELS      Array of scattering channels.
-  !> @param[in] LEMP          Electromagnetic potential flag.
-  !> @param[out] PHASE_SHIFTS Array of phase shift results.
-  !> @param[in] IPOT          (Optional) Integer potential identifier.
-  !> @param[in] ILB           (Optional) Integer label for the potential.
-  !> @param[in] LECS_FOR_PLESS (Optional) Low-energy constants for PLESS potential.
-  !> @param[in] FIT_CONSTANTS (Optional) Fit constants for low-energy expansion.
-  !> @param[in] ORDER_OF_THE_FIT (Optional) Order of the polynomial fit for low-energy expansion.
+  !> @param[in]  ENERGIES        Array of energies at which to compute phase shifts.
+  !> @param[in]  CHANNELS        Array of scattering channels.
+  !> @param[in]  LEMP            Electromagnetic potential flag.
+  !> @param[out] PHASE_SHIFTS    Array of phase shift results.
+  !> @param[in]  IPOT            (Optional) Integer potential identifier.
+  !> @param[in]  ILB             (Optional) Integer label for the potential.
+  !> @param[in]  LECS_FOR_PLESS  (Optional) Low-energy constants for PLESS potential.
+  !> @param[in]  FIT_CONSTANTS   (Optional) Fit constants for low-energy expansion.
+  !> @param[in]  ORDER_OF_THE_FIT (Optional) Order of the polynomial fit for low-energy expansion.
+  !> @param[out] FITTED          (Optional) Logical flag: .TRUE. if the fit was successful, .FALSE. otherwise.
   !>
   !> @note
   !> Optional arguments are indicated as (Optional) in the parameter description.
-  !> Array dimensions are described in the comment body
+  !> Array dimensions are described in the comment body above.
   SUBROUTINE NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS(ENERGIES, CHANNELS, LEMP, PHASE_SHIFTS, IPOT, ILB, LECS_FOR_PLESS, &
         FIT_CONSTANTS, ORDER_OF_THE_FIT, FITTED)
     IMPLICIT NONE
@@ -2400,6 +2398,7 @@ CONTAINS
     ENDIF
   END SUBROUTINE NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Fit low-energy constants for multiple scattering channels using phase shift data.
   !>
   !> @details
@@ -2447,6 +2446,7 @@ CONTAINS
     ENDDO
   END FUNCTION FIT_CHANNELS_LOW_ENERGY
 
+  !> \ingroup scattering_nn_variational_mod
   !> @brief Fit low-energy constants for a single scattering channel using phase shift data.
   !>
   !> @details

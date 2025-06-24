@@ -117,8 +117,8 @@ CONTAINS
   !> \brief Evaluate isospin T for given L, S, and TZ.
   !! \param[in] L Orbital angular momentum
   !! \param[in] S Spin
-  !! \param[in] TZ Isospin projection
-  !! \return Isospin T
+  !!
+  !! \return T The isospin quantum number
   FUNCTION EVALUATE_T(L, S) RESULT(T)
     INTEGER, INTENT(IN) :: L, S
     INTEGER :: T
@@ -728,7 +728,8 @@ CONTAINS
   !>
   !> @param[in] L Orbital angular momentum quantum number
   !> @param[in] S Spin quantum number
-  !> @param[out] T Total angular momentum quantum number
+  !> 
+  !> @return T Total angular momentum quantum number
   FUNCTION T_FROM_L_S(L, S) RESULT(T)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: L, S
