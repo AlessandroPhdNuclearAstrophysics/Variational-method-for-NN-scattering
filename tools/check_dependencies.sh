@@ -37,6 +37,7 @@ ask_install() {
                 sudo make install
                 cd ..
                 rm -rf fortran-module-interface-generator
+                ;;
             *)  
                 echo "Unknown dependency: $1"
                 ;;
