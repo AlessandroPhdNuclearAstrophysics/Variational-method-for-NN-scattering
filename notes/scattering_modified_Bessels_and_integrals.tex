@@ -1,0 +1,193 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath, amsfonts,amsthm,bm,amssymb, graphics, setspace}
+\usepackage{mathtools}
+\usepackage[left=2.00cm, right=2.00cm, top=3.00cm, bottom=3.00cm]{geometry}
+\usepackage{xfrac}
+\usepackage{empheq}
+\usepackage[most]{tcolorbox}
+\usepackage{appendix}
+\author{Alessandro Grassi}
+
+
+\newtcbox{\mymathUtil}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=white!10, boxrule=1pt,
+	#1}
+
+\newtcbox{\mymath}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=blue!10, boxrule=1pt,
+	#1}
+
+\newtcbox{\mymathUsed}[1][]{%
+	nobeforeafter, math upper, tcbox raise base,
+	enhanced, colframe=blue!30!black,
+	colback=yellow!30, boxrule=1pt,
+	#1}
+
+\DeclarePairedDelimiter\Bra{\langle}{\rvert}
+\DeclarePairedDelimiter\Ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\Braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+
+\DeclarePairedDelimiter\wBra{\bigg\langle}{\bigg\rvert}
+\DeclarePairedDelimiter\wKet{\bigg\lvert}{\bigg\rangle}
+\DeclarePairedDelimiterX\wBraket[2]{\bigg\langle}{\bigg\rangle}{#1 \delimsize\vert #2}
+
+\newcommand{\bra}[1]{\Bra{#1}}
+\newcommand{\ket}[1]{\Ket{#1}}
+\newcommand{\braket}[2]{\Braket{#1}{#2}}
+
+\newcommand{\wbra}[1]{\wBra{#1}}
+\newcommand{\wket}[1]{\wKet{#1}}
+\newcommand{\wbraket}[2]{\wBraket{#1}{#2}}
+
+
+\newcommand{\matrixelement}[3]{\bra{#1}\,#2\,\ket{#3}}
+\newcommand{\wmatrixelement}[3]{\wbra{#1}\,#2\,\wket{#3}}
+\newcommand{\matrixelementred}[3]{\langle #1 \Vert #2 \Vert #3\rangle}
+
+\newcommand{\CG}[3]{\braket{#1\,#2\,}{#3}}
+\newcommand{\eq}[1]{Eq.~#1}
+\newcommand{\de}[1]{\mathrm{d}#1\,}
+\newcommand{\ve}[1]{\mathbf{#1}}
+\newcommand{\onehalf}{\sfrac{1}{2}\,}
+\newcommand{\ylm}[3]{Y_{#1}^{#2}(#3)}
+\newcommand{\versor}[1]{\ve{\hat{#1}}}
+\newcommand{\mand}{\qquad\mathrm{and}\qquad}
+\newcommand{\pd}[2]{\frac{\partial^{#1}}{\partial{#2}^{#1}}}
+\newcommand{\mtm}[1]{\mathrm{#1}}
+
+
+
+\newcommand{\threejsymbol}[6]{
+	\begin{pmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{pmatrix}
+	}
+\newcommand{\sixjsymbol}[6]{
+	\begin{Bmatrix}
+		#1 & #2 & #3\\
+		#4 & #5 & #6
+	\end{Bmatrix}
+}
+
+\mathtoolsset{showonlyrefs,showmanualtags}
+
+\title{Modified Bessel functions and their integrals}
+
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	\section{Zero energy}
+	The Bessel function, for computational purposes at $E=0$ are evaluated removing the $k=\sqrt{2mE}/\hbar$ dependence.
+	\begin{empheq}[box=\mymath]{align}
+		\tilde{j}_L(r) &\equiv 
+		\dfrac{(2L+1)!!}{k^L}\,j_L(k r)\,,\\
+		\tilde{y}_L(r) &\equiv 
+		\dfrac{k^{L+1}}{(2L+1)!!}\,
+		f_\epsilon(r)\,
+		y_L(k r)\,,
+	\end{empheq}
+	where $f_\epsilon(r)$ is a function to regolarise $y_L(kr)$ for $r\rightarrow 0$, defined as
+	\begin{equation}
+		f_\epsilon(r) \equiv \left(1-e^{-\epsilon r}\right)^{2L+1}\,.
+	\end{equation}
+	Choosing in the code $\epsilon=0.25 \mtm{~fm}^{-1}$ one gets that $(1-f_\epsilon(20))\sim0.01$ for $L\sim 1$.
+	For $r\rightarrow 0$ 
+	\begin{equation}
+		\lim_{r\rightarrow0}f_\epsilon(r) \sim (\epsilon r)^{2L+1}\,.
+	\end{equation}
+	Since
+	\begin{empheq}[box=\mymath]{align}
+		j_L(x) &\simeq \dfrac{x^L}{(2L+1)!!}\,,\\
+		y_L(x) &\simeq -\dfrac{(2L-1)!!}{x^{L+1}}\,,
+	\end{empheq}
+	we have for very small $x=kr$
+	\begin{align}
+		\tilde{j}_L(r) &= r^L\,,\\
+		\tilde{y}_L(r) &=-\frac{f_\epsilon(r)}{(2L+1)\,}\,\dfrac{1}{r^{L+1}}\,.
+	\end{align}
+	Specifically $x=0$ since we chose $E=0$ and this holds perfectly. 
+	
+	\newcommand{\INT}[2]{I_{#1,#2}}
+	\section{Integrals for the variational method}
+	\subsection{Asymptotic region integrals}
+	The integrals needed for the asymptotic region are
+	\begin{align}
+		\INT{R'}{R}
+		&\equiv
+		\matrixelement{\tilde{j}_{L'},\alpha'}{H-E}{j_L,\alpha}\,,\\
+		\INT{I'}{R}
+		&\equiv
+		\matrixelement{\tilde{y}_{L'},\alpha'}{H-E}{j_L,\alpha}\,,\\
+		\INT{R'}{I}
+		&\equiv
+		\matrixelement{\tilde{j}_{L'},\alpha'}{H-E}{j_L,\alpha}\,,\\
+		\INT{I'}{I}
+		&\equiv
+		\matrixelement{\tilde{y}_{L'},\alpha'}{H-E}{y_L,\alpha}\,.
+	\end{align}
+	Since 
+	\begin{equation}
+		\INT{X}{R} = A
+		\matrixelement{X_{L'}}{K-E+V}{j_L} 
+		\qquad\rightarrow\qquad
+		V_{X,R}\equiv \INT{X}{R} = 
+		\matrixelement{X_{L'}}{V}{\tilde{j}_L}\,. 
+	\end{equation}
+	Here we used the fact that $y_L$ are eigenfunction of the kinetic energy $K$ with eigenvalue $E$.
+	Therefore we need to evaluate
+	\begin{align}
+		\INT{R'}{R}
+		& = V_{R',R}\,,\\
+		\INT{I'}{R}
+		&=V_{I',R}\,,\\
+		\INT{R'}{I}
+		&= K_{R',I}-E\,\braket{R'}{I}+V_{R',I}\,,\\
+		\INT{I'}{I}
+		&=
+		K_{I',I}-E\,\braket{I'}{I}+V_{I',I}\,.
+	\end{align}
+	(\textbf{question} why are not we using $\bra{y_L}{(K-E)}=0$ to write $\INT{R'}{I}=V_{R',I}$ ??? Is it numerically different?)\\
+	Since $E=0$
+	
+	\begin{align}
+		\INT{R'}{R}
+		& = V_{R',R}\,,\\
+		\INT{I'}{R}
+		&=V_{I',R}\,,\\
+		\INT{R'}{I}
+		&= K_{R',I}+V_{R',I}\,,\\
+		\INT{I'}{I}
+		&=
+		K_{I',I}+V_{I',I}\,.
+	\end{align}
+	
+	\subsection{Convergence of $I_{R',R}$ and $I_{I',R}$}
+	This is ensured by the fact that $V=V_N\rightarrow e^{-r^\alpha}$ for $r\rightarrow \inf$, in our case specifically 
+	\begin{equation}
+		V\simeq p(r,R_{ST})\,e^{-(r/R_{ST})^2}\,,
+	\end{equation}
+	where $p$ is a polynomial in $r$ and $R_{ST}$.
+	
+	\subsection{Convergence for $I_{R',I}$}
+	The potential part converges for the reasons already stated above.\\
+	Finally let us focus on the kinetic part
+	\begin{equation}
+		K_{R',I} = 
+		\wmatrixelement{R'}{-\frac{\de{^2}}{\de{r}^2}-\frac{2}{r}\frac{\de{}}{\de{r}}}{I}
+	\end{equation}
+	// CONTINUE
+	
+	
+\end{document}
