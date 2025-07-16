@@ -539,10 +539,9 @@ CONTAINS
       IF (ALLOCATED(SMAT)) DEALLOCATE(SMAT)
       ALLOCATE(SMAT(NCH, NCH))
 
-
-      CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+      CALL CHANNEL%SET(J, L, S, TZ)
       CH_INDEX = FIND_CHANNEL_INDEX()
-      ! WRITE(*,*) "CH_INDEX", CH_INDEX
+      
     ELSE
       VAR_P%E = E
       VAR_P%K = DSQRT(2*E*MR) / HC
@@ -1958,11 +1957,8 @@ CONTAINS
     INTEGER :: INDX
 
     ! Find the index of the channel in the CHANNELS array
-    INDX = 0
     DO INDX = 1, SIZE(CHANNELS_)
-      IF (IS_SAME_CHANNEL(CHANNELS_(INDX),CHANNEL)) THEN
-        RETURN
-      ENDIF
+      IF ( CHANNEL == CHANNELS_(INDX) ) RETURN
     ENDDO
 
     PRINT *, "Error: Channel not found in CHANNELS array"

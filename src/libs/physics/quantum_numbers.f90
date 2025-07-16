@@ -228,6 +228,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: J, L, S, TZ
     LOGICAL :: IS_EVEN
 
+    IF (.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
+      PRINT *, "QUANTUM_NUMBERS::SET_CHANNEL: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      STOP
+    ENDIF
+
     IS_EVEN = MOD(L, 2) == 0
 
     CHANNEL%J_ = J
@@ -279,6 +284,11 @@ CONTAINS
 
     ! Generate a name for the scattering channel based on L, S, and J
     ! Format: '<2S+1><L_letter><J>', e.g., '3SD' for S=1, L=2, J=2
+
+    IF (IS_LSJ_PHYSICAL(L, S, J) .EQV. .FALSE.) THEN
+      PRINT *, "QUANTUM_NUMBERS::GET_CHANNEL_NAME_LSJ: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      STOP
+    ENDIF
 
     NAME = '   '
     SELECT CASE (L)
@@ -337,13 +347,17 @@ CONTAINS
   FUNCTION GET_CHANNEL_L(CHANNEL, I) RESULT(L)
     IMPLICIT NONE
     CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
-    INTEGER, INTENT(IN) :: I
+    INTEGER, OPTIONAL, INTENT(IN) :: I
     INTEGER :: L
-    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
-      PRINT *, "Error: Index out of bounds in GET_CHANNEL_L"
-      STOP
+    IF (PRESENT(I)) THEN
+      IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
+        PRINT *, "Error: Index out of bounds in GET_CHANNEL_L"
+        STOP
+      ENDIF
+      L = CHANNEL%L_(I)
+      RETURN
     ENDIF
-    L = CHANNEL%L_(I)
+    L = CHANNEL%L_(1)  ! Default to first channel if no index provided
   END FUNCTION GET_CHANNEL_L
 
   !> \brief Get the S quantum number for a given channel index.
@@ -354,13 +368,17 @@ CONTAINS
   FUNCTION GET_CHANNEL_S(CHANNEL, I) RESULT(S)
     IMPLICIT NONE
     CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
-    INTEGER, INTENT(IN) :: I
+    INTEGER, OPTIONAL, INTENT(IN) :: I
     INTEGER :: S
-    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
-      PRINT *, "Error: Index out of bounds in GET_CHANNEL_S"
-      STOP
+    IF (PRESENT(I)) THEN
+      IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
+        PRINT *, "Error: Index out of bounds in GET_CHANNEL_S"
+        STOP
+      ENDIF
+      S = CHANNEL%S_(I)
+      RETURN
     ENDIF
-    S = CHANNEL%S_(I)
+    S = CHANNEL%S_(1)  ! Default to first channel if no index provided
   END FUNCTION GET_CHANNEL_S
 
   !> \brief Get the T quantum number for a given channel index.
@@ -371,13 +389,17 @@ CONTAINS
   FUNCTION GET_CHANNEL_T(CHANNEL, I) RESULT(T)
     IMPLICIT NONE
     CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
-    INTEGER, INTENT(IN) :: I
+    INTEGER, OPTIONAL, INTENT(IN) :: I
     INTEGER :: T
-    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
-      PRINT *, "Error: Index out of bounds in GET_CHANNEL_T"
-      STOP
+    IF (PRESENT(I)) THEN
+      IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
+        PRINT *, "Error: Index out of bounds in GET_CHANNEL_T"
+        STOP
+      ENDIF
+      T = CHANNEL%T_(I)
+      RETURN
     ENDIF
-    T = CHANNEL%T_(I)
+    T = CHANNEL%T_(1)  ! Default to first channel if no index provided
   END FUNCTION GET_CHANNEL_T
 
   !> \brief Get the J quantum number for a channel.
@@ -630,58 +652,6 @@ CONTAINS
       ENDDO
     ENDDO
   END SUBROUTINE PREPARE_CHANNELS
-
-  ! FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(FILENAME) RESULT(CHANNELS)
-  !   IMPLICIT NONE
-  !   CHARACTER(LEN=*), INTENT(IN) :: FILENAME
-  !   TYPE(SCATTERING_CHANNEL), ALLOCATABLE :: CHANNELS(:)
-  !   TYPE(SCATTERING_CHANNEL) :: TMP
-
-  !   CHARACTER(LEN=16) :: CH_NAME
-  !   INTEGER :: I, N, LENF, START, ENDCH, COUNT
-  !   LOGICAL :: FIRST_NUMBER_IS_READ = .FALSE.
-  !   LOGICAL :: LAST_NUMBER_IS_READ = .FALSE.
-
-
-  !   ! Find and print all channels in the filename
-
-  !   LENF = LEN_TRIM(FILENAME)
-  !   COUNT = 0
-
-  !   I = 1
-  !   DO WHILE (I <= LENF - 2)
-  !     IF (.NOT.FIRST_NUMBER_IS_READ) THEN
-  !       ! Look for the first digit
-  !       IF (FILENAME(I:I) >= '0' .AND. FILENAME(I:I) <= '9') THEN
-  !         START = I
-  !         FIRST_NUMBER_IS_READ = .TRUE.
-  !       ENDIF
-  !       CH_NAME(1:1) = FILENAME(I:I)
-  !     ELSE
-  !       IF (FILENAME(I:I) < 'A' .AND. FILENAME(I:I) > 'Z') THEN
-  !         CH_NAME(2:2) = FILENAME(I:I)
-  !       ELSE
-  !         IF (FILENAME(I:I) >= '0' .AND. FILENAME(I:I) <= '9') THEN
-  !           CH_NAME(3:3) = FILENAME(I:I)
-  !           LAST_NUMBER_IS_READ = .TRUE.
-  !         ELSE
-  !           FIRST_NUMBER_IS_READ = .FALSE.
-  !         ENDIF
-  !       ENDIF
-  !     ENDIF
-  !     I = I + 1
-  !     IF (LAST_NUMBER_IS_READ) THEN
-  !       TMP = GET_CHANNEL_FROM_NAME(TRIM(CH_NAME))
-  !       =>>>>> TO FINISH
-  !   ENDDO
-
-  !   IF (COUNT > 0) THEN
-  !     ALLOCATE(CHANNELS(COUNT))
-  !     CHANNELS = TMP
-  !   ELSE
-  !     ALLOCATE(CHANNELS(0))
-  !   END IF
-  ! END FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME
 
   !> \brief Print all quantum numbers and info for a SCATTERING_CHANNEL object.
   !! \ingroup quantum_numbers
