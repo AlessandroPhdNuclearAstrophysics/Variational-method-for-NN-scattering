@@ -14,23 +14,23 @@ PROGRAM test_quantum_numbers_full
 
   ! Test 1: Test initialization with different parameters
   ! Test 1.1: Even parity J=0 channel
-  ch = init_scattering_channel(0, .TRUE., 0)
+  ch = NEW_SCATTERING_CHANNEL(0, .TRUE., 0)
   CALL test_channel(ch, 0, 0, 0, 0, 1, .FALSE., "1S0", "Test 1.1: Even parity J=0 channel")
 
   ! Test 1.2: Odd parity J=0 channel
-  ch = init_scattering_channel(0, .FALSE., 0)
+  ch = NEW_SCATTERING_CHANNEL(0, .FALSE., 0)
   CALL test_channel(ch, 0, 1, 1, 0, 1, .FALSE., "3P0", "Test 1.2: Odd parity J=0 channel")
 
   ! Test 1.3: Even parity J=1 channel (coupled)
-  ch = init_scattering_channel(1, .TRUE., 0)
+  ch = NEW_SCATTERING_CHANNEL(1, .TRUE., 0)
   CALL test_channel(ch, 1, 0, 1, 0, 2, .TRUE., "3S1-3D1", "Test 1.3: Even parity J=1 channel (coupled)")
 
   ! Test 1.4: Odd parity J=1 channel
-  ch = init_scattering_channel(1, .FALSE., 0)
+  ch = NEW_SCATTERING_CHANNEL(1, .FALSE., 0)
   CALL test_channel(ch, 1, 1, 0, 0, 2, .FALSE., "1P1-3P1", "Test 1.4: Odd parity J=1 channel")
 
   ! Test 1.5: Test different TZ value
-  ch = init_scattering_channel(2, .TRUE., 0)
+  ch = NEW_SCATTERING_CHANNEL(2, .TRUE., 0)
   CALL test_channel(ch, 2, 2, 0, 0, 2, .FALSE., "1D2-3D2", "Test 1.5: Different TZ value")
 
   ! Test 2: Test SET_CHANNEL functionality
@@ -91,7 +91,7 @@ PROGRAM test_quantum_numbers_full
   END IF
 
   ! Test 5.2: Test with non-physical L, S, J combination
-  ch = init_scattering_channel(2, .TRUE., 0)
+  ch = NEW_SCATTERING_CHANNEL(2, .TRUE., 0)
   CALL SET_CHANNEL(ch, 2, 2, 1, 0)
   ! Not directly testable for failure here, so skip status print
 

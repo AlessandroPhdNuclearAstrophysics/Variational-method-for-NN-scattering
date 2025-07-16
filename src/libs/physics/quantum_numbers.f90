@@ -22,13 +22,33 @@ MODULE QUANTUM_NUMBERS
   !> This type stores quantum numbers and properties associated with a scattering channel,
   !> including total angular momentum, orbital angular momentum, spin, isospin, and coupling information.
   TYPE, PUBLIC :: SCATTERING_CHANNEL
-    INTEGER, PRIVATE :: J !< Total angular momentum quantum number
-    INTEGER, ALLOCATABLE, PRIVATE :: L(:) !< Orbital angular momentum quantum numbers (allocatable array)
-    INTEGER, ALLOCATABLE, PRIVATE :: S(:) !< Spin quantum numbers (allocatable array)
-    INTEGER, ALLOCATABLE, PRIVATE :: T(:) !< Isospin quantum numbers (allocatable array)
-    INTEGER, PRIVATE :: TZ !< Isospin projection quantum number
-    INTEGER, PRIVATE :: NCH !< Number of channels
-    LOGICAL, PRIVATE :: COUPLED = .FALSE. !< Logical flag indicating if the channel is coupled (default: .FALSE.)
+  PRIVATE
+    INTEGER :: J_ !< Total angular momentum quantum number
+    INTEGER, ALLOCATABLE :: L_(:) !< Orbital angular momentum quantum numbers (allocatable array)
+    INTEGER, ALLOCATABLE :: S_(:) !< Spin quantum numbers (allocatable array)
+    INTEGER, ALLOCATABLE :: T_(:) !< Isospin quantum numbers (allocatable array)
+    INTEGER :: TZ_ !< Isospin projection quantum number
+    INTEGER :: NCH_ !< Number of channels
+    LOGICAL :: COUPLED_ = .FALSE. !< Logical flag indicating if the channel is coupled (default: .FALSE.)
+  CONTAINS 
+    PROCEDURE :: SET => SET_CHANNEL
+    PROCEDURE :: ASSIGN_CHANNEL
+    PROCEDURE :: IS_SAME_CHANNEL
+    PROCEDURE :: IS_NOT_SAME_CHANNEL
+    PROCEDURE :: RESET => RESET_CHANNEL
+    PROCEDURE :: PRINT => PRINT_SCATTERING_CHANNEL
+    PROCEDURE :: IS_COUPLED => IS_CHANNEL_COUPLED
+    PROCEDURE :: NAME => GET_CHANNEL_NAME_FROM_OBJECT
+    PROCEDURE :: J => GET_CHANNEL_J
+    PROCEDURE :: TZ => GET_CHANNEL_TZ
+    PROCEDURE :: NCH => GET_CHANNEL_NCH
+    PROCEDURE :: L => GET_CHANNEL_L
+    PROCEDURE :: S => GET_CHANNEL_S
+    PROCEDURE :: T => GET_CHANNEL_T
+
+    GENERIC :: ASSIGNMENT(=) => ASSIGN_CHANNEL
+    GENERIC :: OPERATOR(==) => IS_SAME_CHANNEL
+    GENERIC :: OPERATOR(/=) => IS_NOT_SAME_CHANNEL
   ENDTYPE SCATTERING_CHANNEL
 
 
@@ -37,7 +57,7 @@ MODULE QUANTUM_NUMBERS
     MODULE PROCEDURE GET_CHANNEL_NAME_FROM_OBJECT
   END INTERFACE GET_CHANNEL_NAME
 
-  PUBLIC :: init_scattering_channel
+  PUBLIC :: NEW_SCATTERING_CHANNEL
   PUBLIC :: SET_CHANNEL
   PUBLIC :: GET_CHANNEL_NAME
   PUBLIC :: GET_CHANNEL_NCH
@@ -50,6 +70,7 @@ MODULE QUANTUM_NUMBERS
   PUBLIC :: IS_PHYSICAL_CHANNEL
   PUBLIC :: GET_CHANNEL_FROM_NAME
   PUBLIC :: PREPARE_CHANNELS
+  PUBLIC :: PREPARE_CHANNELS_FROM_NAMES
   PUBLIC :: PRINT_SCATTERING_CHANNEL
   PUBLIC :: RESET_CHANNEL
   PUBLIC :: TZ_TO_T1Z_T2Z
@@ -57,13 +78,32 @@ MODULE QUANTUM_NUMBERS
   PUBLIC :: T_FROM_L_S
   
 CONTAINS
+
+  !> \brief Assignment procedure for SCATTERING_CHANNEL type
+  !! \param[out] LHS Left-hand side (target)
+  !! \param[in] RHS Right-hand side (source)
+  SUBROUTINE ASSIGN_CHANNEL(LHS, RHS)
+    CLASS(SCATTERING_CHANNEL), INTENT(OUT) :: LHS
+    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: RHS
+
+    ! Simple assignment - Fortran handles allocatable copying automatically
+    LHS%J_ = RHS%J_
+    LHS%TZ_ = RHS%TZ_
+    LHS%NCH_ = RHS%NCH_
+    LHS%COUPLED_ = RHS%COUPLED_
+    LHS%L_ = RHS%L_     ! Automatic deep copy
+    LHS%S_ = RHS%S_     ! Automatic deep copy
+    LHS%T_ = RHS%T_     ! Automatic deep copy
+  END SUBROUTINE ASSIGN_CHANNEL
+
+
   !> \brief Constructor for SCATTERING_CHANNEL.
   !! \ingroup quantum_numbers
   !! \param[in] J Total angular momentum
   !! \param[in] IS_EVEN Logical for parity
   !! \param[in] TZ Isospin projection
   !! \return Initialized SCATTERING_CHANNEL object
-  FUNCTION init_scattering_channel(J, IS_EVEN, TZ) RESULT(channel)
+  FUNCTION NEW_SCATTERING_CHANNEL(J, IS_EVEN, TZ) RESULT(channel)
     INTEGER, INTENT(IN) :: J, TZ
     LOGICAL, INTENT(IN) :: IS_EVEN
     TYPE(SCATTERING_CHANNEL) :: CHANNEL
@@ -71,59 +111,59 @@ CONTAINS
     INTEGER :: ICH
 
     IF (J == 0) THEN
-      CHANNEL%NCH = 1
+      CHANNEL%NCH_ = 1
     ELSE
-      CHANNEL%NCH = 2
+      CHANNEL%NCH_ = 2
     ENDIF
 
     ! ALLOCATE ARRAYS FOR L AND S
-    CALL REALLOCATE_1D_1_INT(CHANNEL%L, CHANNEL%NCH)
-    CALL REALLOCATE_1D_1_INT(CHANNEL%S, CHANNEL%NCH)
-    CALL REALLOCATE_1D_1_INT(CHANNEL%T, CHANNEL%NCH)
+    CALL REALLOCATE(CHANNEL%L_, CHANNEL%NCH_)
+    CALL REALLOCATE(CHANNEL%S_, CHANNEL%NCH_)
+    CALL REALLOCATE(CHANNEL%T_, CHANNEL%NCH_)
     IF (J == 0) THEN
       IF (IS_EVEN) THEN
-        CHANNEL%L(1) = 0
-        CHANNEL%S(1) = 0
+        CHANNEL%L_(1) = 0
+        CHANNEL%S_(1) = 0
       ELSE
-        CHANNEL%L(1) = 1
-        CHANNEL%S(1) = 1
+        CHANNEL%L_(1) = 1
+        CHANNEL%S_(1) = 1
       ENDIF
     ELSE
       IF (MOD(J, 2) == 0) THEN
         IF (IS_EVEN) THEN
-          CHANNEL%L(1) = J
-          CHANNEL%S(1) = 0
-          CHANNEL%L(2) = J
-          CHANNEL%S(2) = 1
+          CHANNEL%L_(1) = J
+          CHANNEL%S_(1) = 0
+          CHANNEL%L_(2) = J
+          CHANNEL%S_(2) = 1
         ELSE
-          CHANNEL%L(1) = J-1
-          CHANNEL%S(1) = 1
-          CHANNEL%L(2) = J+1
-          CHANNEL%S(2) = 1
-          CHANNEL%COUPLED = .TRUE.
+          CHANNEL%L_(1) = J-1
+          CHANNEL%S_(1) = 1
+          CHANNEL%L_(2) = J+1
+          CHANNEL%S_(2) = 1
+          CHANNEL%COUPLED_ = .TRUE.
         ENDIF
       ELSE
         IF (IS_EVEN) THEN
-          CHANNEL%L(1) = J - 1
-          CHANNEL%S(1) = 1
-          CHANNEL%L(2) = J + 1
-          CHANNEL%S(2) = 1
-          CHANNEL%COUPLED = .TRUE.
+          CHANNEL%L_(1) = J - 1
+          CHANNEL%S_(1) = 1
+          CHANNEL%L_(2) = J + 1
+          CHANNEL%S_(2) = 1
+          CHANNEL%COUPLED_ = .TRUE.
         ELSE
-          CHANNEL%L(1) = J
-          CHANNEL%S(1) = 0
-          CHANNEL%L(2) = J
-          CHANNEL%S(2) = 1
+          CHANNEL%L_(1) = J
+          CHANNEL%S_(1) = 0
+          CHANNEL%L_(2) = J
+          CHANNEL%S_(2) = 1
         ENDIF
       ENDIF
     ENDIF
 
-    CHANNEL%J = J
-    DO ICH = 1, CHANNEL%NCH
-      CHANNEL%T(ICH) = EVALUATE_T(CHANNEL%L(ICH), CHANNEL%S(ICH))
+    CHANNEL%J_ = J
+    DO ICH = 1, CHANNEL%NCH_
+      CHANNEL%T_(ICH) = EVALUATE_T(CHANNEL%L_(ICH), CHANNEL%S_(ICH))
     ENDDO
-    CHANNEL%TZ = TZ
-  END FUNCTION init_scattering_channel
+    CHANNEL%TZ_ = TZ
+  END FUNCTION NEW_SCATTERING_CHANNEL
 
   !> \brief Evaluate isospin T for given L, S, and TZ.
   !! \param[in] L Orbital angular momentum
@@ -146,14 +186,14 @@ CONTAINS
     LOGICAL :: IS_PHYSICAL
     INTEGER :: L, S, J, T, ICH, TZ
 
-    J = CHANNEL%J
+    J = CHANNEL%J_
     IS_PHYSICAL = .TRUE.
 
-    DO ICH=1, CHANNEL%NCH
-      L = CHANNEL%L(ICH)
-      S = CHANNEL%S(ICH)
-      T = CHANNEL%T(ICH)
-      TZ = CHANNEL%TZ
+    DO ICH=1, CHANNEL%NCH_
+      L = CHANNEL%L_(ICH)
+      S = CHANNEL%S_(ICH)
+      T = CHANNEL%T_(ICH)
+      TZ = CHANNEL%TZ_
       IF (ABS(TZ) > T) IS_PHYSICAL = .FALSE.
 
       ! CHECK IF THE SCATTERING CHANNEL IS PHYSICAL
@@ -185,45 +225,45 @@ CONTAINS
   !! \param[in] S Spin
   !! \param[in] TZ Isospin projection
   SUBROUTINE SET_CHANNEL(CHANNEL, J, L, S, TZ)
-    TYPE(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
     INTEGER, INTENT(IN) :: J, L, S, TZ
     LOGICAL :: IS_EVEN
 
     IS_EVEN = MOD(L, 2) == 0
 
-    CHANNEL%J = J
-    CHANNEL%TZ = TZ
-    CHANNEL%COUPLED = .FALSE.
+    CHANNEL%J_ = J
+    CHANNEL%TZ_ = TZ
+    CHANNEL%COUPLED_ = .FALSE.
 
     IF (J == 0) THEN
-      CHANNEL%NCH = 1
-      CALL REALLOCATE_1D_1_INT(CHANNEL%L, 1)
-      CALL REALLOCATE_1D_1_INT(CHANNEL%S, 1)
-      CALL REALLOCATE_1D_1_INT(CHANNEL%T, 1)
-      CHANNEL%L(1) = L
-      CHANNEL%S(1) = S
-      CHANNEL%T(1) = EVALUATE_T(L, S)
+      CHANNEL%NCH_ = 1
+      CALL REALLOCATE(CHANNEL%L_, 1)
+      CALL REALLOCATE(CHANNEL%S_, 1)
+      CALL REALLOCATE(CHANNEL%T_, 1)
+      CHANNEL%L_(1) = L
+      CHANNEL%S_(1) = S
+      CHANNEL%T_(1) = EVALUATE_T(L, S)
     ELSE
       IF ((L==(J-1) .OR. L==(J+1))) THEN
-        CHANNEL%NCH = 2
-        CALL REALLOCATE_1D_1_INT(CHANNEL%L, 2)
-        CALL REALLOCATE_1D_1_INT(CHANNEL%S, 2)
-        CALL REALLOCATE_1D_1_INT(CHANNEL%T, 2)
-        CHANNEL%L(1) = J-1
-        CHANNEL%S(1) = S
-        CHANNEL%L(2) = J+1
-        CHANNEL%S(2) = S
-        CHANNEL%T(1) = EVALUATE_T(J-1, S)
-        CHANNEL%T(2) = EVALUATE_T(J+1, S)
-        CHANNEL%COUPLED = .TRUE.
+        CHANNEL%NCH_ = 2
+        CALL REALLOCATE(CHANNEL%L_, 2)
+        CALL REALLOCATE(CHANNEL%S_, 2)
+        CALL REALLOCATE(CHANNEL%T_, 2)
+        CHANNEL%L_(1) = J-1
+        CHANNEL%S_(1) = S
+        CHANNEL%L_(2) = J+1
+        CHANNEL%S_(2) = S
+        CHANNEL%T_(1) = EVALUATE_T(J-1, S)
+        CHANNEL%T_(2) = EVALUATE_T(J+1, S)
+        CHANNEL%COUPLED_ = .TRUE.
       ELSE
-        CHANNEL%NCH = 1
-        CALL REALLOCATE_1D_1_INT(CHANNEL%L, 1)
-        CALL REALLOCATE_1D_1_INT(CHANNEL%S, 1)
-        CALL REALLOCATE_1D_1_INT(CHANNEL%T, 1)
-        CHANNEL%L(1) = J
-        CHANNEL%S(1) = S
-        CHANNEL%T(1) = EVALUATE_T(J, S)
+        CHANNEL%NCH_ = 1
+        CALL REALLOCATE(CHANNEL%L_, 1)
+        CALL REALLOCATE(CHANNEL%S_, 1)
+        CALL REALLOCATE(CHANNEL%T_, 1)
+        CHANNEL%L_(1) = J
+        CHANNEL%S_(1) = S
+        CHANNEL%T_(1) = EVALUATE_T(J, S)
       ENDIF
     ENDIF
   END SUBROUTINE SET_CHANNEL
@@ -265,18 +305,18 @@ CONTAINS
   !! \param[in] CHANNEL The channel object
   !! \return Name as CHARACTER(LEN=16)
   FUNCTION GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL) RESULT(NAME)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     CHARACTER(LEN=16) :: NAME
     INTEGER :: ICH
 
-    IF (.NOT.ALLOCATED(CHANNEL%L) .OR. .NOT.ALLOCATED(CHANNEL%S)) THEN
+    IF (.NOT.ALLOCATED(CHANNEL%L_) .OR. .NOT.ALLOCATED(CHANNEL%S_)) THEN
       NAME=""
       RETURN
     ENDIF
     ICH = 1
-    NAME = GET_CHANNEL_NAME_LSJ(CHANNEL%L(ICH), CHANNEL%S(ICH), CHANNEL%J)
-    DO ICH = 2, CHANNEL%NCH
-      NAME = TRIM(NAME) // "-" // GET_CHANNEL_NAME_LSJ(CHANNEL%L(ICH), CHANNEL%S(ICH), CHANNEL%J)
+    NAME = GET_CHANNEL_NAME_LSJ(CHANNEL%L_(ICH), CHANNEL%S_(ICH), CHANNEL%J_)
+    DO ICH = 2, CHANNEL%NCH_
+      NAME = TRIM(NAME) // "-" // GET_CHANNEL_NAME_LSJ(CHANNEL%L_(ICH), CHANNEL%S_(ICH), CHANNEL%J_)
     ENDDO
   END FUNCTION GET_CHANNEL_NAME_FROM_OBJECT
 
@@ -285,9 +325,9 @@ CONTAINS
   !! \param[in] CHANNEL The channel object
   !! \return Number of channels
   FUNCTION GET_CHANNEL_NCH(CHANNEL) RESULT (NCH)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: NCH
-    NCH = CHANNEL%NCH
+    NCH = CHANNEL%NCH_
   END FUNCTION GET_CHANNEL_NCH
 
   !> \brief Get the L quantum number for a given channel index.
@@ -297,14 +337,14 @@ CONTAINS
   !! \return L quantum number
   FUNCTION GET_CHANNEL_L(CHANNEL, I) RESULT(L)
     IMPLICIT NONE
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER, INTENT(IN) :: I
     INTEGER :: L
-    IF (I < 1 .OR. I > CHANNEL%NCH) THEN
+    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
       PRINT *, "Error: Index out of bounds in GET_CHANNEL_L"
       STOP
     ENDIF
-    L = CHANNEL%L(I)
+    L = CHANNEL%L_(I)
   END FUNCTION GET_CHANNEL_L
 
   !> \brief Get the S quantum number for a given channel index.
@@ -314,14 +354,14 @@ CONTAINS
   !! \return S quantum number
   FUNCTION GET_CHANNEL_S(CHANNEL, I) RESULT(S)
     IMPLICIT NONE
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER, INTENT(IN) :: I
     INTEGER :: S
-    IF (I < 1 .OR. I > CHANNEL%NCH) THEN
+    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
       PRINT *, "Error: Index out of bounds in GET_CHANNEL_S"
       STOP
     ENDIF
-    S = CHANNEL%S(I)
+    S = CHANNEL%S_(I)
   END FUNCTION GET_CHANNEL_S
 
   !> \brief Get the T quantum number for a given channel index.
@@ -331,14 +371,14 @@ CONTAINS
   !! \return T quantum number
   FUNCTION GET_CHANNEL_T(CHANNEL, I) RESULT(T)
     IMPLICIT NONE
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER, INTENT(IN) :: I
     INTEGER :: T
-    IF (I < 1 .OR. I > CHANNEL%NCH) THEN
+    IF (I < 1 .OR. I > CHANNEL%NCH_) THEN
       PRINT *, "Error: Index out of bounds in GET_CHANNEL_T"
       STOP
     ENDIF
-    T = CHANNEL%T(I)
+    T = CHANNEL%T_(I)
   END FUNCTION GET_CHANNEL_T
 
   !> \brief Get the J quantum number for a channel.
@@ -346,9 +386,9 @@ CONTAINS
   !! \param[in] CHANNEL The channel object
   !! \return J quantum number
   FUNCTION GET_CHANNEL_J(CHANNEL) RESULT(J)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: J
-    J = CHANNEL%J
+    J = CHANNEL%J_
   END FUNCTION GET_CHANNEL_J
 
   !> \brief Get the TZ quantum number for a channel.
@@ -356,9 +396,9 @@ CONTAINS
   !! \param[in] CHANNEL The channel object
   !! \return TZ quantum number
   FUNCTION GET_CHANNEL_TZ(CHANNEL) RESULT(TZ)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: TZ
-    TZ = CHANNEL%TZ
+    TZ = CHANNEL%TZ_
   END FUNCTION GET_CHANNEL_TZ
 
   !> \brief Check if the channel is coupled.
@@ -366,9 +406,9 @@ CONTAINS
   !! \param[in] CHANNEL The channel object
   !! \return .TRUE. if coupled, .FALSE. otherwise
   FUNCTION IS_CHANNEL_COUPLED(CHANNEL) RESULT(COUPLED)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     LOGICAL :: COUPLED
-    COUPLED = CHANNEL%COUPLED
+    COUPLED = CHANNEL%COUPLED_
   END FUNCTION IS_CHANNEL_COUPLED
 
   !> \brief Check if two channels are the same.
@@ -377,25 +417,39 @@ CONTAINS
   !! \param[in] CHANNEL2 Second channel
   !! \return .TRUE. if the channels are the same, .FALSE. otherwise
   FUNCTION IS_SAME_CHANNEL(CHANNEL1, CHANNEL2) RESULT(SAME)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL1, CHANNEL2
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL1
+    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL2
     LOGICAL :: SAME
     INTEGER :: ICH
 
     SAME = .TRUE.
-    IF (CHANNEL1%NCH /= CHANNEL2%NCH .OR. CHANNEL1%J /= CHANNEL2%J .OR. CHANNEL1%TZ /= CHANNEL2%TZ) THEN
+    IF (CHANNEL1%NCH_ /= CHANNEL2%NCH_ .OR. CHANNEL1%J_ /= CHANNEL2%J_ .OR. CHANNEL1%TZ_ /= CHANNEL2%TZ_) THEN
       SAME = .FALSE.
       RETURN
     ENDIF
 
-    DO ICH = 1, CHANNEL1%NCH
-      IF (CHANNEL1%L(ICH) /= CHANNEL2%L(ICH) .OR. &
-          CHANNEL1%S(ICH) /= CHANNEL2%S(ICH) .OR. &
-          CHANNEL1%T(ICH) /= CHANNEL2%T(ICH)) THEN
+    DO ICH = 1, CHANNEL1%NCH_
+      IF (CHANNEL1%L_(ICH) /= CHANNEL2%L_(ICH) .OR. &
+          CHANNEL1%S_(ICH) /= CHANNEL2%S_(ICH) .OR. &
+          CHANNEL1%T_(ICH) /= CHANNEL2%T_(ICH)) THEN
         SAME = .FALSE.
         RETURN
       ENDIF
     ENDDO
   END FUNCTION IS_SAME_CHANNEL
+
+  !> \brief Check if two channels are not the same.
+  !! \ingroup quantum_numbers 
+  !! \param[in] CHANNEL1 First channel
+  !! \param[in] CHANNEL2 Second channel
+  !! \return .TRUE. if the channels are different, .FALSE. otherwise
+  FUNCTION IS_NOT_SAME_CHANNEL(CHANNEL1, CHANNEL2) RESULT(NOT_SAME)
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL1
+    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL2
+    LOGICAL :: NOT_SAME
+
+    NOT_SAME = .NOT. IS_SAME_CHANNEL(CHANNEL1, CHANNEL2)
+  END FUNCTION IS_NOT_SAME_CHANNEL
 
   !> \brief Get a SCATTERING_CHANNEL object from its spectroscopic name.
   !! \ingroup quantum_numbers
@@ -451,16 +505,16 @@ CONTAINS
       READ(NAME(3:3), '(I1)') J
 
       NCH = 1
-      CHANNEL%COUPLED = .FALSE.
-      CHANNEL%NCH = 1
-      ALLOCATE(CHANNEL%L(1))
-      ALLOCATE(CHANNEL%S(1))
-      ALLOCATE(CHANNEL%T(1))
-      CHANNEL%L(1) = L(1)
-      CHANNEL%S(1) = S(1)
-      CHANNEL%T(1) = EVALUATE_T(L(1), S(1))
-      CHANNEL%J = J
-      CHANNEL%TZ = TZ
+      CHANNEL%COUPLED_ = .FALSE.
+      CHANNEL%NCH_ = 1
+      ALLOCATE(CHANNEL%L_(1))
+      ALLOCATE(CHANNEL%S_(1))
+      ALLOCATE(CHANNEL%T_(1))
+      CHANNEL%L_(1) = L(1)
+      CHANNEL%S_(1) = S(1)
+      CHANNEL%T_(1) = EVALUATE_T(L(1), S(1))
+      CHANNEL%J_ = J
+      CHANNEL%TZ_ = TZ
     ELSE
       ! Coupled channel: split at '-'
       LEN1 = POS - 1
@@ -513,22 +567,22 @@ CONTAINS
       ! J must be the same for both parts, so skip reading again
 
       NCH = 2
-      CHANNEL = init_scattering_channel(J, MOD(L(1), 2) == 0, TZ)
+      CHANNEL = NEW_SCATTERING_CHANNEL(J, MOD(L(1), 2) == 0, TZ)
 
       ! Set both channels explicitly
-      CALL REALLOCATE_1D_1_INT(CHANNEL%L, 2)
-      CALL REALLOCATE_1D_1_INT(CHANNEL%S, 2)
-      CALL REALLOCATE_1D_1_INT(CHANNEL%T, 2)
-      CHANNEL%NCH = 2
-      CHANNEL%L(1) = L(1)
-      CHANNEL%S(1) = S(1)
-      CHANNEL%T(1) = EVALUATE_T(L(1), S(1))
-      CHANNEL%L(2) = L(2)
-      CHANNEL%S(2) = S(2)
-      CHANNEL%T(2) = EVALUATE_T(L(2), S(2))
-      CHANNEL%COUPLED = .TRUE.
-      CHANNEL%J = J
-      CHANNEL%TZ = TZ
+      CALL REALLOCATE(CHANNEL%L_, 2)
+      CALL REALLOCATE(CHANNEL%S_, 2)
+      CALL REALLOCATE(CHANNEL%T_, 2)
+      CHANNEL%NCH_ = 2
+      CHANNEL%L_(1) = L(1)
+      CHANNEL%S_(1) = S(1)
+      CHANNEL%T_(1) = EVALUATE_T(L(1), S(1))
+      CHANNEL%L_(2) = L(2)
+      CHANNEL%S_(2) = S(2)
+      CHANNEL%T_(2) = EVALUATE_T(L(2), S(2))
+      CHANNEL%COUPLED_ = .TRUE.
+      CHANNEL%J_ = J
+      CHANNEL%TZ_ = TZ
     ENDIF
   END FUNCTION GET_CHANNEL_FROM_NAME
 
@@ -555,7 +609,7 @@ CONTAINS
     DO L = 0, LMAX
       DO S = 0, 1
         DO J = ABS(L-S), MIN(L+S, JMAX)
-          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+          CALL CHANNEL%SET(J, L, S, TZ)
           IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
           IF ( J /= 0 .AND. L > J .AND. S == 1) CYCLE
           NCH = NCH + 1
@@ -568,7 +622,7 @@ CONTAINS
     DO L = 0, LMAX
       DO S = 0, 1
         DO J = ABS(L-S), MIN(L+S, JMAX)
-          CALL SET_CHANNEL(CHANNEL, J, L, S, TZ)
+          CALL CHANNEL%SET(J, L, S, TZ)
           IF (.NOT.IS_PHYSICAL_CHANNEL(CHANNEL)) CYCLE
           IF ( J /= 0 .AND. L > J .AND. S == 1) CYCLE
           CHANNELS(ICH) = CHANNEL
@@ -577,6 +631,18 @@ CONTAINS
       ENDDO
     ENDDO
   END SUBROUTINE PREPARE_CHANNELS
+
+  SUBROUTINE PREPARE_CHANNELS_FROM_NAMES(NAMES, CHANNELS)
+    IMPLICIT NONE
+    CHARACTER(LEN=*), INTENT(IN) :: NAMES(:)
+    TYPE(SCATTERING_CHANNEL), ALLOCATABLE, INTENT(OUT) :: CHANNELS(:)
+    INTEGER :: NCHANNELS, I
+    NCHANNELS = SIZE(NAMES)
+    ALLOCATE(CHANNELS(NCHANNELS))
+    DO I=1, NCHANNELS
+      CHANNELS(I) = GET_CHANNEL_FROM_NAME(NAMES(I))
+    ENDDO
+  END SUBROUTINE
 
   ! FUNCTION EXTRACT_CHANNELS_FROM_WHOLE_FILENAME(FILENAME) RESULT(CHANNELS)
   !   IMPLICIT NONE
@@ -636,18 +702,18 @@ CONTAINS
   !! Prints all quantum numbers and spectroscopic name for the given channel.
   !! \param[in] CHANNEL Scattering channel to print
   SUBROUTINE PRINT_SCATTERING_CHANNEL(CHANNEL)
-    TYPE(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
     INTEGER :: ICH
     PRINT *, '--- SCATTERING_CHANNEL INFO ---'
-    PRINT *, '  J  =', CHANNEL%J
-    PRINT *, '  TZ =', CHANNEL%TZ
-    PRINT *, '  NCH=', CHANNEL%NCH
-    PRINT *, '  COUPLED =', CHANNEL%COUPLED
-    DO ICH = 1, CHANNEL%NCH
+    PRINT *, '  J  =', CHANNEL%J_
+    PRINT *, '  TZ =', CHANNEL%TZ_
+    PRINT *, '  NCH=', CHANNEL%NCH_
+    PRINT *, '  COUPLED =', CHANNEL%COUPLED_
+    DO ICH = 1, CHANNEL%NCH_
       PRINT *, '    Channel index:', ICH
-      PRINT *, '      L =', CHANNEL%L(ICH)
-      PRINT *, '      S =', CHANNEL%S(ICH)
-      PRINT *, '      T =', CHANNEL%T(ICH)
+      PRINT *, '      L =', CHANNEL%L_(ICH)
+      PRINT *, '      S =', CHANNEL%S_(ICH)
+      PRINT *, '      T =', CHANNEL%T_(ICH)
     END DO
     PRINT *, '  Spectroscopic name: ', TRIM(GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL))
     PRINT *, '------------------------------'
@@ -658,15 +724,15 @@ CONTAINS
   !! Deallocates arrays and resets all quantum numbers.
   !! \param[inout] CHANNEL Scattering channel to reset
   SUBROUTINE RESET_CHANNEL(CHANNEL)
-    TYPE(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
+    CLASS(SCATTERING_CHANNEL), INTENT(INOUT) :: CHANNEL
 
-    CHANNEL%J = 0
-    CHANNEL%TZ = 0
-    CHANNEL%NCH = 0
-    CHANNEL%COUPLED = .FALSE.
-    IF (ALLOCATED(CHANNEL%L)) DEALLOCATE(CHANNEL%L)
-    IF (ALLOCATED(CHANNEL%S)) DEALLOCATE(CHANNEL%S)
-    IF (ALLOCATED(CHANNEL%T)) DEALLOCATE(CHANNEL%T)
+    CHANNEL%J_ = 0
+    CHANNEL%TZ_ = 0
+    CHANNEL%NCH_ = 0
+    CHANNEL%COUPLED_ = .FALSE.
+    IF (ALLOCATED(CHANNEL%L_)) DEALLOCATE(CHANNEL%L_)
+    IF (ALLOCATED(CHANNEL%S_)) DEALLOCATE(CHANNEL%S_)
+    IF (ALLOCATED(CHANNEL%T_)) DEALLOCATE(CHANNEL%T_)
   END SUBROUTINE RESET_CHANNEL
 
 
@@ -692,12 +758,12 @@ CONTAINS
 
     ! Loop over all channels
     DO ICH = 1, NCHANNELS
-      NCH = CHANNELS(ICH)%NCH
+      NCH = CHANNELS(ICH)%NCH_
       ! Loop over all pairs (i, j) of L values
       DO I = 1, NCH
-        L1 = CHANNELS(ICH)%L(I)
+        L1 = CHANNELS(ICH)%L_(I)
         DO J = 1, NCH
-          L2 = CHANNELS(ICH)%L(J)
+          L2 = CHANNELS(ICH)%L_(J)
           ! Check if this combination already exists
           FOUND = .FALSE.
           DO K = 1, N_COMB

@@ -116,13 +116,17 @@ PROGRAM TRANSFORM_FROM_PHASE_SHIFTS_TO_KCOTD
     REWIND(unit_in)
 
     ! Allocate arrays using REALLOCATE_UTILS
-    CALL REALLOCATE_1D_1(energies, num_lines)
-    CALL REALLOCATE_1D_1(deltas1, num_lines)
-    CALL REALLOCATE_1D_3(k_vals, k2_vals, kcotd1_vals, num_lines)
+    CALL REALLOCATE(energies, num_lines)
+    CALL REALLOCATE(deltas1, num_lines)
+    CALL REALLOCATE(k_vals, num_lines)
+    CALL REALLOCATE(k2_vals, num_lines)
+    CALL REALLOCATE(kcotd1_vals, num_lines)
+
 
     IF (is_coupled) THEN
-      CALL REALLOCATE_1D_2(deltas2, epsilons, num_lines)
-      CALL REALLOCATE_1D_1(kcotd2_vals, num_lines)
+      CALL REALLOCATE(deltas2, num_lines)
+      CALL REALLOCATE(epsilons, num_lines)
+      CALL REALLOCATE(kcotd2_vals, num_lines)
     END IF
 
     ! Read data from file

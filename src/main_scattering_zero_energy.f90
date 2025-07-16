@@ -31,12 +31,12 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   
   WRITE(*,*)
   WRITE(*,*)
-  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNEL RESULTS"//CHAR(27)//'[0m'
+  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNELS RESULTS"//CHAR(27)//'[0m'
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(1))
   R = PS(1,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(1), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(1))
+  L = CHANNELS(1)%L(1)
+  DIM = CHANNELS(1)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.0433
@@ -44,8 +44,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(3))
   R = PS(3,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(3), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(3))
+  L = CHANNELS(3)%L(1)
+  DIM = CHANNELS(3)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.359170
@@ -53,8 +53,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(4))
   R = PS(4,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(4), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(4))
+  L = CHANNELS(4)%L(1)
+  DIM = CHANNELS(4)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.397155
@@ -62,8 +62,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(5))
   R = PS(5,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(5), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(5))
+  L = CHANNELS(5)%L(1)
+  DIM = CHANNELS(5)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.654212
@@ -72,8 +72,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(7))
   R = PS(7,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(7), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(7))
+  L = CHANNELS(7)%L(1)
+  DIM = CHANNELS(7)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.721184
@@ -81,8 +81,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(8))
   R = PS(8,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(8), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(8))
+  L = CHANNELS(8)%L(1)
+  DIM = CHANNELS(8)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.135085
@@ -94,8 +94,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -107,8 +107,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -123,8 +123,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -136,8 +136,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -161,12 +161,12 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   
   WRITE(*,*)
   WRITE(*,*)
-  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNEL RESULTS"//CHAR(27)//'[0m'
+  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNELS RESULTS"//CHAR(27)//'[0m'
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(1))
   R = PS(1,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(1), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(1))
+  L = CHANNELS(1)%L(1)
+  DIM = CHANNELS(1)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.043617
@@ -174,8 +174,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(3))
   R = PS(3,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(3), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(3))
+  L = CHANNELS(3)%L(1)
+  DIM = CHANNELS(3)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.581388
@@ -183,8 +183,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(4))
   R = PS(4,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(4), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(4))
+  L = CHANNELS(4)%L(1)
+  DIM = CHANNELS(4)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.438454
@@ -192,8 +192,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(5))
   R = PS(5,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(5), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(5))
+  L = CHANNELS(5)%L(1)
+  DIM = CHANNELS(5)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.717147
@@ -202,8 +202,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(7))
   R = PS(7,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(7), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(7))
+  L = CHANNELS(7)%L(1)
+  DIM = CHANNELS(7)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/2.795050
@@ -211,8 +211,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(8))
   R = PS(8,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(8), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(8))
+  L = CHANNELS(8)%L(1)
+  DIM = CHANNELS(8)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/1.032862
@@ -223,8 +223,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -236,8 +236,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -252,8 +252,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -265,8 +265,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -292,12 +292,12 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   
   WRITE(*,*)
   WRITE(*,*)
-  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNEL RESULTS"//CHAR(27)//'[0m'
+  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNELS RESULTS"//CHAR(27)//'[0m'
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(1))
   R = PS(1,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(1), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(1))
+  L = CHANNELS(1)%L(1)
+  DIM = CHANNELS(1)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.043585
@@ -305,8 +305,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(3))
   R = PS(3,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(3), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(3))
+  L = CHANNELS(3)%L(1)
+  DIM = CHANNELS(3)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.583100
@@ -314,8 +314,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(4))
   R = PS(4,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(4), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(4))
+  L = CHANNELS(4)%L(1)
+  DIM = CHANNELS(4)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.466579
@@ -323,8 +323,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(5))
   R = PS(5,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(5), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(5))
+  L = CHANNELS(5)%L(1)
+  DIM = CHANNELS(5)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.749634
@@ -333,8 +333,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(7))
   R = PS(7,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(7), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(7))
+  L = CHANNELS(7)%L(1)
+  DIM = CHANNELS(7)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/2.664854
@@ -342,8 +342,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(8))
   R = PS(8,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(8), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(8))
+  L = CHANNELS(8)%L(1)
+  DIM = CHANNELS(8)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/1.124504
@@ -355,8 +355,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -368,8 +368,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -384,8 +384,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -397,8 +397,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -424,12 +424,12 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   
   WRITE(*,*)
   WRITE(*,*)
-  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNEL RESULTS"//CHAR(27)//'[0m'
+  WRITE(*,*) CHAR(27)//'[34m'//"SINGLE CHANNELS RESULTS"//CHAR(27)//'[0m'
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(1))
   R = PS(1,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(1), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(1))
+  L = CHANNELS(1)%L(1)
+  DIM = CHANNELS(1)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.043585
@@ -437,8 +437,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(3))
   R = PS(3,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(3), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(3))
+  L = CHANNELS(3)%L(1)
+  DIM = CHANNELS(3)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.583100
@@ -446,8 +446,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(4))
   R = PS(4,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(4), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(4))
+  L = CHANNELS(4)%L(1)
+  DIM = CHANNELS(4)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/0.466579
@@ -455,8 +455,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(5))
   R = PS(5,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(5), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(5))
+  L = CHANNELS(5)%L(1)
+  DIM = CHANNELS(5)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", 1/0.749634
@@ -465,8 +465,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(7))
   R = PS(7,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(7), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(7))
+  L = CHANNELS(7)%L(1)
+  DIM = CHANNELS(7)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/2.664854
@@ -474,8 +474,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(8))
   R = PS(8,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(8), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(8))
+  L = CHANNELS(8)%L(1)
+  DIM = CHANNELS(8)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,'(A,F10.3)') " Expected scattering length: ", -1/1.124504
@@ -487,8 +487,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -500,8 +500,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_BB(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -516,8 +516,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(2))
   R = PS(2,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(2), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(2))
+  L = CHANNELS(2)%L(1)
+  DIM = CHANNELS(2)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
@@ -529,8 +529,8 @@ PROGRAM SCATTERING_NN_ZERO_ENERGY
   WRITE(*,*)
   WRITE(*,*) "Scattering lengths at zero energy for channel: ", GET_CHANNEL_NAME(CHANNELS(6))
   R = PS(6,1)%R_BB
-  L = GET_CHANNEL_L(CHANNELS(6), 1)
-  DIM = GET_CHANNEL_NCH(CHANNELS(6))
+  L = CHANNELS(6)%L(1)
+  DIM = CHANNELS(6)%NCH()
   OBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(R, DIM, L)
   WRITE(*,*) "a_1", OBS%a1
   WRITE(*,*) "e  ", OBS%e
