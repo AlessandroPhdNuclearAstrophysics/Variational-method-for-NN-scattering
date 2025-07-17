@@ -20,8 +20,10 @@ MODULE SCATTERING_NN_VARIATIONAL
   USE EFT_PLESS
   USE PHYSICAL_CONSTANTS
   USE SCATTERING
+  USE LOG, ONLY: LOG_TYPE => LOGGER
   IMPLICIT NONE
   PRIVATE
+  TYPE(LOG_TYPE), SAVE :: LOGGER
 
   !> \ingroup scattering_nn_variational_mod
   !> \brief Structure to store the results of phase shift calculations.
@@ -196,6 +198,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: DUMP_MODULE_DATA
   PUBLIC :: FIT_CHANNEL_LOW_ENERGY
   PUBLIC :: FIT_CHANNELS_LOW_ENERGY
+  PUBLIC :: SET_MAX_LOG_LEVEL
 
   PRIVATE:: PRINT_DIVIDER
   PRIVATE:: PREPARE_GRID
@@ -208,6 +211,11 @@ MODULE SCATTERING_NN_VARIATIONAL
   PRIVATE:: PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
 
 CONTAINS
+  SUBROUTINE SET_MAX_LOG_LEVEL(LOG_LEVEL)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: LOG_LEVEL
+    CALL LOGGER%SET_LOG_MAX_LEVEL(LOG_LEVEL)
+  END SUBROUTINE SET_MAX_LOG_LEVEL
   !> \ingroup scattering_nn_variational_mod
   !> \brief Set all variational parameters at once.
   !! \param[in] J    Total angular momentum
@@ -230,13 +238,14 @@ CONTAINS
   !! \param[in] NNL   Number of Laguerre basis functions (optional)
   SUBROUTINE SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, T, ILB, LEMP, HR1, H, &
                                             RANGE, GAMMA, EPS, AF, NX_AA, NX_AC, NX_CC, NNL)
+    USE STRINGS_UTILS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT
     INTEGER, OPTIONAL, INTENT(IN) :: T, NX_AA, NX_CC, NX_AC, NNL, ILB, LEMP
     DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
 
     IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      CALL LOGGER%LOG_ERR("::SET_VARIATIONAL_PARAMETERS: Invalid quantum numbers L="// TO_STRING(L)//", S="// TO_STRING(S)//", J="//TO_STRING(J))
       STOP
     ENDIF
     
@@ -250,7 +259,7 @@ CONTAINS
     ENDIF
     VAR_P%TZ    = TZ
     IF (ABS(TZ)>VAR_P%T) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Error: |Tz| > T!"
+      CALL LOGGER%LOG_ERR("::SET_VARIATIONAL_PARAMETERS: Error: |Tz| > T!")
       STOP
     ENDIF
     VAR_P%IPOT  = IPOT
@@ -280,7 +289,12 @@ CONTAINS
   SUBROUTINE SET_ENERGIES(ENERGIES)
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: ENERGIES(:)
-    
+    LOGICAL :: FIRST_CALL = .TRUE.
+    IF (FIRST_CALL) THEN
+      CALL LOGGER%SET_LOGGER_NAME("SCATTERING_NN_VARIATIONAL")
+      FIRST_CALL = .FALSE.
+    ENDIF
+
     NE = SIZE(ENERGIES)
     CALL REALLOCATE(ENERGIES_, NE)
     ENERGIES_ = ENERGIES
@@ -488,16 +502,16 @@ CONTAINS
     FIRST_CALL = FIRST_CALL .OR. CALL_TO_IS_FIRST_CALL
     IF (.NOT.POTENTIAL_SET) THEN
       IF (.NOT.CHANNELS_SET) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and channels not set!"
+        CALL LOGGER%LOG_ERR("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and channels not set!")
         STOP
       ENDIF
       IF (ENERGIES_SET) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels"
+        CALL LOGGER%LOG_INFO("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels")
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
         CALL PREPARE_POTENTIAL(CHANNELS_)
         POTENTIAL_SET = .TRUE.
       ELSE
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and energies not set!"
+        CALL LOGGER%LOG_ERR("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and energies not set!")
         STOP
       ENDIF
     ENDIF
@@ -518,6 +532,7 @@ CONTAINS
 
     ! INITIALIZE THE VARIATIONAL PARAMETERS
     IF (FIRST_CALL) THEN
+      CALL LOGGER%SET_LOGGER_NAME("SCATTERING_NN_VARIATIONAL")
       CALL SET_VARIATIONAL_PARAMETERS_(E, J, L, S, TZ, IPOT, ILB, LEMP)
       IF (.NOT.GRID_SET) CALL PREPARE_GRID
       NNN     = VAR_P%NNL * NCH
@@ -557,7 +572,7 @@ CONTAINS
     ENDIF
 
     IF (.NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Grid not ready or Bessels not ready"
+      CALL LOGGER%LOG_ERR("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Grid not ready or Bessels not ready")
       STOP
     ENDIF
 
@@ -573,11 +588,11 @@ CONTAINS
     IE = FIND_ENERGY_INDEX(E)
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      ! WRITE(6,*) "Combining the CC potential"
+      CALL LOGGER%LOG_INFO("Combining the CC potential")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
-      ! WRITE(6,*) "Combining the AC potential (real part)"
+      CALL LOGGER%LOG_INFO("Combining the AC potential (real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
-      ! WRITE(6,*) "Combining the AC potential (imaginary part)"
+      CALL LOGGER%LOG_INFO("Combining the AC potential (imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
       VM_CC = VM_CC / HTM
       VM_AC_R = VM_AC_R / HTM
@@ -605,10 +620,15 @@ CONTAINS
     ! Evaluating for the "c_{n, alpha}" coefficients
       CALL DGESV(NNN, 1, CC , NNN, IPIV, CARR, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-      IF (PRINT_I) WRITE(6,*) "INFO: ", INFO
+      IF (PRINT_I) THEN
+        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: DGESV failed for CC")
+        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: INFO: ", INFO)
+      ENDIF
       CALL DGESV(NNN, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
-      IF (PRINT_I) WRITE(6,*) "INFO: ", INFO
+      IF (PRINT_I) THEN
+        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: INFO: ", INFO)
+      ENDIF
 
       XRCOEFF(IAK,:) = CARR
       XICOEFF(IAK,:) = CAII
@@ -631,19 +651,19 @@ CONTAINS
     ENDIF
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      ! WRITE(6,*) "Combining the AA potential (real part)"
+      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-      ! WRITE(6,*) "Combining the AA potential (real-imaginary part)"
+      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real-imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-      ! WRITE(6,*) "Combining the AA potential (imaginary-real part)"
+      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary-real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-      ! WRITE(6,*) "Combining the AA potential (imaginary part)"
+      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
       VM_AA_RR = VM_AA_RR / HTM
       VM_AA_RI = VM_AA_RI / HTM
       VM_AA_IR = VM_AA_IR / HTM
       VM_AA_II = VM_AA_II / HTM
-      ! WRITE(6,*) "Finished combining potentials"    
+      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Finished combining potentials")
       H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
       H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
       H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
@@ -785,15 +805,15 @@ CONTAINS
       WRITE(6,*) "E:    ",                  VAR_P%E, " MeV"
       WRITE(6,*) "HTM:  ",                  HTM, " MeV fm^2"
       WRITE(6,*) "k:    ",                  VAR_P%K, " fm^-1"
-      WRITE(10,*) "J:     ",                VAR_P%J
-      WRITE(10,*) "NCH:   ",                NCH
-      WRITE(10,*) "L0:    ",                LC(1)
-      IF (NCH==2) WRITE(10,*) "L1:    ",    LC(2)
-      WRITE(10,*) "S:     ",                VAR_P%S
-      WRITE(10,*) "T:     ",                VAR_P%T
-      WRITE(10,*) "TZ:    ",                VAR_P%TZ
+      WRITE(*,10) "J:     ",                VAR_P%J
+      WRITE(*,10) "NCH:   ",                NCH
+      WRITE(*,10) "L0:    ",                LC(1)
+      IF (NCH==2) WRITE(*,10) "L1:    ",    LC(2)
+      WRITE(*,10) "S:     ",                VAR_P%S
+      WRITE(*,10) "T:     ",                VAR_P%T
+      WRITE(*,10) "TZ:    ",                VAR_P%TZ
 
-      10 FORMAT(" ",A, I2)
+ 10 FORMAT(" ",A, I2)
     END SUBROUTINE PRINT_INFO
 
     !> \brief Compute the second order R-matrix.
@@ -1049,11 +1069,11 @@ CONTAINS
       ENCC(:,I,I) = ENERGIES_
     ENDDO
 
-    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS
+    CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements")
     ELSE
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements")
     ENDIF
     
     DO ICH = 1, NCHANNELS
@@ -1148,6 +1168,7 @@ CONTAINS
   SUBROUTINE PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS()
     USE LAGUERRE_POLYNOMIAL_MOD
     USE INTEGRATION_MOD
+    USE STRINGS_UTILS
     USE OMP_LIB
     IMPLICIT NONE
 
@@ -1169,15 +1190,15 @@ CONTAINS
 
     ! Check if prerequisites are set
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
+      CALL LOGGER%LOG_ERR("SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set")
       STOP
     ENDIF
 
-    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
+    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements")
     ELSE
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements")
     ENDIF
 
     ! Allocate output arrays
@@ -1198,7 +1219,7 @@ CONTAINS
     NX = VAR_P%NX_AC
 
     IF (VAR_P%RANGE.LT.H5 .OR. VAR_P%RANGE.GT.200.D0) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: RANGE out of bounds"
+      CALL LOGGER%LOG_ERR("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: RANGE out of bounds")
       STOP
     ENDIF
 
@@ -1227,8 +1248,8 @@ CONTAINS
     IF (PARALLEL_ENABLED) NUM_THREADS = OMP_GET_NUM_THREADS()
     !$OMP END MASTER
     !$OMP END PARALLEL
-    
-    WRITE(6,*) "Computing matrix elements using", NUM_THREADS, "threads"
+
+    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Computing matrix elements using: "//TRIM(TO_STRING(NUM_THREADS))//" threads")
 
     ! Compute kinetic energy matrix elements and potential terms - this is the computationally intensive part
     !$OMP PARALLEL DO COLLAPSE(3) PRIVATE(IE, IL, LL, LIK, INTEGRAND, S, T, IPOT) &
@@ -1474,7 +1495,7 @@ CONTAINS
                                      POT_AA_RI(:,:,:,:,:,:), POT_AA_II(:,:,:,:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS: Energies, grid or Bessel functions not set"
+      CALL LOGGER%LOG_ERR("PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS: Energies, grid or Bessel functions not set")
       STOP
     ENDIF
 
@@ -1502,11 +1523,11 @@ CONTAINS
     CALL REALLOCATE(INTEGRAND, NX+1)
 
 
-    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
+    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements")
     ELSE
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements"
+      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements")
     ENDIF
 
     ! MATRIX ELEMENTS DEPENDING ONLY ON (LL, LR)
@@ -1651,15 +1672,16 @@ CONTAINS
       CASE (3)
         N = 7
       CASE DEFAULT
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::ORDER_TO_NMAX: Invalid order for EFT radial function"
+        CALL LOGGER%LOG_ERR("::ORDER_TO_NMAX: Invalid order for EFT radial function")
         STOP
     END SELECT
   END FUNCTION ORDER_TO_NMAX
 
   !> \brief Print a divider line to the output.
   SUBROUTINE PRINT_DIVIDER()
+    USE LOG, ONLY: COLOR_RESET
     IMPLICIT NONE
-      WRITE(6,*) '====================================================================================='
+      CALL LOGGER%LOG_MESSAGE("=====================================================================================",3,COLOR_RESET)
   END SUBROUTINE PRINT_DIVIDER
 
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
@@ -1753,12 +1775,12 @@ CONTAINS
     DOUBLE PRECISION :: AG, BG, XG, EPS
 
     IF (.NOT.TZ_SET .OR. .NOT.LMAX_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: TZ or LMAX not set"
+      CALL LOGGER%LOG_ERR("::PREPARE_ASYMPTOTIC_FUNCTIONS: TZ or LMAX not set")
       STOP
     ENDIF
 
     IF (.NOT.ENERGIES_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: energies not set"
+      CALL LOGGER%LOG_ERR("::PREPARE_ASYMPTOTIC_FUNCTIONS: energies not set")
       STOP
     ENDIF
     
@@ -1768,7 +1790,7 @@ CONTAINS
 
     IF (BESSELS_SET) RETURN
 
-    WRITE(6,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions'
+    CALL LOGGER%LOG_INFO('::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions')
 
     KK = DSQRT(ENERGIES_/HTM)
     K2 = KK**2
@@ -1836,7 +1858,7 @@ CONTAINS
     ENDDO
     BESSELS_SET = .TRUE.
 
-    WRITE(6,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared'
+    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared")
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
   !> \brief Find the index of a given energy in the ENERGIES array.
@@ -1856,7 +1878,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIND_ENERGY_INDEX: Energy not found in ENERGIES array"
+    CALL LOGGER%LOG_ERR("::FIND_ENERGY_INDEX: Energy not found in ENERGIES array")
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
@@ -1871,7 +1893,7 @@ CONTAINS
     INTEGER :: NC, ICH
 
     IF (VAR_P%IPOT==0) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: IPOT not set"
+      CALL LOGGER%LOG_ERR("::PREPARE_POTENTIAL: IPOT not set")
       RETURN
     ENDIF
 
@@ -1895,7 +1917,7 @@ CONTAINS
     ELSE
       ! FILL TO PREPARE POTENTIALS FOR DYNAMIC CASE
       IF (.NOT.LECS_SET) THEN
-        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: LECs not set"
+        CALL LOGGER%LOG_ERR("::PREPARE_POTENTIAL: LECs not set")
         STOP
       ENDIF
       CALL GET_EFT_RADIAL_FUNCTIONS(XX_CC, LECS%RC, EFT_RADIAL_CC, ORDER_POTENTIAL = LECS%ORDER)
@@ -1971,7 +1993,7 @@ CONTAINS
       IF ( CHANNEL == CHANNELS_(INDX) ) RETURN
     ENDDO
 
-    WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIND_CHANNEL_INDEX: Channel not found in CHANNELS array"
+    CALL LOGGER%LOG_ERR("::FIND_CHANNEL_INDEX: Channel not found in CHANNELS array")
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
@@ -1987,7 +2009,7 @@ CONTAINS
     DOUBLE PRECISION :: HTM_VALUE
 
     IF (.NOT.HTM_SET) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::GET_HTM: HTM not set"
+      CALL LOGGER%LOG_ERR("::GET_HTM: HTM not set")
       STOP
     ENDIF
 
@@ -2023,7 +2045,7 @@ CONTAINS
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_NEW
     LOGICAL :: NEW_CUTOFFS
     IF (.NOT.ENERGIES_SET) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::SET_NEW_LECS: ENERGIES not set, first set them before calling SET_NEW_LECS"
+      CALL LOGGER%LOG_ERR("::SET_NEW_LECS: ENERGIES not set, first set them before calling SET_NEW_LECS")
       STOP
     ENDIF
       IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
@@ -2187,7 +2209,7 @@ CONTAINS
     unit = 1234567
     IF (PRESENT(unit_to_open)) unit = unit_to_open
     IF (LEN(string_append) > 255) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::DUMP_MODULE_DATA: string_append is too long, must be <= 255 characters"
+      CALL LOGGER%LOG_ERR("DUMP_MODULE_DATA: string_append is too long, must be <= 255 characters")
       RETURN
     ENDIF
 
@@ -2388,33 +2410,33 @@ CONTAINS
     ! Set the energies and channels
     NE = SIZE(ENERGIES)
     IF (NE <= 0) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No energies provided"
+      CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No energies provided")
       STOP
     ENDIF
     CALL SET_ENERGIES(ENERGIES)
     NCHANNELS = SIZE(CHANNELS)
     IF (NCHANNELS <= 0) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No channels provided"
+      CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No channels provided")
       STOP
     ENDIF
     CALL SET_CHANNELS(CHANNELS)
     
     IF (PRESENT(LECS_FOR_PLESS)) THEN
       IF (PRESENT(IPOT) .OR. PRESENT(ILB)) THEN
-        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Cannot set LECS and IPOT/ILB at the same time"
+        CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Cannot set LECS and IPOT/ILB at the same time")
         STOP
       ENDIF
       IPOT_ = -1
       ILB_ = -1
       CALL SET_NEW_LECS(LECS_FOR_PLESS)
     ELSEIF (.NOT.PRESENT(IPOT)) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: LECS and IPOT not set, set one of them"
+      CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: LECS and IPOT not set, set one of them")
       STOP
     ELSEIF (PRESENT(ILB)) THEN
       IPOT_ = IPOT
       IF (IPOT /= 19) THEN
         IF (ILB /= 1) THEN
-          WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for this IPOT could be only 1, setting it to 1"
+          CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for this IPOT could be only 1, setting it to 1")
         ENDIF
         ILB_ = 1
       ELSE
@@ -2422,9 +2444,9 @@ CONTAINS
       ENDIF
     ELSE
       IF (IPOT /= 19) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT
+        CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT)
       ELSE
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15"
+        CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15")
         ILB_ = 15
       ENDIF
     ENDIF
@@ -2444,7 +2466,7 @@ CONTAINS
 
     IF (PRESENT(FIT_CONSTANTS)) THEN
       IF (.NOT.PRESENT(ORDER_OF_THE_FIT)) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: using default ORDER_OF_THE_FIT=2"
+        CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: using default ORDER_OF_THE_FIT=2")
         ORDER_OF_THE_FIT_ = 2
       ELSE
         ORDER_OF_THE_FIT_ = ORDER_OF_THE_FIT
@@ -2502,7 +2524,7 @@ CONTAINS
       IF (NEQ > NEQ_MAX) NEQ_MAX = NEQ
     ENDDO
     IF (NEQ_MAX <= 0) THEN
-      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNELS_LOW_ENERGY: No channels to fit or invalid channel data"
+      CALL LOGGER%LOG_ERR("::FIT_CHANNELS_LOW_ENERGY: No channels to fit or invalid channel data")
       STOP
     ENDIF
     CALL REALLOCATE(FIT_CONSTANTS, NCH_TO_FIT, NEQ_MAX, ORDER_OF_THE_FIT + 1)
@@ -2576,7 +2598,7 @@ CONTAINS
     X = ENERGIES / HTM
     IF (PRESENT(KSQUARED)) THEN
       IF (SIZE(KSQUARED) /= NK2) THEN
-        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: KSQUARED size does not match ENERGIES size"
+        CALL LOGGER%LOG_ERR("::FIT_CHANNEL_LOW_ENERGY: KSQUARED size does not match ENERGIES size")
         STOP
       ENDIF
       KSQUARED = X
@@ -2601,7 +2623,8 @@ CONTAINS
         ENDIF
       ENDDO
       IF (IMIN == -1) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
+        CALL LOGGER%LOG_WARNING("::FIT_CHANNEL_LOW_ENERGY: Warning: No valid points for channel "//&
+                                  GET_CHANNEL_NAME(CHANNEL_TO_FIT) // " with L=", NUMBER = L)
         FIT_CONSTANTS(IEQ,:) = 0.D0
         FITTED = .FALSE.
         RETURN

@@ -15,6 +15,7 @@ module strings_utils
   public :: is_alphanumeric, is_whitespace, is_special
   public :: to_upper, to_lower, trim_str
   public :: replace, contains_str, index_of, split
+  public :: to_string  ! New function to convert integer to string
 
 contains
 
@@ -220,5 +221,17 @@ contains
     count = count + 1
     parts(count) = str(prev_pos:len_trim(str))
   end function split
+
+  !> @brief Converts an integer to a string.
+  !>
+  !> @details This function takes an integer input and converts it to a string representation.
+  !>
+  !> @param[in] num The integer number to convert.
+  !> @return The string representation of the integer.
+  function to_string(num) result(str)
+    integer, intent(in) :: num
+    character(len=20) :: str
+    write(str, '(I0)') num  ! Convert integer to string
+  end function to_string
 
 end module strings_utils
