@@ -193,7 +193,7 @@ MODULE SCATTERING_NN_VARIATIONAL
   PUBLIC :: SET_DYNAMIC
   PUBLIC :: SET_NEW_LECS
   PUBLIC :: RESET_SCATTERING_NN_VARIATIONAL
-  PUBLIC :: PRINT_ALL_DATA_IN_MODULE
+  PUBLIC :: DUMP_MODULE_DATA
   PUBLIC :: FIT_CHANNEL_LOW_ENERGY
   PUBLIC :: FIT_CHANNELS_LOW_ENERGY
 
@@ -234,6 +234,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT
     INTEGER, OPTIONAL, INTENT(IN) :: T, NX_AA, NX_CC, NX_AC, NNL, ILB, LEMP
     DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
+
+    IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      STOP
+    ENDIF
     
     VAR_P%J     = J
     VAR_P%L     = L
@@ -241,11 +246,11 @@ CONTAINS
     IF (PRESENT(T)) THEN
       VAR_P%T = T
     ELSE
-      VAR_P%T = MOD(MOD((L+S),2)+1,2)
+      VAR_P%T = T_FROM_L_S(L,S)
     ENDIF
     VAR_P%TZ    = TZ
     IF (ABS(TZ)>VAR_P%T) THEN
-      PRINT *, "Error: |Tz| > T!"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Error: |Tz| > T!"
       STOP
     ENDIF
     VAR_P%IPOT  = IPOT
@@ -365,19 +370,19 @@ CONTAINS
     VAR_P%K = DSQRT(2*E*MR) / HC
 
     IF (PRINT_I) THEN
-      PRINT 5
-      PRINT 15, "L", "S", "T", "TZ", "J"
-      PRINT 5
+      WRITE(*,5)
+      WRITE(*,15) "L", "S", "T", "TZ", "J"
+      WRITE(*,5)
     ENDIF
     LC(1) = L
     NCH = 1
-    IF (PRINT_I) PRINT 20, LC(1), S, VAR_P%T, VAR_P%TZ, J
+    IF (PRINT_I) WRITE(*,20) LC(1), S, VAR_P%T, VAR_P%TZ, J
     IF (J-L==1) THEN
       LC(2) = L + 2
-      IF (PRINT_I) PRINT 20, LC(2), S, VAR_P%T, VAR_P%TZ, J
+      IF (PRINT_I) WRITE(*,20) LC(2), S, VAR_P%T, VAR_P%TZ, J
       NCH = 2
     ENDIF
-    IF (PRINT_I) PRINT 5
+    IF (PRINT_I) WRITE(*,5)
     
 
   5 FORMAT(30("-"))
@@ -441,6 +446,11 @@ CONTAINS
     ! EXTERNAL FUNCTIONS AND SUBROUTINES
     INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
 
+    IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      STOP
+    ENDIF
+
     IF (PRESENT(RESET)) THEN
       IF (.NOT. RESET) RETURN
       NNN = 0
@@ -478,17 +488,16 @@ CONTAINS
     FIRST_CALL = FIRST_CALL .OR. CALL_TO_IS_FIRST_CALL
     IF (.NOT.POTENTIAL_SET) THEN
       IF (.NOT.CHANNELS_SET) THEN
-        PRINT *, "Error: Potential not set and channels not set!"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and channels not set!"
         STOP
       ENDIF
       IF (ENERGIES_SET) THEN
-        PRINT *, "DEBUG: Setting potential and variational parameters for these channels"
-        WRITE(*,*) "Setting potential and variational parameters for this channels"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels"
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
         CALL PREPARE_POTENTIAL(CHANNELS_)
         POTENTIAL_SET = .TRUE.
       ELSE
-        PRINT *, "Error: Potential not set and energies not set!"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and energies not set!"
         STOP
       ENDIF
     ENDIF
@@ -548,7 +557,8 @@ CONTAINS
     ENDIF
 
     IF (.NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      STOP "Grid not ready or Bessels not ready"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Grid not ready or Bessels not ready"
+      STOP
     ENDIF
 
     IF (PRINT_I) CALL PRINT_INFO()
@@ -764,7 +774,7 @@ CONTAINS
     SUBROUTINE HANDLE_INFO_ERROR()
       IMPLICIT NONE
       IF (INFO/=0) THEN
-        PRINT *, "Error in LAPACK dgesv: INFO = ", INFO
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Error in LAPACK dgesv: INFO = ", INFO
         STOP
       ENDIF
     END SUBROUTINE HANDLE_INFO_ERROR
@@ -772,16 +782,16 @@ CONTAINS
     !> \brief Print information about the current calculation.
     SUBROUTINE PRINT_INFO()
       IMPLICIT NONE
-      PRINT *, "E:    ",                  VAR_P%E, " MeV"
-      PRINT *, "HTM:  ",                  HTM, " MeV fm^2"
-      PRINT *, "k:    ",                  VAR_P%K, " fm^-1"
-      PRINT 10, "J:     ",                VAR_P%J
-      PRINT 10, "NCH:   ",                NCH
-      PRINT 10, "L0:    ",                LC(1)
-      IF (NCH==2) PRINT 10, "L1:    ",    LC(2)
-      PRINT 10, "S:     ",                VAR_P%S
-      PRINT 10, "T:     ",                VAR_P%T
-      PRINT 10, "TZ:    ",                VAR_P%TZ
+      WRITE(*,*) "E:    ",                  VAR_P%E, " MeV"
+      WRITE(*,*) "HTM:  ",                  HTM, " MeV fm^2"
+      WRITE(*,*) "k:    ",                  VAR_P%K, " fm^-1"
+      WRITE(10,*) "J:     ",                VAR_P%J
+      WRITE(10,*) "NCH:   ",                NCH
+      WRITE(10,*) "L0:    ",                LC(1)
+      IF (NCH==2) WRITE(10,*) "L1:    ",    LC(2)
+      WRITE(10,*) "S:     ",                VAR_P%S
+      WRITE(10,*) "T:     ",                VAR_P%T
+      WRITE(10,*) "TZ:    ",                VAR_P%TZ
 
       10 FORMAT(" ",A, I2)
     END SUBROUTINE PRINT_INFO
@@ -1013,7 +1023,7 @@ CONTAINS
     INTEGER :: SL, SR, TL, TR, T, S
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.LAGUERRE_SET) THEN
-      PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
     
@@ -1039,11 +1049,11 @@ CONTAINS
       ENCC(:,I,I) = ENERGIES_
     ENDDO
 
-    WRITE(*,*) "Preparing core-core matrix elements for channels: ", NCHANNELS
+    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "Using dynamic potential for core-core matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements"
     ELSE
-      WRITE(*,*) "Using static potential for core-core matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements"
     ENDIF
     
     DO ICH = 1, NCHANNELS
@@ -1159,15 +1169,15 @@ CONTAINS
 
     ! Check if prerequisites are set
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
-      PRINT *, "Error: Energies, grid, Bessels or Laguerre polynomials not set"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
 
-    WRITE(*,*) "Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
+    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "Using dynamic potential for asymptotic-core matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements"
     ELSE
-      WRITE(*,*) "Using static potential for asymptotic-core matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements"
     ENDIF
 
     ! Allocate output arrays
@@ -1188,7 +1198,7 @@ CONTAINS
     NX = VAR_P%NX_AC
 
     IF (VAR_P%RANGE.LT.H5 .OR. VAR_P%RANGE.GT.200.D0) THEN
-      PRINT *, "Error: RANGE out of bounds"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: RANGE out of bounds"
       STOP
     ENDIF
 
@@ -1464,7 +1474,7 @@ CONTAINS
                                      POT_AA_RI(:,:,:,:,:,:), POT_AA_II(:,:,:,:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      PRINT *, "Error: Energies, grid or Bessel functions not set in PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS: Energies, grid or Bessel functions not set"
       STOP
     ENDIF
 
@@ -1492,11 +1502,11 @@ CONTAINS
     CALL REALLOCATE(INTEGRAND, NX+1)
 
 
-    WRITE(*,*) "Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
+    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "Using dynamic potential for asymptotic-asymptotic matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements"
     ELSE
-      WRITE(*,*) "Using static potential for asymptotic-asymptotic matrix elements"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements"
     ENDIF
 
     ! MATRIX ELEMENTS DEPENDING ONLY ON (LL, LR)
@@ -1641,7 +1651,7 @@ CONTAINS
       CASE (3)
         N = 7
       CASE DEFAULT
-        PRINT *, "Error: Invalid order for EFT radial function"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::ORDER_TO_NMAX: Invalid order for EFT radial function"
         STOP
     END SELECT
   END FUNCTION ORDER_TO_NMAX
@@ -1743,12 +1753,12 @@ CONTAINS
     DOUBLE PRECISION :: AG, BG, XG, EPS
 
     IF (.NOT.TZ_SET .OR. .NOT.LMAX_SET) THEN
-      PRINT *, "Error: TZ or LMAX not set"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: TZ or LMAX not set"
       STOP
     ENDIF
 
     IF (.NOT.ENERGIES_SET) THEN
-      PRINT *, "Error: energies not set"
+      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: energies not set"
       STOP
     ENDIF
     
@@ -1758,7 +1768,7 @@ CONTAINS
 
     IF (BESSELS_SET) RETURN
 
-    WRITE(*,*)'PREPARING BESSEL FUNCTIONS'
+    WRITE(*,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions'
 
     KK = DSQRT(ENERGIES_/HTM)
     K2 = KK**2
@@ -1825,8 +1835,8 @@ CONTAINS
       ENDDO
     ENDDO
     BESSELS_SET = .TRUE.
-    
-    WRITE(*,*)'BESSEL FUNCTIONS PREPARED'
+
+    WRITE(*,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
   !> \brief Find the index of a given energy in the ENERGIES array.
@@ -1846,7 +1856,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    PRINT *, "Error: Energy not found in ENERGIES array"
+    WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIND_ENERGY_INDEX: Energy not found in ENERGIES array"
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
@@ -1861,7 +1871,7 @@ CONTAINS
     INTEGER :: NC, ICH
 
     IF (VAR_P%IPOT==0) THEN
-      PRINT *, "Error: IPOT not set"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: IPOT not set"
       RETURN
     ENDIF
 
@@ -1885,7 +1895,7 @@ CONTAINS
     ELSE
       ! FILL TO PREPARE POTENTIALS FOR DYNAMIC CASE
       IF (.NOT.LECS_SET) THEN
-        PRINT *, "Error: LECS_NOT_SET"
+        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: LECs not set"
         STOP
       ENDIF
       CALL GET_EFT_RADIAL_FUNCTIONS(XX_CC, LECS%RC, EFT_RADIAL_CC, ORDER_POTENTIAL = LECS%ORDER)
@@ -1961,7 +1971,7 @@ CONTAINS
       IF ( CHANNEL == CHANNELS_(INDX) ) RETURN
     ENDDO
 
-    PRINT *, "Error: Channel not found in CHANNELS array"
+    WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIND_CHANNEL_INDEX: Channel not found in CHANNELS array"
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
@@ -1977,7 +1987,7 @@ CONTAINS
     DOUBLE PRECISION :: HTM_VALUE
 
     IF (.NOT.HTM_SET) THEN
-      PRINT *, "Error: HTM not set"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::GET_HTM: HTM not set"
       STOP
     ENDIF
 
@@ -2013,7 +2023,7 @@ CONTAINS
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_NEW
     LOGICAL :: NEW_CUTOFFS
     IF (.NOT.ENERGIES_SET) THEN
-      PRINT *, "Error: ENERGIES not set, first set them before calling SET_NEW_LECS"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::SET_NEW_LECS: ENERGIES not set, first set them before calling SET_NEW_LECS"
       STOP
     ENDIF
       IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
@@ -2168,13 +2178,20 @@ CONTAINS
   !> @note
   !> The subroutine creates a new file or overwrites an existing one for the specified unit.
   !> Only the sizes of large arrays are printed, not their full contents.
-  SUBROUTINE PRINT_ALL_DATA_IN_MODULE(unit)
+  SUBROUTINE DUMP_MODULE_DATA(string_append, unit_to_open)
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: unit
-    INTEGER :: i
+    CHARACTER(LEN=*), INTENT(IN) :: string_append
+    INTEGER, OPTIONAL, INTENT(IN) :: unit_to_open
+    INTEGER :: i, unit
     CHARACTER(LEN=256) :: fname
-    
-    WRITE(fname, '(A,I0,A)') 'scattering_nn_variational_dump_unit', unit, '.txt'
+    unit = 1234567
+    IF (PRESENT(unit_to_open)) unit = unit_to_open
+    IF (LEN(string_append) > 255) THEN
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::DUMP_MODULE_DATA: string_append is too long, must be <= 255 characters"
+      RETURN
+    ENDIF
+
+    WRITE(fname, *) 'scattering_nn_variational_dump_unit' // TRIM(string_append) // '.txt'
     OPEN(unit, FILE=TRIM(fname), STATUS='REPLACE', ACTION='WRITE')
 
     WRITE(unit,*) '==== Module SCATTERING_NN_VARIATIONAL Dump ===='
@@ -2216,16 +2233,16 @@ CONTAINS
 
     WRITE(unit,*) 'CHANNEL: ', GET_CHANNEL_NAME(CHANNEL)
 
-    IF (ALLOCATED(XX_CC)) WRITE(unit,*) 'XX_CC size =', SIZE(XX_CC)
-    IF (ALLOCATED(YY_CC)) WRITE(unit,*) 'YY_CC size =', SIZE(YY_CC)
-    IF (ALLOCATED(XX_AC)) WRITE(unit,*) 'XX_AC size =', SIZE(XX_AC)
-    IF (ALLOCATED(XX_AA)) WRITE(unit,*) 'XX_AA size =', SIZE(XX_AA)
-    IF (ALLOCATED(A_CC))  WRITE(unit,*) 'A_CC size =', SIZE(A_CC)
-    IF (ALLOCATED(A_AC))  WRITE(unit,*) 'A_AC size =', SIZE(A_AC)
-    IF (ALLOCATED(A_AA))  WRITE(unit,*) 'A_AA size =', SIZE(A_AA)
-    IF (ALLOCATED(B_AA))  WRITE(unit,*) 'B_AA size =', SIZE(B_AA)
-    IF (ALLOCATED(AJ_AA)) WRITE(unit,*) 'AJ_AA size =', SIZE(AJ_AA)
-    IF (ALLOCATED(AJ_AC)) WRITE(unit,*) 'AJ_AC size =', SIZE(AJ_AC)
+    IF (ALLOCATED(XX_CC)) WRITE(unit,*) 'XX_CC size  =', SIZE(XX_CC)
+    IF (ALLOCATED(YY_CC)) WRITE(unit,*) 'YY_CC size  =', SIZE(YY_CC)
+    IF (ALLOCATED(XX_AC)) WRITE(unit,*) 'XX_AC size  =', SIZE(XX_AC)
+    IF (ALLOCATED(XX_AA)) WRITE(unit,*) 'XX_AA size  =', SIZE(XX_AA)
+    IF (ALLOCATED(A_CC))  WRITE(unit,*) 'A_CC size   =', SIZE(A_CC)
+    IF (ALLOCATED(A_AC))  WRITE(unit,*) 'A_AC size   =', SIZE(A_AC)
+    IF (ALLOCATED(A_AA))  WRITE(unit,*) 'A_AA size   =', SIZE(A_AA)
+    IF (ALLOCATED(B_AA))  WRITE(unit,*) 'B_AA size   =', SIZE(B_AA)
+    IF (ALLOCATED(AJ_AA)) WRITE(unit,*) 'AJ_AA size  =', SIZE(AJ_AA)
+    IF (ALLOCATED(AJ_AC)) WRITE(unit,*) 'AJ_AC size  =', SIZE(AJ_AC)
     IF (ALLOCATED(YYL_AC))WRITE(unit,*) 'YYL_AC size =', SIZE(YYL_AC)
 
     IF (ALLOCATED(V_CC))  WRITE(unit,*) 'V_CC size =', SHAPE(V_CC)
@@ -2233,17 +2250,17 @@ CONTAINS
     IF (ALLOCATED(V_AA))  WRITE(unit,*) 'V_AA size =', SHAPE(V_AA)
 
     IF (ALLOCATED(ENERGIES_)) WRITE(unit,*) 'ENERGIES_ size =', SIZE(ENERGIES_)
-    IF (ALLOCATED(KK))       WRITE(unit,*) 'KK size =', SIZE(KK)
-    IF (ALLOCATED(K2))       WRITE(unit,*) 'K2 size =', SIZE(K2)
+    IF (ALLOCATED(KK))       WRITE(unit,*)  'KK size        =', SIZE(KK)
+    IF (ALLOCATED(K2))       WRITE(unit,*)  'K2 size        =', SIZE(K2)
 
-    IF (ALLOCATED(FBES_AA))  WRITE(unit,*) 'FBES_AA size =', SHAPE(FBES_AA)
-    IF (ALLOCATED(FBES_AC))  WRITE(unit,*) 'FBES_AC size =', SHAPE(FBES_AC)
-    IF (ALLOCATED(GBES_AA))  WRITE(unit,*) 'GBES_AA size =', SHAPE(GBES_AA)
-    IF (ALLOCATED(GBES_AC))  WRITE(unit,*) 'GBES_AC size =', SHAPE(GBES_AC)
+    IF (ALLOCATED(FBES_AA))  WRITE(unit,*) 'FBES_AA size  =', SHAPE(FBES_AA)
+    IF (ALLOCATED(FBES_AC))  WRITE(unit,*) 'FBES_AC size  =', SHAPE(FBES_AC)
+    IF (ALLOCATED(GBES_AA))  WRITE(unit,*) 'GBES_AA size  =', SHAPE(GBES_AA)
+    IF (ALLOCATED(GBES_AC))  WRITE(unit,*) 'GBES_AC size  =', SHAPE(GBES_AC)
     IF (ALLOCATED(GBES0_AA)) WRITE(unit,*) 'GBES0_AA size =', SHAPE(GBES0_AA)
     IF (ALLOCATED(GBES1_AA)) WRITE(unit,*) 'GBES1_AA size =', SHAPE(GBES1_AA)
     IF (ALLOCATED(GBES2_AA)) WRITE(unit,*) 'GBES2_AA size =', SHAPE(GBES2_AA)
-    IF (ALLOCATED(HNOR_AA))  WRITE(unit,*) 'HNOR_AA size =', SHAPE(HNOR_AA)
+    IF (ALLOCATED(HNOR_AA))  WRITE(unit,*) 'HNOR_AA size  =', SHAPE(HNOR_AA)
 
     IF (ALLOCATED(V0_CC)) WRITE(unit,*) 'V0_CC size =', SHAPE(V0_CC)
     IF (ALLOCATED(V1_CC)) WRITE(unit,*) 'V1_CC size =', SHAPE(V1_CC)
@@ -2252,33 +2269,33 @@ CONTAINS
     IF (ALLOCATED(V1_AC)) WRITE(unit,*) 'V1_AC size =', SHAPE(V1_AC)
     IF (ALLOCATED(V2_AC)) WRITE(unit,*) 'V2_AC size =', SHAPE(V2_AC)
 
-    IF (ALLOCATED(H_MINUS_E_CC))    WRITE(unit,*) 'H_MINUS_E_CC size =', SHAPE(H_MINUS_E_CC)
-    IF (ALLOCATED(H_MINUS_E_AC_R))  WRITE(unit,*) 'H_MINUS_E_AC_R size =', SHAPE(H_MINUS_E_AC_R)
-    IF (ALLOCATED(H_MINUS_E_AC_I))  WRITE(unit,*) 'H_MINUS_E_AC_I size =', SHAPE(H_MINUS_E_AC_I)
+    IF (ALLOCATED(H_MINUS_E_CC))    WRITE(unit,*) 'H_MINUS_E_CC size    =', SHAPE(H_MINUS_E_CC)
+    IF (ALLOCATED(H_MINUS_E_AC_R))  WRITE(unit,*) 'H_MINUS_E_AC_R size  =', SHAPE(H_MINUS_E_AC_R)
+    IF (ALLOCATED(H_MINUS_E_AC_I))  WRITE(unit,*) 'H_MINUS_E_AC_I size  =', SHAPE(H_MINUS_E_AC_I)
     IF (ALLOCATED(H_MINUS_E_AA_RR)) WRITE(unit,*) 'H_MINUS_E_AA_RR size =', SHAPE(H_MINUS_E_AA_RR)
     IF (ALLOCATED(H_MINUS_E_AA_RI)) WRITE(unit,*) 'H_MINUS_E_AA_RI size =', SHAPE(H_MINUS_E_AA_RI)
     IF (ALLOCATED(H_MINUS_E_AA_IR)) WRITE(unit,*) 'H_MINUS_E_AA_IR size =', SHAPE(H_MINUS_E_AA_IR)
     IF (ALLOCATED(H_MINUS_E_AA_II)) WRITE(unit,*) 'H_MINUS_E_AA_II size =', SHAPE(H_MINUS_E_AA_II)
 
-    IF (ALLOCATED(K_MINUS_E_CC))    WRITE(unit,*) 'K_MINUS_E_CC size =', SHAPE(K_MINUS_E_CC)
-    IF (ALLOCATED(K_MINUS_E_AC_R))  WRITE(unit,*) 'K_MINUS_E_AC_R size =', SHAPE(K_MINUS_E_AC_R)
-    IF (ALLOCATED(K_MINUS_E_AC_I))  WRITE(unit,*) 'K_MINUS_E_AC_I size =', SHAPE(K_MINUS_E_AC_I)
+    IF (ALLOCATED(K_MINUS_E_CC))    WRITE(unit,*) 'K_MINUS_E_CC size    =', SHAPE(K_MINUS_E_CC)
+    IF (ALLOCATED(K_MINUS_E_AC_R))  WRITE(unit,*) 'K_MINUS_E_AC_R size  =', SHAPE(K_MINUS_E_AC_R)
+    IF (ALLOCATED(K_MINUS_E_AC_I))  WRITE(unit,*) 'K_MINUS_E_AC_I size  =', SHAPE(K_MINUS_E_AC_I)
     IF (ALLOCATED(K_MINUS_E_AA_RR)) WRITE(unit,*) 'K_MINUS_E_AA_RR size =', SHAPE(K_MINUS_E_AA_RR)
     IF (ALLOCATED(K_MINUS_E_AA_RI)) WRITE(unit,*) 'K_MINUS_E_AA_RI size =', SHAPE(K_MINUS_E_AA_RI)
     IF (ALLOCATED(K_MINUS_E_AA_IR)) WRITE(unit,*) 'K_MINUS_E_AA_IR size =', SHAPE(K_MINUS_E_AA_IR)
     IF (ALLOCATED(K_MINUS_E_AA_II)) WRITE(unit,*) 'K_MINUS_E_AA_II size =', SHAPE(K_MINUS_E_AA_II)
 
-    IF (ALLOCATED(VM_CC))    WRITE(unit,*) 'VM_CC size =', SHAPE(VM_CC)
-    IF (ALLOCATED(VM_AC_R))  WRITE(unit,*) 'VM_AC_R size =', SHAPE(VM_AC_R)
-    IF (ALLOCATED(VM_AC_I))  WRITE(unit,*) 'VM_AC_I size =', SHAPE(VM_AC_I)
+    IF (ALLOCATED(VM_CC))    WRITE(unit,*) 'VM_CC size    =', SHAPE(VM_CC)
+    IF (ALLOCATED(VM_AC_R))  WRITE(unit,*) 'VM_AC_R size  =', SHAPE(VM_AC_R)
+    IF (ALLOCATED(VM_AC_I))  WRITE(unit,*) 'VM_AC_I size  =', SHAPE(VM_AC_I)
     IF (ALLOCATED(VM_AA_RR)) WRITE(unit,*) 'VM_AA_RR size =', SHAPE(VM_AA_RR)
     IF (ALLOCATED(VM_AA_RI)) WRITE(unit,*) 'VM_AA_RI size =', SHAPE(VM_AA_RI)
     IF (ALLOCATED(VM_AA_IR)) WRITE(unit,*) 'VM_AA_IR size =', SHAPE(VM_AA_IR)
     IF (ALLOCATED(VM_AA_II)) WRITE(unit,*) 'VM_AA_II size =', SHAPE(VM_AA_II)
 
-    IF (ALLOCATED(FMAT_CC))    WRITE(unit,*) 'FMAT_CC size =', SHAPE(FMAT_CC)
-    IF (ALLOCATED(FMAT_AC_R))  WRITE(unit,*) 'FMAT_AC_R size =', SHAPE(FMAT_AC_R)
-    IF (ALLOCATED(FMAT_AC_I))  WRITE(unit,*) 'FMAT_AC_I size =', SHAPE(FMAT_AC_I)
+    IF (ALLOCATED(FMAT_CC))    WRITE(unit,*) 'FMAT_CC size    =', SHAPE(FMAT_CC)
+    IF (ALLOCATED(FMAT_AC_R))  WRITE(unit,*) 'FMAT_AC_R size  =', SHAPE(FMAT_AC_R)
+    IF (ALLOCATED(FMAT_AC_I))  WRITE(unit,*) 'FMAT_AC_I size  =', SHAPE(FMAT_AC_I)
     IF (ALLOCATED(FMAT_AA_RR)) WRITE(unit,*) 'FMAT_AA_RR size =', SHAPE(FMAT_AA_RR)
     IF (ALLOCATED(FMAT_AA_RI)) WRITE(unit,*) 'FMAT_AA_RI size =', SHAPE(FMAT_AA_RI)
     IF (ALLOCATED(FMAT_AA_IR)) WRITE(unit,*) 'FMAT_AA_IR size =', SHAPE(FMAT_AA_IR)
@@ -2294,29 +2311,29 @@ CONTAINS
 
     WRITE(unit,*) 'LECS:'
     WRITE(unit,*) '  ILB=', LECS%ILB, ' ORDER=', LECS%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
-    WRITE(unit,*) '  CLO(0:1)'
-    WRITE(unit,*) '  CNLO(7)'
-    WRITE(unit,*) '  CN3LO(11)'
-    WRITE(unit,*) '  CIT(0:4)'
+    WRITE(unit,*) '  RC(0:1,0:1)=', LECS%RC
+    WRITE(unit,*) '  CLO(0:1)   =', LECS%CLO
+    WRITE(unit,*) '  CNLO(7)    =', LECS%CNLO
+    WRITE(unit,*) '  CN3LO(11)  =', LECS%CN3LO
+    WRITE(unit,*) '  CIT(0:4)   =', LECS%CIT
 
     WRITE(unit,*) 'EFT_RADIAL_CC:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_CC%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
+    WRITE(unit,*) '  ORDER       =', EFT_RADIAL_CC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1) =', EFT_RADIAL_CC%RC
     IF (ALLOCATED(EFT_RADIAL_CC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_CC%FR_I)
 
     WRITE(unit,*) 'EFT_RADIAL_AC:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AC%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
+    WRITE(unit,*) '  ORDER       =', EFT_RADIAL_AC%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1) =', EFT_RADIAL_AC%RC
     IF (ALLOCATED(EFT_RADIAL_AC%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AC%FR_I)
 
     WRITE(unit,*) 'EFT_RADIAL_AA:'
-    WRITE(unit,*) '  ORDER=', EFT_RADIAL_AA%ORDER
-    WRITE(unit,*) '  RC(0:1,0:1)'
+    WRITE(unit,*) '  ORDER       =', EFT_RADIAL_AA%ORDER
+    WRITE(unit,*) '  RC(0:1,0:1) =', EFT_RADIAL_AA%RC
     IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) WRITE(unit,*) '  FR_I size =', SHAPE(EFT_RADIAL_AA%FR_I)
 
     CLOSE(unit)
-  END SUBROUTINE PRINT_ALL_DATA_IN_MODULE
+  END SUBROUTINE DUMP_MODULE_DATA
 
 
   !> \ingroup scattering_nn_variational_mod
@@ -2371,33 +2388,33 @@ CONTAINS
     ! Set the energies and channels
     NE = SIZE(ENERGIES)
     IF (NE <= 0) THEN
-      PRINT *, "Error: No energies provided"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No energies provided"
       STOP
     ENDIF
     CALL SET_ENERGIES(ENERGIES)
     NCHANNELS = SIZE(CHANNELS)
     IF (NCHANNELS <= 0) THEN
-      PRINT *, "Error: No channels provided"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No channels provided"
       STOP
     ENDIF
     CALL SET_CHANNELS(CHANNELS)
     
     IF (PRESENT(LECS_FOR_PLESS)) THEN
       IF (PRESENT(IPOT) .OR. PRESENT(ILB)) THEN
-        PRINT *, "Error: Cannot set LECS and IPOT/ILB at the same time"
+        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Cannot set LECS and IPOT/ILB at the same time"
         STOP
       ENDIF
       IPOT_ = -1
       ILB_ = -1
       CALL SET_NEW_LECS(LECS_FOR_PLESS)
     ELSEIF (.NOT.PRESENT(IPOT)) THEN
-      PRINT *, "Error: LECS and IPOT not set, set one of them"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: LECS and IPOT not set, set one of them"
       STOP
     ELSEIF (PRESENT(ILB)) THEN
       IPOT_ = IPOT
       IF (IPOT /= 19) THEN
         IF (ILB /= 1) THEN
-          WRITE(*,*) "ILB for this IPOT could be only 1, setting it to 1"
+          WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for this IPOT could be only 1, setting it to 1"
         ENDIF
         ILB_ = 1
       ELSE
@@ -2405,19 +2422,19 @@ CONTAINS
       ENDIF
     ELSE
       IF (IPOT /= 19) THEN
-        WRITE(*,*) "Setting ILB to 1 for IPOT=", IPOT
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT
       ELSE
-        WRITE(*,*) "ILB for IPOT=19 is not set, using default value 15"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15"
         ILB_ = 15
       ENDIF
     ENDIF
 
     DO ICH = 1, NCHANNELS
-      J = GET_CHANNEL_J(CHANNELS(ICH))
-      TZ = GET_CHANNEL_TZ(CHANNELS(ICH))
-      L = GET_CHANNEL_L(CHANNELS(ICH), 1)
-      S = GET_CHANNEL_S(CHANNELS(ICH), 1)
-      T = GET_CHANNEL_T(CHANNELS(ICH), 1)
+      J  = CHANNELS(ICH)%J()
+      TZ = CHANNELS(ICH)%TZ()
+      L  = CHANNELS(ICH)%L()
+      S  = CHANNELS(ICH)%S()
+      T  = CHANNELS(ICH)%T()
       DO IE = 1, NE
         E = ENERGIES(IE)
         CALL NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT_, ILB_, LEMP, PHASE_SHIFTS(ICH,IE))
@@ -2427,7 +2444,7 @@ CONTAINS
 
     IF (PRESENT(FIT_CONSTANTS)) THEN
       IF (.NOT.PRESENT(ORDER_OF_THE_FIT)) THEN
-        WRITE(*,*) "FIT_CONSTATS: using default ORDER_OF_THE_FIT=2"
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: using default ORDER_OF_THE_FIT=2"
         ORDER_OF_THE_FIT_ = 2
       ELSE
         ORDER_OF_THE_FIT_ = ORDER_OF_THE_FIT
@@ -2485,7 +2502,7 @@ CONTAINS
       IF (NEQ > NEQ_MAX) NEQ_MAX = NEQ
     ENDDO
     IF (NEQ_MAX <= 0) THEN
-      PRINT *, "Error: No channels to fit or invalid channel data"
+      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNELS_LOW_ENERGY: No channels to fit or invalid channel data"
       STOP
     ENDIF
     CALL REALLOCATE(FIT_CONSTANTS, NCH_TO_FIT, NEQ_MAX, ORDER_OF_THE_FIT + 1)
@@ -2548,8 +2565,6 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: X(:), Y(:)
     DOUBLE PRECISION :: DELTA
     DOUBLE PRECISION :: FIT_CONSTANTS_(ORDER_OF_THE_FIT +1)
-    ! WRITE(*,*) "Fitting channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", GET_CHANNEL_L(CHANNEL_TO_FIT, 1), &
-        ! " and order of the fit: ", ORDER_OF_THE_FIT
 
     NK2 = SIZE(ENERGIES)
     NEQ = GET_CHANNEL_NCH(CHANNEL_TO_FIT)
@@ -2561,7 +2576,7 @@ CONTAINS
     X = ENERGIES / HTM
     IF (PRESENT(KSQUARED)) THEN
       IF (SIZE(KSQUARED) /= NK2) THEN
-        PRINT *, "Error: KSQUARED size does not match ENERGIES size"
+        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: KSQUARED size does not match ENERGIES size"
         STOP
       ENDIF
       KSQUARED = X
@@ -2586,13 +2601,12 @@ CONTAINS
         ENDIF
       ENDDO
       IF (IMIN == -1) THEN
-        WRITE(*,*) "Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
+        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
         FIT_CONSTANTS(IEQ,:) = 0.D0
         FITTED = .FALSE.
         RETURN
       ENDIF
-      ! WRITE(*,*) " Fitting channel "// GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L, " and ", NK2-IMIN+1, " points, ", &
-          ! "using htm: ", HTM
+      
       FIT_CONSTANTS_ = 0.D0
       CALL POLYNOMIAL_REGRESSION(Y(IMIN:), X(IMIN:), ORDER_OF_THE_FIT, NK2-IMIN, FIT_CONSTANTS_)
       FIT_CONSTANTS(IEQ,:) = FIT_CONSTANTS_
