@@ -15,7 +15,12 @@ module strings_utils
   public :: is_alphanumeric, is_whitespace, is_special
   public :: to_upper, to_lower, trim_str
   public :: replace, contains_str, index_of, split
-  public :: to_string  ! New function to convert integer to string
+  public :: to_string  ! New function to convert integers, reals, and doubles to strings
+
+  interface to_string
+    module procedure to_string_int, to_string_double, to_string_complex
+    module procedure to_string_array_double, to_string_array_int, to_string_array_2d
+  end interface to_string
 
 contains
 
@@ -228,10 +233,62 @@ contains
   !>
   !> @param[in] num The integer number to convert.
   !> @return The string representation of the integer.
-  function to_string(num) result(str)
+  function to_string_int(num) result(str)
     integer, intent(in) :: num
     character(len=20) :: str
-    write(str, '(I0)') num  ! Convert integer to string
-  end function to_string
+    write(str, *) num  ! Convert integer to string
+  end function to_string_int
+
+  !> @brief Converts a double precision number to a string.
+  !>
+  !> @details This function takes a double precision number input and converts it to a string representation.
+  !>
+  !> @param[in] num The double precision number to convert.
+  !> @return The string representation of the double precision number.
+  function to_string_double(num) result(str)
+    double precision, intent(in) :: num
+    character(len=64) :: str
+    write(str, *) num  ! Convert double precision to string
+  end function to_string_double 
+
+
+  function to_string_complex(num) result(str)
+    complex, intent(in) :: num
+    character(len=256) :: str
+    write(str, *) num  ! Convert complex to string
+  end function to_string_complex
+
+
+  function to_string_array_double(arr) result(str)
+    double precision, intent(in), allocatable :: arr(:)
+    character(len=64), allocatable :: str(:)
+    integer :: i
+    allocate(str(size(arr)))
+    do i = 1, size(arr)
+      write(str(i), *) trim(to_string_double(arr(i)))  ! Convert each element to string
+    end do
+  end function to_string_array_double
+
+  function to_string_array_int(arr) result(str)
+    integer, intent(in), allocatable :: arr(:)
+    character(len=64), allocatable :: str(:)
+    integer :: i
+    allocate(str(size(arr)))
+    do i = 1, size(arr)
+      write(str(i), *) trim(to_string_int(arr(i)))  ! Convert each element to string
+    end do
+  end function to_string_array_int
+
+  function to_string_array_2d(arr) result(str)
+    double precision, intent(in), allocatable :: arr(:,:)
+    character(len=64), allocatable :: str(:,:)
+    integer :: i, j
+    allocate(str(size(arr, 1), size(arr, 2)))
+    do i = 1, size(arr, 1)
+      do j = 1, size(arr, 2)
+        write(str(i,j), *) trim(to_string_double(arr(i,j)))  ! Convert each element to string
+      end do
+    end do
+  end function to_string_array_2d
 
 end module strings_utils

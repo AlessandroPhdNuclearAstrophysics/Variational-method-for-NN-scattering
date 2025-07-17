@@ -83,7 +83,6 @@ MODULE SCATTERING_NN_VARIATIONAL
   DOUBLE PRECISION :: HTM = 0, M = 0
   LOGICAL :: HTM_SET = .FALSE.
   INTEGER :: LC(NCH_MAX)
-  LOGICAL :: PRINT_I = .FALSE.
 
   INTEGER :: LMAX=-1
   LOGICAL :: TZ_SET = .FALSE., LMAX_SET = .FALSE., PREPARE = .TRUE.
@@ -362,6 +361,7 @@ CONTAINS
     IMPLICIT NONE
     DOUBLE PRECISION, INTENT(IN) :: E
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
+    CHARACTER(LEN=512) :: MESSAGE
 
     VAR_P%J = J
     VAR_P%L = L
@@ -383,21 +383,26 @@ CONTAINS
 
     VAR_P%K = DSQRT(2*E*MR) / HC
 
-    IF (PRINT_I) THEN
-      WRITE(6,5)
-      WRITE(6,15) "L", "S", "T", "TZ", "J"
-      WRITE(6,5)
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      WRITE(MESSAGE,5)
+      CALL LOGGER%LOG_INFO(MESSAGE)
+      WRITE(MESSAGE,15) "L", "S", "T", "TZ", "J"
+      CALL LOGGER%LOG_INFO(MESSAGE)
+      WRITE(MESSAGE,5)
+      CALL LOGGER%LOG_INFO(MESSAGE)
     ENDIF
     LC(1) = L
     NCH = 1
-    IF (PRINT_I) WRITE(6,20) LC(1), S, VAR_P%T, VAR_P%TZ, J
+    WRITE(MESSAGE,20) LC(1), S, VAR_P%T, VAR_P%TZ, J
+    CALL LOGGER%LOG_INFO(MESSAGE)
     IF (J-L==1) THEN
       LC(2) = L + 2
-      IF (PRINT_I) WRITE(6,20) LC(2), S, VAR_P%T, VAR_P%TZ, J
       NCH = 2
+      WRITE(MESSAGE,20) LC(2), S, VAR_P%T, VAR_P%TZ, J
+      CALL LOGGER%LOG_INFO(MESSAGE)
     ENDIF
-    IF (PRINT_I) WRITE(6,5)
-    
+    WRITE(MESSAGE,5)
+    CALL LOGGER%LOG_INFO(MESSAGE)
 
   5 FORMAT(30("-"))
  15 FORMAT(" ", A5, A5, A5, A5, A5, A5)
@@ -419,19 +424,21 @@ CONTAINS
   !! \param[in]  LEMP   Electromagnetic potential flag
   !! \param[out] PHASE_SHIFT  Structure with phase shifts and mixing angles
   !! \param[in]  PRINT_COEFFICIENTS (optional) Print wave function coefficients
-  !! \param[in]  PRINT_INFORMATIONS (optional) Print detailed calculation info
+  !! \param[in]  LOG_LEVEL (optional) Logging level for output messages
   !! \param[in]  RESET  Reset the variational calculation (optional)
   !! \note This routine allocates and deallocates several arrays, so it should be called with care.
   !> \note If RESET is set to .TRUE., all allocated arrays are deallocated and the calculation is reset.
   SUBROUTINE NN_SCATTERING_VARIATIONAL(E, J, L, S, TZ, IPOT, ILB, LEMP, PHASE_SHIFT, &
-   PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET)
+   PRINT_COEFFICIENTS, LOG_LEVEL, RESET)
     USE ANGLES
+    USE STRINGS_UTILS
     IMPLICIT NONE
     ! INPUT PARAMETERS
     DOUBLE PRECISION, INTENT(IN) :: E
     INTEGER, INTENT(IN) :: J, L, S, TZ, IPOT, ILB, LEMP
     TYPE(PHASE_SHIFT_RESULT), INTENT(OUT) :: PHASE_SHIFT
-    LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, PRINT_INFORMATIONS, RESET
+    LOGICAL, INTENT(IN), OPTIONAL :: PRINT_COEFFICIENTS, RESET
+    INTEGER, OPTIONAL, INTENT(IN) :: LOG_LEVEL
 
     LOGICAL :: PRINT_C, FIRST_CALL = .TRUE., CALL_TO_IS_FIRST_CALL
     ! VARIABLES AND PARAMETERS FOR DGESV
@@ -461,7 +468,10 @@ CONTAINS
     INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
 
     IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
-      WRITE(4,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      BLOCK 
+        USE STRINGS_UTILS
+        CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL: Invalid quantum numbers L="//TO_STRING(L)//", S="//TO_STRING(S)//", J="//TO_STRING(J))
+      END BLOCK
       STOP
     ENDIF
 
@@ -506,7 +516,7 @@ CONTAINS
         STOP
       ENDIF
       IF (ENERGIES_SET) THEN
-        CALL LOGGER%LOG_INFO("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels")
+        CALL LOGGER%LOG_DEBUG("SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels")
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
         CALL PREPARE_POTENTIAL(CHANNELS_)
         POTENTIAL_SET = .TRUE.
@@ -523,10 +533,8 @@ CONTAINS
       PRINT_C = .FALSE.
     ENDIF
 
-    IF (PRESENT(PRINT_INFORMATIONS)) THEN
-      PRINT_I = PRINT_INFORMATIONS
-    ELSE
-      PRINT_I = .FALSE.
+    IF (PRESENT(LOG_LEVEL)) THEN
+      CALL LOGGER%SET_LOG_MAX_LEVEL(LOG_LEVEL)
     ENDIF
 
 
@@ -576,23 +584,23 @@ CONTAINS
       STOP
     ENDIF
 
-    IF (PRINT_I) CALL PRINT_INFO()
+    IF (LOGGER%LEVEL_LOGS() > 1) CALL PRINT_INFO()
     IF (PREPARE) THEN
       CALL PREPARE_CORE_CORE_MATRIX_ELEMENTS
-      IF (PRINT_I) CALL PRINT_DIVIDER
+      CALL PRINT_DIVIDER
       CALL PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS
     ENDIF
 
-    IF (PRINT_I) CALL PRINT_DIVIDER
+    CALL PRINT_DIVIDER
 
     IE = FIND_ENERGY_INDEX(E)
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      CALL LOGGER%LOG_INFO("Combining the CC potential")
+      CALL LOGGER%LOG_DEBUG("Combining the CC potential")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
-      CALL LOGGER%LOG_INFO("Combining the AC potential (real part)")
+      CALL LOGGER%LOG_DEBUG("Combining the AC potential (real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
-      CALL LOGGER%LOG_INFO("Combining the AC potential (imaginary part)")
+      CALL LOGGER%LOG_DEBUG("Combining the AC potential (imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
       VM_CC = VM_CC / HTM
       VM_AC_R = VM_AC_R / HTM
@@ -607,7 +615,7 @@ CONTAINS
     CAR = H_MINUS_E_AC_R(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
     CAI = H_MINUS_E_AC_I(CH_INDEX, IE, 1:NNN, 1:NCH)  ! H - E
 
-    IF (PRINT_I) CALL PRINT_DIVIDER
+    CALL PRINT_DIVIDER
 
     DO IAK=1, NCH
     ! Preparing the matrix elements for the diagonalization
@@ -620,22 +628,21 @@ CONTAINS
     ! Evaluating for the "c_{n, alpha}" coefficients
       CALL DGESV(NNN, 1, CC , NNN, IPIV, CARR, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-      IF (PRINT_I) THEN
-        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: DGESV failed for CC")
+      IF (INFO /= 0) THEN
+        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: DGESV failed for C")
         CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: INFO: ", INFO)
       ENDIF
+      
       CALL DGESV(NNN, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
-      IF (PRINT_I) THEN
-        CALL LOGGER%LOG_WARNING("NN_SCATTERING_VARIATIONAL: INFO: ", INFO)
-      ENDIF
+      CALL LOGGER%LOG_INFO("NN_SCATTERING_VARIATIONAL: INFO: ", INFO)
 
       XRCOEFF(IAK,:) = CARR
       XICOEFF(IAK,:) = CAII
     ENDDO
 
     ! Calculating R coefficients
-    IF (PRINT_I) WRITE(6,*) NCH, NNN
+    CALL LOGGER%LOG_INFO(TO_STRING(NCH)//"     "//TO_STRING(NNN))
 
     ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
     CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
@@ -644,26 +651,26 @@ CONTAINS
     CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XRCOEFF, SIZE(XRCOEFF,1), CAR, SIZE(CAR,1), 0.0D0, BD4, SIZE(BD4,1))
 
     IF (PREPARE) THEN
-      IF (PRINT_I) CALL PRINT_DIVIDER
+      CALL PRINT_DIVIDER
       CALL PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS
-      IF (PRINT_I) CALL PRINT_DIVIDER
+      CALL PRINT_DIVIDER
       PREPARE = .FALSE.
     ENDIF
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real part)")
+      CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real-imaginary part)")
+      CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (real-imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary-real part)")
+      CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary-real part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary part)")
+      CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL: Combining the AA potential (imaginary part)")
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
       VM_AA_RR = VM_AA_RR / HTM
       VM_AA_RI = VM_AA_RI / HTM
       VM_AA_IR = VM_AA_IR / HTM
       VM_AA_II = VM_AA_II / HTM
-      CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL: Finished combining potentials")
+      CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL: Finished combining potentials")
       H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
       H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
       H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
@@ -677,16 +684,24 @@ CONTAINS
     AIR = H_MINUS_E_AA_IR(CH_INDEX, IE, :, :)
     AII = H_MINUS_E_AA_II(CH_INDEX, IE, :, :)
 
-    IF (PRINT_I) THEN
-      CALL PRINT_DIVIDER
-      WRITE(6,*)'A-A MATRIX J = ', J, ' L = ', L, ' S = ', S, ' T = ', VAR_P%T, ' TZ = ', VAR_P%TZ, ' IPOT = ', IPOT , ' RANGE = ', VAR_P%RANGE
-      DO IAB=1,NCH
-      DO IAK=1,NCH
-      WRITE(6,'(2I3,4D20.7)') IAB,IAK,ARR(IAB,IAK), ARI(IAB,IAK), AIR(IAB,IAK), AII(IAB,IAK)
-      WRITE(6,*)"1=",ARI(IAB,IAK)-AIR(IAB,IAK)
-      END DO
-      END DO
-      CALL PRINT_DIVIDER
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      BLOCK
+        CHARACTER(LEN=1024) :: MESSAGE
+        CALL PRINT_DIVIDER
+        MESSAGE = 'A-A MATRIX J = '//TO_STRING(J)//' L = '//TO_STRING(L)//' S = '//TO_STRING(S)// &
+         ' T = '//TO_STRING(VAR_P%T)//' TZ = '//TO_STRING(VAR_P%TZ)//' IPOT = '//TO_STRING(IPOT)// &
+         ' RANGE = '//TO_STRING(VAR_P%RANGE)
+        CALL LOGGER%LOG_DEBUG(MESSAGE)
+        DO IAB=1,NCH
+        DO IAK=1,NCH
+          WRITE(MESSAGE,'(X,2I3,4D20.7)') IAB,IAK,ARR(IAB,IAK), ARI(IAB,IAK), AIR(IAB,IAK), AII(IAB,IAK)
+          CALL LOGGER%LOG_INFO(MESSAGE)
+          WRITE(MESSAGE,*)"1=",ARI(IAB,IAK)-AIR(IAB,IAK)
+          CALL LOGGER%LOG_INFO(MESSAGE)
+        END DO
+        END DO
+        CALL PRINT_DIVIDER
+      END BLOCK
     ENDIF
 
     AM = 0.D0
@@ -699,34 +714,39 @@ CONTAINS
 
     AMM = AM
     RMAT =-AN
-    IF (PRINT_I) THEN
-      CALL PRINT_DIVIDER
-      WRITE(6,*) "AMM = ", AMM
-      WRITE(6,*) "RMAT = ", RMAT
-      CALL PRINT_DIVIDER
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      BLOCK
+        CHARACTER(LEN=1024) :: MESSAGE
+        CALL PRINT_DIVIDER(2)
+        WRITE(MESSAGE,*) "AMM = ", TO_STRING(AMM)
+        CALL LOGGER%LOG_INFO(MESSAGE)
+        WRITE(MESSAGE,*) "RMAT = ", TO_STRING(RMAT)
+        CALL LOGGER%LOG_INFO(MESSAGE)
+        CALL PRINT_DIVIDER(2)
+      END BLOCK
     ENDIF
 
 
     ! Evaluating the "R_{alpha, beta}" matrix elements
     CALL DGESV(NCH, NCH, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
     CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
-    IF (PRINT_I)  WRITE(6,*) "INFO: ", INFO
+    CALL LOGGER%LOG_INFO("INFO: "//TO_STRING(INFO))
 
-    IF (PRINT_I) THEN
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
       DO IAB = 1, NCH
       DO IAK = 1, NCH
-        WRITE(6,*)"COEFF R",RMAT(IAB,IAK)
+        CALL LOGGER%LOG_INFO("COEFF R"//TO_STRING(RMAT(IAB,IAK)))
       ENDDO
       ENDDO
     ENDIF
 
     ! Evaluating the "R_{alpha, beta}" matrix elements to the second order
     CALL R_SECOND_ORDER()
-    IF (PRINT_I) THEN
-      WRITE(6,*)
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      CALL LOGGER%LOG_INFO("COEFF RMAT2 NORMALIZZATO")
       DO IAB = 1, NCH
       DO IAK = 1, NCH
-        WRITE(6,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
+        CALL LOGGER%LOG_INFO("COEFF RMAT2 NORMALIZZATO"//TO_STRING(-RMAT2(IAB,IAK)))
       ENDDO
       ENDDO
     ENDIF
@@ -749,43 +769,44 @@ CONTAINS
     PHASE_SHIFT%delta1_BB  = RAD_TO_DEG(PS%DELTA1)
     PHASE_SHIFT%delta2_BB  = RAD_TO_DEG(PS%DELTA2)
     PHASE_SHIFT%epsilon_BB = RAD_TO_DEG(PS%MIXING)
-    
-    IF (PRINT_I) THEN
-      WRITE(6,*)
-      WRITE(6,*)"BLATT-BIEDENHARN"
-      WRITE(6,*)"MIXING ANGLE=", PHASE_SHIFT%epsilon_BB
-      WRITE(6,*)"DELTA_1     =", PHASE_SHIFT%delta1_BB
-      WRITE(6,*)"DELTA_2     =", PHASE_SHIFT%delta2_BB
+
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      CALL LOGGER%LOG_INFO("BLATT-BIEDENHARN")
+      CALL LOGGER%LOG_INFO("MIXING ANGLE="//TRIM(TO_STRING(PHASE_SHIFT%epsilon_BB)))
+      CALL LOGGER%LOG_INFO("DELTA_1     ="//TRIM(TO_STRING(PHASE_SHIFT%delta1_BB)))
+      CALL LOGGER%LOG_INFO("DELTA_2     ="//TRIM(TO_STRING(PHASE_SHIFT%delta2_BB)))
     ENDIF
 
     ! Calculating the S-matrix
     CALL CALCULATE_S_MATRIX_FROM_BLATT(PS, NCH, SMAT)
     PHASE_SHIFT%S(:NCH, :NCH) = SMAT
 
-    IF (PRINT_I) THEN
-      WRITE(6,*)
-      WRITE(6,*) "S-MATRIX"
-      WRITE(6,*) "S(1,1)=" , SMAT(1,1)
-      WRITE(6,*) "S(1,2)=" , SMAT(1,2)
-      WRITE(6,*) "S(2,2)=" , SMAT(2,2)
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      CALL LOGGER%LOG_INFO("S-MATRIX")
+      CALL LOGGER%LOG_INFO("S(1,1)="//TRIM(TO_STRING(SMAT(1,1))))
+      CALL LOGGER%LOG_INFO("S(1,2)="//TRIM(TO_STRING(SMAT(1,2))))
+      CALL LOGGER%LOG_INFO("S(2,2)="//TRIM(TO_STRING(SMAT(2,2))))
     ENDIF
 
     ! Calculating the phase shifts and mixing angles in the Stapp convention
     PS = CALCULATE_PHASE_SHIFTS_STAPP_DEG(RMAT2, SMAT, NCH)
 
-    IF (PRINT_I) THEN
-      WRITE(6,*)
-      WRITE(6,*)"STAPP"
-      WRITE(6,*) "MIXING ANGLE=", PS%MIXING
-      WRITE(6,*) "DELTA_1     =", PS%DELTA1
-      WRITE(6,*) "DELTA_2     =", PS%DELTA2
+    IF (LOGGER%LEVEL_LOGS() > 1) THEN
+      CALL LOGGER%LOG_INFO("STAPP")
+      CALL LOGGER%LOG_INFO("MIXING ANGLE="//TRIM(TO_STRING(PS%MIXING)))
+      CALL LOGGER%LOG_INFO("DELTA_1     ="//TRIM(TO_STRING(PS%DELTA1)))
+      CALL LOGGER%LOG_INFO("DELTA_2     ="//TRIM(TO_STRING(PS%DELTA2)))
     ENDIF
 
     PHASE_SHIFT%delta1_S  = PS%DELTA1
     PHASE_SHIFT%delta2_S  = PS%DELTA2
     PHASE_SHIFT%epsilon_S = PS%MIXING
 
-    IF (PRINT_I) WRITE(6,*) PHASE_SHIFT%delta1_S, PHASE_SHIFT%delta2_S, PHASE_SHIFT%epsilon_S
+    BLOCK 
+      CHARACTER(LEN=256) :: MESSAGE
+      WRITE(MESSAGE,*) PHASE_SHIFT%delta1_S, PHASE_SHIFT%delta2_S, PHASE_SHIFT%epsilon_S
+      CALL LOGGER%LOG_INFO(MESSAGE)
+    END BLOCK
 
     RETURN
   
@@ -794,7 +815,7 @@ CONTAINS
     SUBROUTINE HANDLE_INFO_ERROR()
       IMPLICIT NONE
       IF (INFO/=0) THEN
-        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Error in LAPACK dgesv: INFO = ", INFO
+        CALL LOGGER%LOG_ERR("::NN_SCATTERING_VARIATIONAL: Error in LAPACK dgesv: INFO = ", INFO)
         STOP
       ENDIF
     END SUBROUTINE HANDLE_INFO_ERROR
@@ -944,7 +965,7 @@ CONTAINS
       CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, RD3, SIZE(RD3,1), RMAT, SIZE(RMAT,1), 0.0D0, CD8, SIZE(CD8,1))
 
       ! Print a blank line before R-matrix output if debug printing is enabled
-      IF (PRINT_I) WRITE(6,*)
+      CALL LOGGER%LOG_INFO(" ")
 
       ! Combine all matrix products to form the second-order correction to the R-matrix
       DO IAB=1,NCH
@@ -959,7 +980,11 @@ CONTAINS
           RMAT2_ASYM(IAB,IAK) = RMAT(IAB,IAK) + ASS(IAB,IAK)
           
           ! Print R-matrix components if debug mode is enabled
-          IF (PRINT_I) WRITE(6,*)"COEFF RMAT2",RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
+          BLOCK 
+            CHARACTER(LEN=516) MESSAGE
+            WRITE(MESSAGE,*) "COEFF RMAT2", RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
+            CALL LOGGER%LOG_INFO(MESSAGE)
+          END BLOCK
         ENDDO
       ENDDO
 
@@ -1043,7 +1068,7 @@ CONTAINS
     INTEGER :: SL, SR, TL, TR, T, S
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.LAGUERRE_SET) THEN
-      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
+      CALL LOGGER%LOG_ERR("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set")
       STOP
     ENDIF
     
@@ -1069,11 +1094,11 @@ CONTAINS
       ENCC(:,I,I) = ENERGIES_
     ENDDO
 
-    CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS)
+    CALL LOGGER%LOG_DEBUG("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements")
     ELSE
-      CALL LOGGER%LOG_INFO("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements")
     ENDIF
     
     DO ICH = 1, NCHANNELS
@@ -1194,11 +1219,11 @@ CONTAINS
       STOP
     ENDIF
 
-    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS)
+    CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements")
     ELSE
-      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements")
     ENDIF
 
     ! Allocate output arrays
@@ -1249,7 +1274,7 @@ CONTAINS
     !$OMP END MASTER
     !$OMP END PARALLEL
 
-    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Computing matrix elements using: "//TRIM(TO_STRING(NUM_THREADS))//" threads")
+    CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Computing matrix elements using: "//TRIM(TO_STRING(NUM_THREADS))//" threads")
 
     ! Compute kinetic energy matrix elements and potential terms - this is the computationally intensive part
     !$OMP PARALLEL DO COLLAPSE(3) PRIVATE(IE, IL, LL, LIK, INTEGRAND, S, T, IPOT) &
@@ -1523,11 +1548,11 @@ CONTAINS
     CALL REALLOCATE(INTEGRAND, NX+1)
 
 
-    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS)
+    CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS)
     IF (USE_DYNAMIC) THEN
-      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements")
     ELSE
-      CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements")
+      CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements")
     ENDIF
 
     ! MATRIX ELEMENTS DEPENDING ONLY ON (LL, LR)
@@ -1678,10 +1703,25 @@ CONTAINS
   END FUNCTION ORDER_TO_NMAX
 
   !> \brief Print a divider line to the output.
-  SUBROUTINE PRINT_DIVIDER()
+  SUBROUTINE PRINT_DIVIDER(LEVEL)
     USE LOG, ONLY: COLOR_RESET
     IMPLICIT NONE
-      CALL LOGGER%LOG_MESSAGE("=====================================================================================",3,COLOR_RESET)
+    INTEGER, OPTIONAL, INTENT(IN) :: LEVEL
+    INTEGER :: LEVEL_
+    IF (.NOT. PRESENT(LEVEL)) LEVEL_ = 2
+    
+    SELECT CASE (LEVEL_)
+      CASE (0)
+        CALL LOGGER%LOG_ERR    ("=====================================================================================")
+      CASE (1)
+        CALL LOGGER%LOG_WARNING("=====================================================================================")
+      CASE (2)
+        CALL LOGGER%LOG_INFO   ("=====================================================================================")
+      CASE (3)
+        CALL LOGGER%LOG_DEBUG  ("=====================================================================================")
+      CASE DEFAULT
+        STOP
+    END SELECT
   END SUBROUTINE PRINT_DIVIDER
 
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
@@ -1790,7 +1830,7 @@ CONTAINS
 
     IF (BESSELS_SET) RETURN
 
-    CALL LOGGER%LOG_INFO('::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions')
+    CALL LOGGER%LOG_DEBUG('::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions')
 
     KK = DSQRT(ENERGIES_/HTM)
     K2 = KK**2
@@ -1858,7 +1898,7 @@ CONTAINS
     ENDDO
     BESSELS_SET = .TRUE.
 
-    CALL LOGGER%LOG_INFO("::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared")
+    CALL LOGGER%LOG_DEBUG("::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared")
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
   !> \brief Find the index of a given energy in the ENERGIES array.
@@ -2135,7 +2175,6 @@ CONTAINS
     ! Reset logical flags
     USE_DYNAMIC     = .FALSE.
     HTM_SET         = .FALSE.
-    PRINT_I         = .FALSE.
     GRID_SET        = .FALSE.
     POTENTIAL_SET   = .FALSE.
     IPOT_SET        = .FALSE.
@@ -2176,7 +2215,7 @@ CONTAINS
     IF (ALLOCATED(EFT_RADIAL_AA%FR_I)) DEALLOCATE(EFT_RADIAL_AA%FR_I)
     LECS = LECS_EFT_PLESS()
 
-    CALL NN_SCATTERING_VARIATIONAL(0.D0, 0, 0, 0, 0, 0, 0, 0, PSR, .FALSE., .FALSE., .TRUE.)
+    CALL NN_SCATTERING_VARIATIONAL(0.D0, 0, 0, 0, 0, 0, 0, 0, PSR, PRINT_COEFFICIENTS = .FALSE., LOG_LEVEL = 1, RESET = .TRUE.)
     TMP = IS_FIRST_CALL(0,0,0,0,0,0,0,.TRUE.)
   END SUBROUTINE RESET_SCATTERING_NN_VARIATIONAL
 
@@ -2225,7 +2264,6 @@ CONTAINS
     WRITE(unit,*) 'HTM =', HTM
     WRITE(unit,*) 'M =', M
     WRITE(unit,*) 'HTM_SET =', HTM_SET
-    WRITE(unit,*) 'PRINT_I =', PRINT_I
     WRITE(unit,*) 'LMAX =', LMAX
     WRITE(unit,*) 'TZ_SET =', TZ_SET
     WRITE(unit,*) 'LMAX_SET =', LMAX_SET
@@ -2444,7 +2482,7 @@ CONTAINS
       ENDIF
     ELSE
       IF (IPOT /= 19) THEN
-        CALL LOGGER%LOG_INFO("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT)
+        CALL LOGGER%LOG_DEBUG("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT)
       ELSE
         CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15")
         ILB_ = 15
