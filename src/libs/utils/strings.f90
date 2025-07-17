@@ -237,6 +237,7 @@ contains
     integer, intent(in) :: num
     character(len=20) :: str
     write(str, *) num  ! Convert integer to string
+    str=adjustl(trim(str))
   end function to_string_int
 
   !> @brief Converts a double precision number to a string.
@@ -247,8 +248,9 @@ contains
   !> @return The string representation of the double precision number.
   function to_string_double(num) result(str)
     double precision, intent(in) :: num
-    character(len=64) :: str
+    character(len=32) :: str
     write(str, *) num  ! Convert double precision to string
+    str=adjustl(trim(str))
   end function to_string_double 
 
 
@@ -256,22 +258,24 @@ contains
     complex, intent(in) :: num
     character(len=256) :: str
     write(str, *) num  ! Convert complex to string
+    str=adjustl(trim(str))
   end function to_string_complex
 
 
   function to_string_array_double(arr) result(str)
     double precision, intent(in), allocatable :: arr(:)
-    character(len=64), allocatable :: str(:)
+    character(len=32), allocatable :: str(:)
     integer :: i
     allocate(str(size(arr)))
     do i = 1, size(arr)
       write(str(i), *) trim(to_string_double(arr(i)))  ! Convert each element to string
+      str(i)=adjustl(trim(str(i)))
     end do
   end function to_string_array_double
 
   function to_string_array_int(arr) result(str)
     integer, intent(in), allocatable :: arr(:)
-    character(len=64), allocatable :: str(:)
+    character(len=32), allocatable :: str(:)
     integer :: i
     allocate(str(size(arr)))
     do i = 1, size(arr)
@@ -281,7 +285,7 @@ contains
 
   function to_string_array_2d(arr) result(str)
     double precision, intent(in), allocatable :: arr(:,:)
-    character(len=64), allocatable :: str(:,:)
+    character(len=32), allocatable :: str(:,:)
     integer :: i, j
     allocate(str(size(arr, 1), size(arr, 2)))
     do i = 1, size(arr, 1)
