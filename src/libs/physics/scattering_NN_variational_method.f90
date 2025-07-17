@@ -236,7 +236,7 @@ CONTAINS
     DOUBLE PRECISION, OPTIONAL, INTENT(IN) :: HR1, H, RANGE, GAMMA, EPS, AF
 
     IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
       STOP
     ENDIF
     
@@ -250,7 +250,7 @@ CONTAINS
     ENDIF
     VAR_P%TZ    = TZ
     IF (ABS(TZ)>VAR_P%T) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Error: |Tz| > T!"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::SET_VARIATIONAL_PARAMETERS: Error: |Tz| > T!"
       STOP
     ENDIF
     VAR_P%IPOT  = IPOT
@@ -370,19 +370,19 @@ CONTAINS
     VAR_P%K = DSQRT(2*E*MR) / HC
 
     IF (PRINT_I) THEN
-      WRITE(*,5)
-      WRITE(*,15) "L", "S", "T", "TZ", "J"
-      WRITE(*,5)
+      WRITE(6,5)
+      WRITE(6,15) "L", "S", "T", "TZ", "J"
+      WRITE(6,5)
     ENDIF
     LC(1) = L
     NCH = 1
-    IF (PRINT_I) WRITE(*,20) LC(1), S, VAR_P%T, VAR_P%TZ, J
+    IF (PRINT_I) WRITE(6,20) LC(1), S, VAR_P%T, VAR_P%TZ, J
     IF (J-L==1) THEN
       LC(2) = L + 2
-      IF (PRINT_I) WRITE(*,20) LC(2), S, VAR_P%T, VAR_P%TZ, J
+      IF (PRINT_I) WRITE(6,20) LC(2), S, VAR_P%T, VAR_P%TZ, J
       NCH = 2
     ENDIF
-    IF (PRINT_I) WRITE(*,5)
+    IF (PRINT_I) WRITE(6,5)
     
 
   5 FORMAT(30("-"))
@@ -447,7 +447,7 @@ CONTAINS
     INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
 
     IF(.NOT.IS_LSJ_PHYSICAL(L, S, J)) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
+      WRITE(4,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Invalid quantum numbers L=", L, ", S=", S, ", J=", J
       STOP
     ENDIF
 
@@ -488,16 +488,16 @@ CONTAINS
     FIRST_CALL = FIRST_CALL .OR. CALL_TO_IS_FIRST_CALL
     IF (.NOT.POTENTIAL_SET) THEN
       IF (.NOT.CHANNELS_SET) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and channels not set!"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and channels not set!"
         STOP
       ENDIF
       IF (ENERGIES_SET) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Setting potential and variational parameters for this channels"
         CALL SET_VARIATIONAL_PARAMETERS(J, L, S, TZ, IPOT, ILB=ILB, LEMP=LEMP)
         CALL PREPARE_POTENTIAL(CHANNELS_)
         POTENTIAL_SET = .TRUE.
       ELSE
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and energies not set!"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Potential not set and energies not set!"
         STOP
       ENDIF
     ENDIF
@@ -557,7 +557,7 @@ CONTAINS
     ENDIF
 
     IF (.NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Grid not ready or Bessels not ready"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Grid not ready or Bessels not ready"
       STOP
     ENDIF
 
@@ -573,11 +573,11 @@ CONTAINS
     IE = FIND_ENERGY_INDEX(E)
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      ! WRITE(*,*) "Combining the CC potential"
+      ! WRITE(6,*) "Combining the CC potential"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_CC,    LECS, VM_CC    )
-      ! WRITE(*,*) "Combining the AC potential (real part)"
+      ! WRITE(6,*) "Combining the AC potential (real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_R,  LECS, VM_AC_R  )
-      ! WRITE(*,*) "Combining the AC potential (imaginary part)"
+      ! WRITE(6,*) "Combining the AC potential (imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AC_I,  LECS, VM_AC_I  )
       VM_CC = VM_CC / HTM
       VM_AC_R = VM_AC_R / HTM
@@ -605,17 +605,17 @@ CONTAINS
     ! Evaluating for the "c_{n, alpha}" coefficients
       CALL DGESV(NNN, 1, CC , NNN, IPIV, CARR, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the first DGESV call
-      IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
+      IF (PRINT_I) WRITE(6,*) "INFO: ", INFO
       CALL DGESV(NNN, 1, CCC, NNN, IPIV, CAII, NNN, INFO)
       CALL HANDLE_INFO_ERROR()  ! Handle the error after the second DGESV call
-      IF (PRINT_I) WRITE(*,*) "INFO: ", INFO
+      IF (PRINT_I) WRITE(6,*) "INFO: ", INFO
 
       XRCOEFF(IAK,:) = CARR
       XICOEFF(IAK,:) = CAII
     ENDDO
 
     ! Calculating R coefficients
-    IF (PRINT_I) WRITE(*,*) NCH, NNN
+    IF (PRINT_I) WRITE(6,*) NCH, NNN
 
     ! This performs matrix multiplication using DGEMM -> BD# = 1.d0*(X#COEFF * CA#) + 0.d0*BD#
     CALL DGEMM('N', 'N', NCH, NCH, NNN, 1.0D0, XICOEFF, SIZE(XICOEFF,1), CAI, SIZE(CAI,1), 0.0D0, BD1, SIZE(BD1,1))
@@ -631,19 +631,19 @@ CONTAINS
     ENDIF
 
     IF (USE_DYNAMIC .AND. NEW_LECS) THEN
-      ! WRITE(*,*) "Combining the AA potential (real part)"
+      ! WRITE(6,*) "Combining the AA potential (real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RR, LECS, VM_AA_RR )
-      ! WRITE(*,*) "Combining the AA potential (real-imaginary part)"
+      ! WRITE(6,*) "Combining the AA potential (real-imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_RI, LECS, VM_AA_RI )
-      ! WRITE(*,*) "Combining the AA potential (imaginary-real part)"
+      ! WRITE(6,*) "Combining the AA potential (imaginary-real part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_IR, LECS, VM_AA_IR )
-      ! WRITE(*,*) "Combining the AA potential (imaginary part)"
+      ! WRITE(6,*) "Combining the AA potential (imaginary part)"
       CALL COMBINE_POTENTIAL( CHANNELS_, FMAT_AA_II, LECS, VM_AA_II )
       VM_AA_RR = VM_AA_RR / HTM
       VM_AA_RI = VM_AA_RI / HTM
       VM_AA_IR = VM_AA_IR / HTM
       VM_AA_II = VM_AA_II / HTM
-      ! WRITE(*,*) "Finished combining potentials"    
+      ! WRITE(6,*) "Finished combining potentials"    
       H_MINUS_E_AA_RR = K_MINUS_E_AA_RR + VM_AA_RR
       H_MINUS_E_AA_RI = K_MINUS_E_AA_RI + VM_AA_RI
       H_MINUS_E_AA_IR = K_MINUS_E_AA_IR + VM_AA_IR
@@ -659,11 +659,11 @@ CONTAINS
 
     IF (PRINT_I) THEN
       CALL PRINT_DIVIDER
-      WRITE(*,*)'A-A MATRIX J = ', J, ' L = ', L, ' S = ', S, ' T = ', VAR_P%T, ' TZ = ', VAR_P%TZ, ' IPOT = ', IPOT , ' RANGE = ', VAR_P%RANGE
+      WRITE(6,*)'A-A MATRIX J = ', J, ' L = ', L, ' S = ', S, ' T = ', VAR_P%T, ' TZ = ', VAR_P%TZ, ' IPOT = ', IPOT , ' RANGE = ', VAR_P%RANGE
       DO IAB=1,NCH
       DO IAK=1,NCH
       WRITE(6,'(2I3,4D20.7)') IAB,IAK,ARR(IAB,IAK), ARI(IAB,IAK), AIR(IAB,IAK), AII(IAB,IAK)
-      WRITE(*,*)"1=",ARI(IAB,IAK)-AIR(IAB,IAK)
+      WRITE(6,*)"1=",ARI(IAB,IAK)-AIR(IAB,IAK)
       END DO
       END DO
       CALL PRINT_DIVIDER
@@ -681,8 +681,8 @@ CONTAINS
     RMAT =-AN
     IF (PRINT_I) THEN
       CALL PRINT_DIVIDER
-      WRITE(*,*) "AMM = ", AMM
-      WRITE(*,*) "RMAT = ", RMAT
+      WRITE(6,*) "AMM = ", AMM
+      WRITE(6,*) "RMAT = ", RMAT
       CALL PRINT_DIVIDER
     ENDIF
 
@@ -690,12 +690,12 @@ CONTAINS
     ! Evaluating the "R_{alpha, beta}" matrix elements
     CALL DGESV(NCH, NCH, AMM, NCH_MAX, IPIV, RMAT, NCH_MAX, INFO)
     CALL HANDLE_INFO_ERROR()  ! Handle the error after the third DGESV call
-    IF (PRINT_I)  WRITE(*,*) "INFO: ", INFO
+    IF (PRINT_I)  WRITE(6,*) "INFO: ", INFO
 
     IF (PRINT_I) THEN
       DO IAB = 1, NCH
       DO IAK = 1, NCH
-        WRITE(*,*)"COEFF R",RMAT(IAB,IAK)
+        WRITE(6,*)"COEFF R",RMAT(IAB,IAK)
       ENDDO
       ENDDO
     ENDIF
@@ -703,10 +703,10 @@ CONTAINS
     ! Evaluating the "R_{alpha, beta}" matrix elements to the second order
     CALL R_SECOND_ORDER()
     IF (PRINT_I) THEN
-      WRITE(*,*)
+      WRITE(6,*)
       DO IAB = 1, NCH
       DO IAK = 1, NCH
-        WRITE(*,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
+        WRITE(6,*)"COEFF RMAT2 NORMALIZZATO", -RMAT2(IAB,IAK)
       ENDDO
       ENDDO
     ENDIF
@@ -731,11 +731,11 @@ CONTAINS
     PHASE_SHIFT%epsilon_BB = RAD_TO_DEG(PS%MIXING)
     
     IF (PRINT_I) THEN
-      WRITE(*,*)
-      WRITE(*,*)"BLATT-BIEDENHARN"
-      WRITE(*,*)"MIXING ANGLE=", PHASE_SHIFT%epsilon_BB
-      WRITE(*,*)"DELTA_1     =", PHASE_SHIFT%delta1_BB
-      WRITE(*,*)"DELTA_2     =", PHASE_SHIFT%delta2_BB
+      WRITE(6,*)
+      WRITE(6,*)"BLATT-BIEDENHARN"
+      WRITE(6,*)"MIXING ANGLE=", PHASE_SHIFT%epsilon_BB
+      WRITE(6,*)"DELTA_1     =", PHASE_SHIFT%delta1_BB
+      WRITE(6,*)"DELTA_2     =", PHASE_SHIFT%delta2_BB
     ENDIF
 
     ! Calculating the S-matrix
@@ -743,29 +743,29 @@ CONTAINS
     PHASE_SHIFT%S(:NCH, :NCH) = SMAT
 
     IF (PRINT_I) THEN
-      WRITE(*,*)
-      WRITE(*,*) "S-MATRIX"
-      WRITE(*,*) "S(1,1)=" , SMAT(1,1)
-      WRITE(*,*) "S(1,2)=" , SMAT(1,2)
-      WRITE(*,*) "S(2,2)=" , SMAT(2,2)
+      WRITE(6,*)
+      WRITE(6,*) "S-MATRIX"
+      WRITE(6,*) "S(1,1)=" , SMAT(1,1)
+      WRITE(6,*) "S(1,2)=" , SMAT(1,2)
+      WRITE(6,*) "S(2,2)=" , SMAT(2,2)
     ENDIF
 
     ! Calculating the phase shifts and mixing angles in the Stapp convention
     PS = CALCULATE_PHASE_SHIFTS_STAPP_DEG(RMAT2, SMAT, NCH)
 
     IF (PRINT_I) THEN
-      WRITE(*,*)
-      WRITE(*,*)"STAPP"
-      WRITE(*,*) "MIXING ANGLE=", PS%MIXING
-      WRITE(*,*) "DELTA_1     =", PS%DELTA1
-      WRITE(*,*) "DELTA_2     =", PS%DELTA2
+      WRITE(6,*)
+      WRITE(6,*)"STAPP"
+      WRITE(6,*) "MIXING ANGLE=", PS%MIXING
+      WRITE(6,*) "DELTA_1     =", PS%DELTA1
+      WRITE(6,*) "DELTA_2     =", PS%DELTA2
     ENDIF
 
     PHASE_SHIFT%delta1_S  = PS%DELTA1
     PHASE_SHIFT%delta2_S  = PS%DELTA2
     PHASE_SHIFT%epsilon_S = PS%MIXING
 
-    IF (PRINT_I) WRITE(*,*) PHASE_SHIFT%delta1_S, PHASE_SHIFT%delta2_S, PHASE_SHIFT%epsilon_S
+    IF (PRINT_I) WRITE(6,*) PHASE_SHIFT%delta1_S, PHASE_SHIFT%delta2_S, PHASE_SHIFT%epsilon_S
 
     RETURN
   
@@ -774,7 +774,7 @@ CONTAINS
     SUBROUTINE HANDLE_INFO_ERROR()
       IMPLICIT NONE
       IF (INFO/=0) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Error in LAPACK dgesv: INFO = ", INFO
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL: Error in LAPACK dgesv: INFO = ", INFO
         STOP
       ENDIF
     END SUBROUTINE HANDLE_INFO_ERROR
@@ -782,9 +782,9 @@ CONTAINS
     !> \brief Print information about the current calculation.
     SUBROUTINE PRINT_INFO()
       IMPLICIT NONE
-      WRITE(*,*) "E:    ",                  VAR_P%E, " MeV"
-      WRITE(*,*) "HTM:  ",                  HTM, " MeV fm^2"
-      WRITE(*,*) "k:    ",                  VAR_P%K, " fm^-1"
+      WRITE(6,*) "E:    ",                  VAR_P%E, " MeV"
+      WRITE(6,*) "HTM:  ",                  HTM, " MeV fm^2"
+      WRITE(6,*) "k:    ",                  VAR_P%K, " fm^-1"
       WRITE(10,*) "J:     ",                VAR_P%J
       WRITE(10,*) "NCH:   ",                NCH
       WRITE(10,*) "L0:    ",                LC(1)
@@ -924,7 +924,7 @@ CONTAINS
       CALL DGEMM('N', 'N', NCH, NCH, NCH, 1.0D0, RD3, SIZE(RD3,1), RMAT, SIZE(RMAT,1), 0.0D0, CD8, SIZE(CD8,1))
 
       ! Print a blank line before R-matrix output if debug printing is enabled
-      IF (PRINT_I) WRITE(*,*)
+      IF (PRINT_I) WRITE(6,*)
 
       ! Combine all matrix products to form the second-order correction to the R-matrix
       DO IAB=1,NCH
@@ -939,7 +939,7 @@ CONTAINS
           RMAT2_ASYM(IAB,IAK) = RMAT(IAB,IAK) + ASS(IAB,IAK)
           
           ! Print R-matrix components if debug mode is enabled
-          IF (PRINT_I) WRITE(*,*)"COEFF RMAT2",RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
+          IF (PRINT_I) WRITE(6,*)"COEFF RMAT2",RMAT2_ASYM(IAB,IAK), RMAT(IAB,IAK), ASS(IAB,IAK)
         ENDDO
       ENDDO
 
@@ -1023,7 +1023,7 @@ CONTAINS
     INTEGER :: SL, SR, TL, TR, T, S
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.LAGUERRE_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
     
@@ -1049,11 +1049,11 @@ CONTAINS
       ENCC(:,I,I) = ENERGIES_
     ENDDO
 
-    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS
+    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Preparing core-core matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using dynamic potential for core-core matrix elements"
     ELSE
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_CORE_CORE_MATRIX_ELEMENTS: Using static potential for core-core matrix elements"
     ENDIF
     
     DO ICH = 1, NCHANNELS
@@ -1169,15 +1169,15 @@ CONTAINS
 
     ! Check if prerequisites are set
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET .OR. .NOT.LAGUERRE_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Energies, grid, Bessels or Laguerre polynomials not set"
       STOP
     ENDIF
 
-    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
+    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Preparing asymptotic-core matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-core matrix elements"
     ELSE
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: Using static potential for asymptotic-core matrix elements"
     ENDIF
 
     ! Allocate output arrays
@@ -1198,7 +1198,7 @@ CONTAINS
     NX = VAR_P%NX_AC
 
     IF (VAR_P%RANGE.LT.H5 .OR. VAR_P%RANGE.GT.200.D0) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: RANGE out of bounds"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_CORE_MATRIX_ELEMENTS: RANGE out of bounds"
       STOP
     ENDIF
 
@@ -1228,7 +1228,7 @@ CONTAINS
     !$OMP END MASTER
     !$OMP END PARALLEL
     
-    WRITE(*,*) "Computing matrix elements using", NUM_THREADS, "threads"
+    WRITE(6,*) "Computing matrix elements using", NUM_THREADS, "threads"
 
     ! Compute kinetic energy matrix elements and potential terms - this is the computationally intensive part
     !$OMP PARALLEL DO COLLAPSE(3) PRIVATE(IE, IL, LL, LIK, INTEGRAND, S, T, IPOT) &
@@ -1474,7 +1474,7 @@ CONTAINS
                                      POT_AA_RI(:,:,:,:,:,:), POT_AA_II(:,:,:,:,:,:)
 
     IF (.NOT.ENERGIES_SET .OR. .NOT.GRID_SET .OR. .NOT.BESSELS_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS: Energies, grid or Bessel functions not set"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_ASYMPTOTIC_MATRIX_ELEMENTS: Energies, grid or Bessel functions not set"
       STOP
     ENDIF
 
@@ -1502,11 +1502,11 @@ CONTAINS
     CALL REALLOCATE(INTEGRAND, NX+1)
 
 
-    WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
+    WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Preparing asymptotic-asymptotic matrix elements for channels: ", NCHANNELS
     IF (USE_DYNAMIC) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using dynamic potential for asymptotic-asymptotic matrix elements"
     ELSE
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_MATRIX_ELEMENTS: Using static potential for asymptotic-asymptotic matrix elements"
     ENDIF
 
     ! MATRIX ELEMENTS DEPENDING ONLY ON (LL, LR)
@@ -1651,7 +1651,7 @@ CONTAINS
       CASE (3)
         N = 7
       CASE DEFAULT
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::ORDER_TO_NMAX: Invalid order for EFT radial function"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::ORDER_TO_NMAX: Invalid order for EFT radial function"
         STOP
     END SELECT
   END FUNCTION ORDER_TO_NMAX
@@ -1659,7 +1659,7 @@ CONTAINS
   !> \brief Print a divider line to the output.
   SUBROUTINE PRINT_DIVIDER()
     IMPLICIT NONE
-      WRITE(*,*) '====================================================================================='
+      WRITE(6,*) '====================================================================================='
   END SUBROUTINE PRINT_DIVIDER
 
   !> \brief Check if this is the first call with a given set of quantum numbers and parameters.
@@ -1753,12 +1753,12 @@ CONTAINS
     DOUBLE PRECISION :: AG, BG, XG, EPS
 
     IF (.NOT.TZ_SET .OR. .NOT.LMAX_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: TZ or LMAX not set"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: TZ or LMAX not set"
       STOP
     ENDIF
 
     IF (.NOT.ENERGIES_SET) THEN
-      WRITE(*,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: energies not set"
+      WRITE(6,*) "SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: energies not set"
       STOP
     ENDIF
     
@@ -1768,7 +1768,7 @@ CONTAINS
 
     IF (BESSELS_SET) RETURN
 
-    WRITE(*,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions'
+    WRITE(6,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: preparing Bessel functions'
 
     KK = DSQRT(ENERGIES_/HTM)
     K2 = KK**2
@@ -1836,7 +1836,7 @@ CONTAINS
     ENDDO
     BESSELS_SET = .TRUE.
 
-    WRITE(*,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared'
+    WRITE(6,*)'SCATTERING_NN_VARIATIONAL::PREPARE_ASYMPTOTIC_FUNCTIONS: Bessel functions prepared'
   END SUBROUTINE PREPARE_ASYMPTOTIC_FUNCTIONS
 
   !> \brief Find the index of a given energy in the ENERGIES array.
@@ -1856,7 +1856,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIND_ENERGY_INDEX: Energy not found in ENERGIES array"
+    WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIND_ENERGY_INDEX: Energy not found in ENERGIES array"
     STOP
   END FUNCTION FIND_ENERGY_INDEX
 
@@ -1871,7 +1871,7 @@ CONTAINS
     INTEGER :: NC, ICH
 
     IF (VAR_P%IPOT==0) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: IPOT not set"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: IPOT not set"
       RETURN
     ENDIF
 
@@ -1895,7 +1895,7 @@ CONTAINS
     ELSE
       ! FILL TO PREPARE POTENTIALS FOR DYNAMIC CASE
       IF (.NOT.LECS_SET) THEN
-        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: LECs not set"
+        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::PREPARE_POTENTIAL: LECs not set"
         STOP
       ENDIF
       CALL GET_EFT_RADIAL_FUNCTIONS(XX_CC, LECS%RC, EFT_RADIAL_CC, ORDER_POTENTIAL = LECS%ORDER)
@@ -1971,7 +1971,7 @@ CONTAINS
       IF ( CHANNEL == CHANNELS_(INDX) ) RETURN
     ENDDO
 
-    WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIND_CHANNEL_INDEX: Channel not found in CHANNELS array"
+    WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIND_CHANNEL_INDEX: Channel not found in CHANNELS array"
     STOP
   END FUNCTION FIND_CHANNEL_INDEX
 
@@ -1987,7 +1987,7 @@ CONTAINS
     DOUBLE PRECISION :: HTM_VALUE
 
     IF (.NOT.HTM_SET) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::GET_HTM: HTM not set"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::GET_HTM: HTM not set"
       STOP
     ENDIF
 
@@ -2023,7 +2023,7 @@ CONTAINS
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_NEW
     LOGICAL :: NEW_CUTOFFS
     IF (.NOT.ENERGIES_SET) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::SET_NEW_LECS: ENERGIES not set, first set them before calling SET_NEW_LECS"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::SET_NEW_LECS: ENERGIES not set, first set them before calling SET_NEW_LECS"
       STOP
     ENDIF
       IF (ANY(LECS_NEW%RC /= LECS%RC)) THEN
@@ -2187,7 +2187,7 @@ CONTAINS
     unit = 1234567
     IF (PRESENT(unit_to_open)) unit = unit_to_open
     IF (LEN(string_append) > 255) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::DUMP_MODULE_DATA: string_append is too long, must be <= 255 characters"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::DUMP_MODULE_DATA: string_append is too long, must be <= 255 characters"
       RETURN
     ENDIF
 
@@ -2388,33 +2388,33 @@ CONTAINS
     ! Set the energies and channels
     NE = SIZE(ENERGIES)
     IF (NE <= 0) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No energies provided"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No energies provided"
       STOP
     ENDIF
     CALL SET_ENERGIES(ENERGIES)
     NCHANNELS = SIZE(CHANNELS)
     IF (NCHANNELS <= 0) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No channels provided"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: No channels provided"
       STOP
     ENDIF
     CALL SET_CHANNELS(CHANNELS)
     
     IF (PRESENT(LECS_FOR_PLESS)) THEN
       IF (PRESENT(IPOT) .OR. PRESENT(ILB)) THEN
-        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Cannot set LECS and IPOT/ILB at the same time"
+        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Cannot set LECS and IPOT/ILB at the same time"
         STOP
       ENDIF
       IPOT_ = -1
       ILB_ = -1
       CALL SET_NEW_LECS(LECS_FOR_PLESS)
     ELSEIF (.NOT.PRESENT(IPOT)) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: LECS and IPOT not set, set one of them"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: LECS and IPOT not set, set one of them"
       STOP
     ELSEIF (PRESENT(ILB)) THEN
       IPOT_ = IPOT
       IF (IPOT /= 19) THEN
         IF (ILB /= 1) THEN
-          WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for this IPOT could be only 1, setting it to 1"
+          WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for this IPOT could be only 1, setting it to 1"
         ENDIF
         ILB_ = 1
       ELSE
@@ -2422,9 +2422,9 @@ CONTAINS
       ENDIF
     ELSE
       IF (IPOT /= 19) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: Setting ILB to 1 for IPOT=", IPOT
       ELSE
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: ILB for IPOT=19 is not set, using default value 15"
         ILB_ = 15
       ENDIF
     ENDIF
@@ -2444,7 +2444,7 @@ CONTAINS
 
     IF (PRESENT(FIT_CONSTANTS)) THEN
       IF (.NOT.PRESENT(ORDER_OF_THE_FIT)) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: using default ORDER_OF_THE_FIT=2"
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS: using default ORDER_OF_THE_FIT=2"
         ORDER_OF_THE_FIT_ = 2
       ELSE
         ORDER_OF_THE_FIT_ = ORDER_OF_THE_FIT
@@ -2502,7 +2502,7 @@ CONTAINS
       IF (NEQ > NEQ_MAX) NEQ_MAX = NEQ
     ENDDO
     IF (NEQ_MAX <= 0) THEN
-      WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNELS_LOW_ENERGY: No channels to fit or invalid channel data"
+      WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNELS_LOW_ENERGY: No channels to fit or invalid channel data"
       STOP
     ENDIF
     CALL REALLOCATE(FIT_CONSTANTS, NCH_TO_FIT, NEQ_MAX, ORDER_OF_THE_FIT + 1)
@@ -2576,7 +2576,7 @@ CONTAINS
     X = ENERGIES / HTM
     IF (PRESENT(KSQUARED)) THEN
       IF (SIZE(KSQUARED) /= NK2) THEN
-        WRITE(*,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: KSQUARED size does not match ENERGIES size"
+        WRITE(6,*)"SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: KSQUARED size does not match ENERGIES size"
         STOP
       ENDIF
       KSQUARED = X
@@ -2601,7 +2601,7 @@ CONTAINS
         ENDIF
       ENDDO
       IF (IMIN == -1) THEN
-        WRITE(*,*) "SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
+        WRITE(6,*) "SCATTERING_NN_VARIATIONAL::FIT_CHANNEL_LOW_ENERGY: Warning: No valid points for channel ", GET_CHANNEL_NAME(CHANNEL_TO_FIT), " with L=", L
         FIT_CONSTANTS(IEQ,:) = 0.D0
         FITTED = .FALSE.
         RETURN
