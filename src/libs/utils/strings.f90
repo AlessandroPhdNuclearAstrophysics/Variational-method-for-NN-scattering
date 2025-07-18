@@ -242,7 +242,7 @@ contains
 
   !> @brief Converts a double precision number to a string.
   !>
-  !> @details This function takes a double precision number input and converts it to a string representation.
+  !> @details This function takes a double precision number finput and converts it to a string representation.
   !>
   !> @param[in] num The double precision number to convert.
   !> @return The string representation of the double precision number.
@@ -254,6 +254,11 @@ contains
   end function to_string_double 
 
 
+  !> @brief Converts a complex number to a string.
+  !>
+  !> @details This function takes a complex input and converts it to a string representation.
+  !> @param[in] num The complex number to convert.
+  !> @return The string representation of the complex number.
   function to_string_complex(num) result(str)
     complex, intent(in) :: num
     character(len=256) :: str
@@ -262,6 +267,11 @@ contains
   end function to_string_complex
 
 
+  !> @brief Converts an array of double precision numbers to an array of strings.
+  !>
+  !> @details Each element is converted individually using to_string_double.
+  !> @param[in] arr Array of double precision numbers to convert.
+  !> @return Array of string representations.
   function to_string_array_double(arr) result(str)
     double precision, intent(in), allocatable :: arr(:)
     character(len=32), allocatable :: str(:)
@@ -273,6 +283,11 @@ contains
     end do
   end function to_string_array_double
 
+  !> @brief Converts an array of integers to an array of strings.
+  !>
+  !> @details Each element is converted individually using to_string_int.
+  !> @param[in] arr Array of integers to convert.
+  !> @return Array of string representations.
   function to_string_array_int(arr) result(str)
     integer, intent(in), allocatable :: arr(:)
     character(len=32), allocatable :: str(:)
@@ -283,6 +298,11 @@ contains
     end do
   end function to_string_array_int
 
+  !> @brief Converts a 2D array of double precision numbers to a 2D array of strings.
+  !>
+  !> @details Each element is converted individually using to_string_double.
+  !> @param[in] arr 2D array of double precision numbers to convert.
+  !> @return 2D array of string representations.
   function to_string_array_2d(arr) result(str)
     double precision, intent(in), allocatable :: arr(:,:)
     character(len=32), allocatable :: str(:,:)

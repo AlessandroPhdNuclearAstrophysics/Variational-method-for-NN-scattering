@@ -37,6 +37,7 @@ MODULE QUANTUM_NUMBERS
     PROCEDURE :: IS_NOT_SAME_CHANNEL
     PROCEDURE :: RESET => RESET_CHANNEL
     PROCEDURE :: PRINT => PRINT_SCATTERING_CHANNEL
+    PROCEDURE :: TO_STRING => CHANNEL_TO_STRING
     PROCEDURE :: IS_COUPLED => IS_CHANNEL_COUPLED
     PROCEDURE :: NAME => GET_CHANNEL_NAME_FROM_OBJECT
     PROCEDURE :: J => GET_CHANNEL_J
@@ -658,23 +659,64 @@ CONTAINS
   !! \brief Print information about a scattering channel.
   !! Prints all quantum numbers and spectroscopic name for the given channel.
   !! \param[in] CHANNEL Scattering channel to print
-  SUBROUTINE PRINT_SCATTERING_CHANNEL(CHANNEL)
+  SUBROUTINE PRINT_SCATTERING_CHANNEL(CHANNEL, UNIT)
     CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    INTEGER, OPTIONAL, INTENT(IN) :: UNIT
+    INTEGER :: UNIT_
     INTEGER :: ICH
-    PRINT *, '--- SCATTERING_CHANNEL INFO ---'
-    PRINT *, '  J  =', CHANNEL%J_
-    PRINT *, '  TZ =', CHANNEL%TZ_
-    PRINT *, '  NCH=', CHANNEL%NCH_
-    PRINT *, '  COUPLED =', CHANNEL%COUPLED_
+    IF (PRESENT(UNIT)) THEN
+      UNIT_ = UNIT
+    ELSE
+      UNIT_ = 6  ! Default to standard output
+    ENDIF
+    WRITE(UNIT_, *) '--- SCATTERING_CHANNEL INFO ---'
+    WRITE(UNIT_, *) '  J  =', CHANNEL%J_
+    WRITE(UNIT_, *) '  TZ =', CHANNEL%TZ_
+    WRITE(UNIT_, *) '  NCH=', CHANNEL%NCH_
+    WRITE(UNIT_, *) '  COUPLED =', CHANNEL%COUPLED_
     DO ICH = 1, CHANNEL%NCH_
-      PRINT *, '    Channel index:', ICH
-      PRINT *, '      L =', CHANNEL%L_(ICH)
-      PRINT *, '      S =', CHANNEL%S_(ICH)
-      PRINT *, '      T =', CHANNEL%T_(ICH)
+      WRITE(UNIT_, *) '    Channel index:', ICH
+      WRITE(UNIT_, *) '      L =', CHANNEL%L_(ICH)
+      WRITE(UNIT_, *) '      S =', CHANNEL%S_(ICH)
+      WRITE(UNIT_, *) '      T =', CHANNEL%T_(ICH)
     END DO
-    PRINT *, '  Spectroscopic name: ', TRIM(GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL))
-    PRINT *, '------------------------------'
+    WRITE(UNIT_, *) '  Spectroscopic name: ', TRIM(GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL))
+    WRITE(UNIT_, *) '------------------------------'
   END SUBROUTINE PRINT_SCATTERING_CHANNEL
+
+  SUBROUTINE CHANNEL_TO_STRING(CHANNEL, STRING)
+    CLASS(SCATTERING_CHANNEL), INTENT(IN) :: CHANNEL
+    CHARACTER(LEN=*), INTENT(OUT) :: STRING
+    CHARACTER(LEN=256) :: TEMP_STRING
+    INTEGER :: ICH
+
+    WRITE(TEMP_STRING, *) '--- SCATTERING_CHANNEL INFO ---'
+    STRING = TEMP_STRING
+    WRITE(TEMP_STRING, '(A,I0)') '  J  = ', CHANNEL%J_
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    WRITE(TEMP_STRING, '(A,I0)') '  TZ = ', CHANNEL%TZ_
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    WRITE(TEMP_STRING, '(A,I0)') '  NCH=', CHANNEL%NCH_
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    WRITE(TEMP_STRING, '(A,L1)') '  COUPLED = ', CHANNEL%COUPLED_
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    DO ICH = 1, CHANNEL%NCH_
+      WRITE(TEMP_STRING, '(A,I0)') '    Channel index: ', ICH
+      STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+      WRITE(TEMP_STRING, '(A,I0)') '      L = ', CHANNEL%L_(ICH)
+      STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+      WRITE(TEMP_STRING, '(A,I0)') '      S = ', CHANNEL%S_(ICH)
+      STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+      WRITE(TEMP_STRING, '(A,I0)') '      T = ', CHANNEL%T_(ICH)
+      STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    END DO
+    WRITE(TEMP_STRING, '(A,A)') '  Spectroscopic name: ', TRIM(GET_CHANNEL_NAME_FROM_OBJECT(CHANNEL))
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    WRITE(TEMP_STRING, '(A)') '------------------------------'
+    STRING = TRIM(STRING) // NEW_LINE('A') // TEMP_STRING
+    
+    STRING = TRIM(STRING)  ! Remove trailing spaces
+  END SUBROUTINE CHANNEL_TO_STRING
 
   !> \brief Reset a scattering channel to default/uninitialized state.
   !! \ingroup quantum_numbers

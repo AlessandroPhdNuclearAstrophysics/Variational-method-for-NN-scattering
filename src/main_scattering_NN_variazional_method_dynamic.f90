@@ -15,13 +15,13 @@
 !! \date 2025
 
 PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
-  USE SCATTERING_NN_VARIATIONAL, ONLY:  SET_VARIATIONAL_PARAMETERS, SET_ENERGIES, SET_DYNAMIC, PHASE_SHIFT_RESULT, &
-                                        SET_CHANNELS, DUMP_MODULE_DATA, SET_MAX_LOG_LEVEL, SET_LECS => SET_NEW_LECS
+  USE SCATTERING_NN_VARIATIONAL
   USE QUANTUM_NUMBERS, ONLY: SCATTERING_CHANNEL, GET_CHANNEL_NAME, GET_CHANNEL_NCH, PREPARE_CHANNELS, GET_CHANNEL_FROM_NAME
   USE EFT_PLESS, ONLY: LECS_EFT_PLESS, GET_LECS
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: JMAX = 2, LMAX = 2
+  INTEGER, PARAMETER :: LEMP = 0
   DOUBLE PRECISION, PARAMETER :: PI = 4.D0 * ATAN(1.D0)
   INTEGER :: NE = 10
   INTEGER :: NCH = 0
@@ -31,14 +31,12 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
 
   INTEGER :: I, TZ
   DOUBLE PRECISION, ALLOCATABLE :: ENERGIES(:), K2(:), K3COT(:)
-  DOUBLE PRECISION :: E, HE
-  INTEGER :: IPOT, ILB, LEMP
-  LOGICAL :: PRINT_COEFFICIENTS = .FALSE.
+  DOUBLE PRECISION :: E, HE, RANGE =40., H = 0.01
   CHARACTER(LEN=256) :: OUT_DIR
-  NAMELIST /IN/ EMAX, NE, TZ, IPOT, ILB, LEMP, PRINT_COEFFICIENTS, OUT_DIR
+  NAMELIST /IN/ EMAX, NE, TZ, OUT_DIR, RANGE, H
 
-  CHARACTER(LEN=256) :: INPUT_FILE
-  LOGICAL :: HAS_ARGUMENTS
+  CHARACTER(LEN=256) :: ARGUMENT
+  INTEGER :: NARGS
   TYPE(LECS_EFT_PLESS) :: LECS
   TYPE(PHASE_SHIFT_RESULT), ALLOCATABLE :: PS(:)
 
@@ -51,6 +49,8 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
   ENERGIES = (/ (I * HE, I = 1, NE) /)
 
   !> \brief Prepare the list of all physical channels.
+  CALL SET_VARIATIONAL_PARAMETERS( RANGE = RANGE, H = H )
+  CALL SET_MAX_LOG_LEVEL(1)
   CALL SET_DYNAMIC(.TRUE.)
   
   LECS = GET_LECS(10)
@@ -60,13 +60,22 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
   LECS%CNLO(6) = 0.5D0
   LECS%CNLO(7) =-0.5D0
   CALL LECS%CONVERT_TO_DIMENSIONAL(1,1)
-  CALL LECS%PRINT()
 
   CALL SET_ENERGIES(ENERGIES)
-  CALL SET_LECS(LECS)
+  CALL SET_NEW_LECS(LECS)
   CALL PREPARE_CHANNELS(LMAX, JMAX, TZ, CHANNELS)
   NCH = SIZE(CHANNELS)
   CALL SET_CHANNELS(CHANNELS)
+
+  OPEN(UNIT=1100, FILE="convergences_1S0.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1301, FILE="convergences_3S1.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1321, FILE="convergences_3D1.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1111, FILE="convergences_1P1.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1310, FILE="convergences_3P0.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1311, FILE="convergences_3P1.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1312, FILE="convergences_3P2.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1122, FILE="convergences_1D2.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
+  OPEN(UNIT=1322, FILE="convergences_3D2.dat", POSITION='APPEND', STATUS='UNKNOWN', ACTION='WRITE')
 
   !> \brief Loop over all possible L, S, J combinations and compute phase shifts for each channel.
   BLOCK ! MAIN LOOP
@@ -83,7 +92,7 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
       HTM = GET_HTM()
 
       CHANNEL_NAME = GET_CHANNEL_NAME(CHANNELS(ICH))
-      CALL SET_VARIATIONAL_PARAMETERS(J, LMIN, S, TZ, IPOT, ILB, LEMP)
+      CALL SET_VARIATIONAL_PARAMETERS(J=J, L=LMIN, S=S, T=TZ, LEMP=LEMP)
       PRINT *, "Scattering channel name: ", TRIM(CHANNEL_NAME)
       NEQ = GET_CHANNEL_NCH(CHANNELS(ICH))
       OPEN(21, FILE=TRIM(OUT_DIR)//'delta_'//TRIM(CHANNEL_NAME)//'.dat', STATUS='UNKNOWN', ACTION='WRITE')
@@ -93,8 +102,8 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
         E =  ENERGIES(I)
         K2(I) = E / HTM
         
-        CALL NN_SCATTERING_VARIATIONAL(E, J, LMIN, S, TZ, IPOT, ILB, LEMP, PS(I), PRINT_COEFFICIENTS=.FALSE., LOG_LEVEL=1)
-
+        CALL NN_SCATTERING_VARIATIONAL(E, J, LMIN, S, TZ, -1, -1, LEMP, PS(I), PRINT_COEFFICIENTS=.FALSE.)
+        
         K3COT(I) = K2(I)**((2*LMIN+1.D0)/2) / TAN(PS(I)%delta1_S * PI / 180.D0)
 
         WRITE(21, *) E, PS(I)%delta1_S, PS(I)%delta2_S, PS(I)%epsilon_S
@@ -113,52 +122,74 @@ PROGRAM SCATTERING_NN_VARIATIONAL_METHOD_DYNAMIC
         FITTED = FIT(CHANNELS(ICH), ENERGIES, PS, COEFFS, 2)
         
         IF (FITTED) THEN 
-          WRITE(*,*) -1/COEFFS(1,1)
-          WRITE(*,*) 2*COEFFS(1,2)
-          WRITE(*,*) COEFFS(1,3)
-          IF (CHANNELS(ICH)%NCH() == 2) THEN
-            WRITE(*,*) -1/COEFFS(2,1)
-            WRITE(*,*) 2*COEFFS(2,2)
-            WRITE(*,*) COEFFS(2,3)
+          BLOCK 
+            INTEGER :: FILE_ID   
+            INTEGER :: FILE_ID_2 
+            FILE_ID = 1000 + (2*S+1)*100 + LMIN*10 + J
+            FILE_ID_2 = 1000 + (2*S+1)*100 + (LMIN+2)*10 + J
+            write(*,*) "oadosaidjaosid ", file_id
+            WRITE(*,*) -1/COEFFS(1,1)
+            WRITE(*,*) 2*COEFFS(1,2)
+            WRITE(*,*) COEFFS(1,3)
+            WRITE(FILE_ID,*) RANGE, H, -1/COEFFS(1,1), 2*COEFFS(1,2),  COEFFS(1,3)
+            IF (CHANNELS(ICH)%NCH() == 2) THEN
+              WRITE(*,*) -1/COEFFS(2,1)
+              WRITE(*,*) 2*COEFFS(2,2)
+              WRITE(*,*) COEFFS(2,3)
+              WRITE(FILE_ID_2,*) RANGE, H, -1/COEFFS(2,1), 2*COEFFS(2,2), COEFFS(2,3)
+            END IF
+            END BLOCK
+          ELSE
+            WRITE(*,*) "Fitting failed for channel: ", TRIM(CHANNEL_NAME)
           END IF
-        ELSE
-          WRITE(*,*) "Fitting failed for channel: ", TRIM(CHANNEL_NAME)
-        END IF
       END BLOCK
 
       CLOSE(21)
       CLOSE(22)
+
       IF (NEQ == 2) CLOSE(22)
 
     ENDDO
   END BLOCK ! MAIN LOOP
+  CLOSE(1100)
+  CLOSE(1301)
+  CLOSE(1321)
+  CLOSE(1111)
+  CLOSE(1310)
+  CLOSE(1311)
+  CLOSE(1312)
+  CLOSE(1122)
+  CLOSE(1322)
 
   CALL CLEANUP
 
 CONTAINS
   SUBROUTINE SETUP_FROM_ARGS
     !> \brief Check if there are command-line arguments.
-    HAS_ARGUMENTS = COMMAND_ARGUMENT_COUNT() > 0
+    NARGS = COMMAND_ARGUMENT_COUNT()
 
     !> \brief Initialize default values for quantum numbers and options.
     TZ = 0
-    IPOT = 18
-    ILB = 1
-    LEMP = 0
     OUT_DIR = 'output/EFT_pless_dynamic/'
 
 
     !> \brief Read namelist from file if provided, otherwise prompt user.
-    IF (HAS_ARGUMENTS) THEN
-      CALL GET_COMMAND_ARGUMENT(1, INPUT_FILE)
-      OPEN(UNIT=10, FILE=TRIM(INPUT_FILE), STATUS='OLD', ACTION='READ')
-      READ(10, NML=IN)
-      CLOSE(10)
-    ELSE
+    IF (NARGS==2) THEN
+      CALL GET_COMMAND_ARGUMENT(1, ARGUMENT)
+      ! If the first argument is provided, treat it as RANGE
+      READ(ARGUMENT, *) RANGE
+      PRINT *, "RANGE set from command-line argument: ", RANGE
+      CALL GET_COMMAND_ARGUMENT(2, ARGUMENT)
+      ! If the second argument is provided, treat it as H
+      READ(ARGUMENT, *) H
+      PRINT *, "H set from command-line argument: ", H
+    ELSEIF (NARGS==0) THEN
       ! If no arguments, write the namelist and allow user to modify it
       WRITE(*, NML=IN)
       PRINT *, "Modify the above values if needed and press Enter to continue."
       READ(*, NML=IN)
+    ELSE
+      STOP "Invalid number of command-line arguments. Expected 0 or 2 arguments."
     END IF
 
     !> \brief Ensure OUT_DIR ends with a slash.
