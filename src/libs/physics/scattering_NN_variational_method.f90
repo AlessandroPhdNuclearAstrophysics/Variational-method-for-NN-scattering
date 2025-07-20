@@ -57,7 +57,7 @@ MODULE SCATTERING_NN_VARIATIONAL
     DOUBLE PRECISION :: K     !< Scattering momentum [fm^-1]
     DOUBLE PRECISION :: HR1 = 0.01D0   !< Step size for core grid [fm]
     DOUBLE PRECISION :: H   = 0.02D0   !< Step size for asymptotic grid [fm]
-    DOUBLE PRECISION :: RANGE = 70.0D0 !< Maximum radial range [fm]
+    DOUBLE PRECISION :: RANGE = 80.D0 !< Maximum radial range [fm]
     DOUBLE PRECISION :: GAMMA = 4.D0   !< Scaling parameter for Laguerre basis
     DOUBLE PRECISION :: EPS = 0.25D0   !< Exponential grid parameter
     DOUBLE PRECISION :: AF = 1.02D0    !< Exponential grid parameter
@@ -750,7 +750,7 @@ CONTAINS
     ! If energy is zero, return the R matrix
     PHASE_SHIFT%R_BB(:NCH, :NCH) = RMAT2
     IF (DSQRT(E/HTM) < K_SMALL) THEN
-      CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL: Energy is too small, returning R matrix only")
+      CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL: Energy is too small, returning R matrix only, k: "//TRIM(TO_STRING(DSQRT(E/HTM)))//" fm^-1")
       CALL LOGGER%LOG_WARNING("::NN_SCATTERING_VARIATIONAL: Minimum energy is "//TRIM(TO_STRING(HTM*K_SMALL**2))//" MeV")
       RETURN
     ENDIF
@@ -2210,7 +2210,7 @@ CONTAINS
     LC          = 0
 
     ! Reset types to default
-    VAR_P = VARIATIONAL_PARAMETERS(0,0,0,0,0,0,0,0,1,0,0.0D0,0.0D0,0.01D0,0.02D0,70.0D0,4.0D0,0.25D0,1.02D0,0,0,100,32)
+    VAR_P = VARIATIONAL_PARAMETERS(0,0,0,0,0,0,0,0,1,0,0.0D0,0.0D0,0.01D0,0.02D0,80.D0,4.0D0,0.25D0,1.02D0,0,0,100,32)
     EFT_RADIAL_CC%ORDER = -1
     EFT_RADIAL_AC%ORDER = -1
     EFT_RADIAL_AA%ORDER = -1
