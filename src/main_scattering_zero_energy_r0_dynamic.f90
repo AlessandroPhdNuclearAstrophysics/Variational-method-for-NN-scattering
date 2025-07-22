@@ -72,11 +72,9 @@ PROGRAM MAIN_SCATTERING_ZERO_ENERGY_R0
     
     ! Evaluating r_e using the R_BB matrix at non-zero energy
     RBB = PS(ICH,2)%R_BB
-    IF ( SQRT(K2) > K_SMALL) THEN       ! K < K_SMALL
-      RBB(1,1) =   RBB(1,1) * DOUBLE_FACTORIAL(2*L+1)**2 / SQRT(K2)**(2*L+1)
-    ENDIF                           ! End of if about coupled or uncoupled channels
-
+    IF ( SQRT(K2) > K_SMALL) RBB(1,1) =   RBB(1,1) * DOUBLE_FACTORIAL(2*L+1)**2 / SQRT(K2)**(2*L+1)
     R0 = -2 * DOUBLE_FACTORIAL(2*L+1)**2 * (RBB(1,1) - RBB0(1,1))/(K2 * RBB0(1,1)**2);
+
     WRITE(*,*) LECS%RC(1,1), LECS%CNLO(4), LECS%CNLO(6), LECS%CNLO(7), A0, R0
   ENDDO
 
