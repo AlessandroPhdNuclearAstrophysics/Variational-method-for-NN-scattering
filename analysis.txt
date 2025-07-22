@@ -1,0 +1,531 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 68.29      0.28     0.28        2   140.00   140.00  __scattering_nn_variational_MOD_prepare_core_core_matrix_elements
+ 12.20      0.33     0.05        6     8.33     9.16  __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements
+  9.76      0.37     0.04                             __strings_utils_MOD_to_string_complex
+  7.32      0.40     0.03    10774     0.00     0.00  __laguerre_polynomial_mod_MOD_laguerre_polynomial
+  2.44      0.41     0.01        2     5.00     5.01  __scattering_nn_variational_MOD_prepare_grid
+  0.00      0.41     0.00     8877     0.00     0.00  __quantum_numbers_MOD_prepare_channels
+  0.00      0.41     0.00     2432     0.00     0.00  __strings_utils_MOD_to_string_array_double
+  0.00      0.41     0.00      107     0.00     0.00  __reallocate_utils_MOD_reallocate_3d_real
+  0.00      0.41     0.00       82     0.00     0.00  __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel
+  0.00      0.41     0.00       56     0.00     0.00  _fini
+  0.00      0.41     0.00       53     0.00     0.00  __quantum_numbers_MOD_get_channel_t
+  0.00      0.41     0.00       42     0.00     0.00  __reallocate_utils_MOD_reallocate_2d_real
+  0.00      0.41     0.00       37     0.00     0.00  __reallocate_utils_MOD_reallocate_4d_real
+  0.00      0.41     0.00       36     0.00     0.00  __quantum_numbers_MOD_set_channel
+  0.00      0.41     0.00       32     0.00     0.00  __strings_utils_MOD_to_lower
+  0.00      0.41     0.00       27     0.00     0.00  __quantum_numbers_MOD_assign_channel
+  0.00      0.41     0.00       14     0.00     0.00  __eft_pless_MOD_combine_potential
+  0.00      0.41     0.00       12     0.00     0.00  __strings_utils_MOD_to_upper
+  0.00      0.41     0.00        6     0.00     0.00  __eft_pless_MOD_get_eft_radial_functions
+  0.00      0.41     0.00        6     0.00     0.00  __eft_pless_MOD_print_lecs
+  0.00      0.41     0.00        6     0.00     0.00  __integration_mod_MOD_b5_single
+  0.00      0.41     0.00        6     0.00     0.00  __quantum_numbers_MOD_is_same_channel
+  0.00      0.41     0.00        5     0.00    74.00  __scattering_nn_variational_MOD_nn_scattering_variational
+  0.00      0.41     0.00        5     0.00     0.00  __scattering_nn_variational_MOD_set_energies
+  0.00      0.41     0.00        4     0.00     0.00  __integration_mod_MOD_b5
+  0.00      0.41     0.00        3     0.00     0.00  __operating_system_linux_MOD_find_string_case_insensitive
+  0.00      0.41     0.00        3     0.00     0.00  __quantum_numbers_MOD_get_channel_from_name
+  0.00      0.41     0.00        3     0.00     0.00  r_second_order.4
+  0.00      0.41     0.00        2     0.00     0.00  __eft_pless_MOD_set_all_lecs
+  0.00      0.41     0.00        2     0.00     0.00  __quantum_numbers_MOD_channel_to_string
+  0.00      0.41     0.00        2     0.00     0.00  __quantum_operators_MOD_s12_operator_channel
+  0.00      0.41     0.00        2     0.00     0.00  __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements
+  0.00      0.41     0.00        2     0.00    17.52  __scattering_nn_variational_MOD_prepare_asymptotic_functions
+  0.00      0.41     0.00        2     0.00    74.00  __scattering_nn_variational_MOD_reset_scattering_nn_variational
+  0.00      0.41     0.00        2     0.00     0.00  __scattering_nn_variational_MOD_set_channels
+  0.00      0.41     0.00        1     0.00    74.00  MAIN__
+  0.00      0.41     0.00        1     0.00     0.00  __eft_pless_MOD_adimensional_lecs_from_dimensional
+  0.00      0.41     0.00        1     0.00     0.00  __eft_pless_MOD_eft_pless_pw
+  0.00      0.41     0.00        1     0.00     0.00  __operating_system_linux_MOD_get_os_name
+  0.00      0.41     0.00        1     0.00     0.00  __potentials_MOD_pot_pw_params
+  0.00      0.41     0.00        1     0.00     0.00  __potentials_MOD_pot_pw_rvalues
+  0.00      0.41     0.00        1     0.00     0.00  __quantum_numbers_MOD_l_combinations
+  0.00      0.41     0.00        1     0.00     0.00  __quantum_operators_MOD_l2_operator_channel
+  0.00      0.41     0.00        1     0.00     0.00  __quantum_operators_MOD_s12_operator_quantum_numbers
+  0.00      0.41     0.00        1     0.00     0.00  __scattering_MOD_calculate_phase_shifts_blatt_deg
+  0.00      0.41     0.00        1     0.00     0.00  __scattering_MOD_evaluate_zero_energies_observables_bb
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2025 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 2.44% of 0.41 seconds
+
+index % time    self  children    called     name
+                                   2             __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.07       1/5           __scattering_MOD_calculate_s_matrix_from_blatt [7]
+                0.00    0.15       2/5           __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.15       2/5           __scattering_nn_variational_MOD_set_max_log_level [4]
+[1]     90.2    0.00    0.37       5+2       __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.28    0.00       2/2           __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.05    0.00       6/6           __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.04       2/2           __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+                0.00    0.00      40/82          __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel [29]
+                0.00    0.00      37/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00      16/37          __reallocate_utils_MOD_reallocate_4d_real [33]
+                0.00    0.00      14/14          __eft_pless_MOD_combine_potential [37]
+                0.00    0.00      10/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       8/27          __quantum_numbers_MOD_assign_channel [36]
+                0.00    0.00       6/12          __strings_utils_MOD_to_upper [38]
+                0.00    0.00       4/36          __quantum_numbers_MOD_set_channel [34]
+                0.00    0.00       3/3           __quantum_numbers_MOD_get_channel_from_name [46]
+                0.00    0.00       3/3           r_second_order.4 [18]
+                0.00    0.00       3/6           __integration_mod_MOD_b5_single [41]
+                0.00    0.00       2/53          __quantum_numbers_MOD_get_channel_t [31]
+                0.00    0.00       2/6           __eft_pless_MOD_print_lecs [40]
+                0.00    0.00       2/32          __strings_utils_MOD_to_lower [35]
+                0.00    0.00       2/2           __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00       1/1           __quantum_operators_MOD_s12_operator_quantum_numbers [59]
+                0.00    0.00       1/1           __quantum_operators_MOD_l2_operator_channel [58]
+                0.00    0.00       1/1           __potentials_MOD_pot_pw_rvalues [56]
+                                   2             __scattering_nn_variational_MOD_nn_scattering_variational [1]
+-----------------------------------------------
+                0.28    0.00       2/2           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[2]     68.3    0.28    0.00       2         __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00      10/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       6/6           __quantum_numbers_MOD_is_same_channel [42]
+                0.00    0.00       2/27          __quantum_numbers_MOD_assign_channel [36]
+                0.00    0.00       2/82          __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel [29]
+                0.00    0.00       2/42          __reallocate_utils_MOD_reallocate_2d_real [32]
+                0.00    0.00       2/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00       2/53          __quantum_numbers_MOD_get_channel_t [31]
+-----------------------------------------------
+                0.00    0.07       1/2           MAIN__ [5]
+                0.00    0.07       1/2           __gsl_coulomb_MOD___copy___iso_c_binding_C_ptr [6]
+[3]     36.1    0.00    0.15       2         __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.15       2/5           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00       6/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       2/5           __scattering_nn_variational_MOD_set_energies [43]
+                0.00    0.00       2/2           __scattering_nn_variational_MOD_set_channels [51]
+                0.00    0.00       2/53          __quantum_numbers_MOD_get_channel_t [31]
+                0.00    0.00       2/36          __quantum_numbers_MOD_set_channel [34]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]     36.1    0.00    0.15                 __scattering_nn_variational_MOD_set_max_log_level [4]
+                0.00    0.15       2/5           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+-----------------------------------------------
+                0.00    0.07       1/1           _start [8]
+[5]     18.0    0.00    0.07       1         MAIN__ [5]
+                0.00    0.07       1/2           __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.00       7/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00       5/32          __strings_utils_MOD_to_lower [35]
+                0.00    0.00       3/5           __scattering_nn_variational_MOD_set_energies [43]
+                0.00    0.00       2/2           __eft_pless_MOD_set_all_lecs [47]
+                0.00    0.00       1/37          __reallocate_utils_MOD_reallocate_4d_real [33]
+                0.00    0.00       1/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       1/53          __quantum_numbers_MOD_get_channel_t [31]
+                0.00    0.00       1/2           __quantum_numbers_MOD_channel_to_string [48]
+                0.00    0.00       1/1           __eft_pless_MOD_eft_pless_pw [53]
+                0.00    0.00       1/1           __scattering_MOD_calculate_phase_shifts_blatt_deg [60]
+                0.00    0.00       1/1           __scattering_MOD_evaluate_zero_energies_observables_bb [61]
+-----------------------------------------------
+                                                 <spontaneous>
+[6]     18.0    0.00    0.07                 __gsl_coulomb_MOD___copy___iso_c_binding_C_ptr [6]
+                0.00    0.07       1/2           __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[7]     18.0    0.00    0.07                 __scattering_MOD_calculate_s_matrix_from_blatt [7]
+                0.00    0.07       1/5           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[8]     18.0    0.00    0.07                 _start [8]
+                0.00    0.07       1/1           MAIN__ [5]
+-----------------------------------------------
+                0.05    0.00       6/6           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[9]     13.4    0.05    0.00       6         __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00    1776/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+                0.00    0.00    2264/2432        __strings_utils_MOD_to_string_array_double [27]
+                0.00    0.00      12/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00       8/42          __reallocate_utils_MOD_reallocate_2d_real [32]
+                0.00    0.00       6/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       6/6           __eft_pless_MOD_get_eft_radial_functions [39]
+                0.00    0.00       2/27          __quantum_numbers_MOD_assign_channel [36]
+                0.00    0.00       2/12          __strings_utils_MOD_to_upper [38]
+                0.00    0.00       2/53          __quantum_numbers_MOD_get_channel_t [31]
+                0.00    0.00       2/2           __quantum_operators_MOD_s12_operator_channel [49]
+                0.00    0.00       2/6           __eft_pless_MOD_print_lecs [40]
+                0.00    0.00       2/37          __reallocate_utils_MOD_reallocate_4d_real [33]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]     9.8    0.04    0.00                 __strings_utils_MOD_to_string_complex [10]
+-----------------------------------------------
+                0.00    0.04       2/2           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[11]     8.5    0.00    0.04       2         __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+                0.03    0.00    8990/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+                0.01    0.00       2/2           __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00       2/6           __eft_pless_MOD_print_lecs [40]
+                0.00    0.00       2/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+-----------------------------------------------
+                0.00    0.00       1/10774       __fit_module_MOD_polynomial_regression_no_constant [16]
+                0.00    0.00       1/10774       __fit_module_MOD_polynomial_regression [15]
+                0.00    0.00       1/10774       __fit_module_MOD_cubic_regression [14]
+                0.00    0.00       1/10774       __scattering_MOD_calculate_phase_shifts_blatt_rad [17]
+                0.00    0.00       4/10774       __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00    1776/10774       __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.03    0.00    8990/10774       __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+[12]     7.3    0.03    0.00   10774         __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+-----------------------------------------------
+                0.01    0.00       2/2           __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+[13]     2.4    0.01    0.00       2         __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00       4/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+                0.00    0.00      40/82          __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel [29]
+                0.00    0.00      30/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00      16/32          __strings_utils_MOD_to_lower [35]
+                0.00    0.00       4/4           __integration_mod_MOD_b5 [44]
+                0.00    0.00       4/12          __strings_utils_MOD_to_upper [38]
+                0.00    0.00       4/27          __quantum_numbers_MOD_assign_channel [36]
+-----------------------------------------------
+                                                 <spontaneous>
+[14]     0.0    0.00    0.00                 __fit_module_MOD_cubic_regression [14]
+                0.00    0.00       1/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+                0.00    0.00       1/32          __strings_utils_MOD_to_lower [35]
+                0.00    0.00       1/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+-----------------------------------------------
+                                                 <spontaneous>
+[15]     0.0    0.00    0.00                 __fit_module_MOD_polynomial_regression [15]
+                0.00    0.00       1/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+-----------------------------------------------
+                                                 <spontaneous>
+[16]     0.0    0.00    0.00                 __fit_module_MOD_polynomial_regression_no_constant [16]
+                0.00    0.00       1/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+                0.00    0.00       8/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00       7/32          __strings_utils_MOD_to_lower [35]
+                0.00    0.00       2/36          __quantum_numbers_MOD_set_channel [34]
+-----------------------------------------------
+                                                 <spontaneous>
+[17]     0.0    0.00    0.00                 __scattering_MOD_calculate_phase_shifts_blatt_rad [17]
+                0.00    0.00       1/10774       __laguerre_polynomial_mod_MOD_laguerre_polynomial [12]
+-----------------------------------------------
+                0.00    0.00       3/3           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[18]     0.0    0.00    0.00       3         r_second_order.4 [18]
+-----------------------------------------------
+                0.00    0.00       1/8877        MAIN__ [5]
+                0.00    0.00       6/8877        __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00       6/8877        __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.00      10/8877        __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00      10/8877        __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00      24/8877        __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00      84/8877        _fini [30]
+                0.00    0.00    8736/8877        __eft_pless_MOD_combine_potential [37]
+[26]     0.0    0.00    0.00    8877         __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00       9/27          __quantum_numbers_MOD_assign_channel [36]
+-----------------------------------------------
+                0.00    0.00     168/2432        __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00    2264/2432        __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+[27]     0.0    0.00    0.00    2432         __strings_utils_MOD_to_string_array_double [27]
+-----------------------------------------------
+                0.00    0.00       1/107         __fit_module_MOD_cubic_regression [14]
+                0.00    0.00       2/107         __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+                0.00    0.00       2/107         __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00       7/107         MAIN__ [5]
+                0.00    0.00       8/107         __fit_module_MOD_polynomial_regression_no_constant [16]
+                0.00    0.00       8/107         __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00      12/107         __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00      30/107         __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00      37/107         __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[28]     0.0    0.00    0.00     107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00      18/37          __reallocate_utils_MOD_reallocate_4d_real [33]
+-----------------------------------------------
+                0.00    0.00       2/82          __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00      40/82          __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00      40/82          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[29]     0.0    0.00    0.00      82         __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel [29]
+-----------------------------------------------
+                                  28             _fini [30]
+                0.00    0.00      56/56          __eft_pless_MOD_combine_potential [37]
+[30]     0.0    0.00    0.00      56+28      _fini [30]
+                0.00    0.00      84/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00      28/36          __quantum_numbers_MOD_set_channel [34]
+                0.00    0.00      28/53          __quantum_numbers_MOD_get_channel_t [31]
+                                  28             _fini [30]
+-----------------------------------------------
+                0.00    0.00       1/53          MAIN__ [5]
+                0.00    0.00       2/53          __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00       2/53          __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00       2/53          __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00       2/53          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00       2/53          __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.00      14/53          __eft_pless_MOD_combine_potential [37]
+                0.00    0.00      28/53          _fini [30]
+[31]     0.0    0.00    0.00      53         __quantum_numbers_MOD_get_channel_t [31]
+-----------------------------------------------
+                0.00    0.00       2/42          __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00       8/42          __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00      14/42          __eft_pless_MOD_combine_potential [37]
+                0.00    0.00      18/42          __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+[32]     0.0    0.00    0.00      42         __reallocate_utils_MOD_reallocate_2d_real [32]
+-----------------------------------------------
+                0.00    0.00       1/37          MAIN__ [5]
+                0.00    0.00       2/37          __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00      16/37          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00      18/37          __reallocate_utils_MOD_reallocate_3d_real [28]
+[33]     0.0    0.00    0.00      37         __reallocate_utils_MOD_reallocate_4d_real [33]
+-----------------------------------------------
+                0.00    0.00       2/36          __fit_module_MOD_polynomial_regression_no_constant [16]
+                0.00    0.00       2/36          __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.00       4/36          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00      28/36          _fini [30]
+[34]     0.0    0.00    0.00      36         __quantum_numbers_MOD_set_channel [34]
+-----------------------------------------------
+                0.00    0.00       1/32          __gsl_coulomb_MOD_coulomb_wave_fg [114]
+                0.00    0.00       1/32          __fit_module_MOD_cubic_regression [14]
+                0.00    0.00       2/32          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00       5/32          MAIN__ [5]
+                0.00    0.00       7/32          __fit_module_MOD_polynomial_regression_no_constant [16]
+                0.00    0.00      16/32          __scattering_nn_variational_MOD_prepare_grid [13]
+[35]     0.0    0.00    0.00      32         __strings_utils_MOD_to_lower [35]
+-----------------------------------------------
+                0.00    0.00       2/27          __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00       2/27          __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+                0.00    0.00       2/27          __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00       4/27          __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00       8/27          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+                0.00    0.00       9/27          __quantum_numbers_MOD_prepare_channels [26]
+[36]     0.0    0.00    0.00      27         __quantum_numbers_MOD_assign_channel [36]
+-----------------------------------------------
+                0.00    0.00      14/14          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[37]     0.0    0.00    0.00      14         __eft_pless_MOD_combine_potential [37]
+                0.00    0.00    8736/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00      56/56          _fini [30]
+                0.00    0.00      14/42          __reallocate_utils_MOD_reallocate_2d_real [32]
+                0.00    0.00      14/53          __quantum_numbers_MOD_get_channel_t [31]
+-----------------------------------------------
+                0.00    0.00       2/12          __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00       4/12          __scattering_nn_variational_MOD_prepare_grid [13]
+                0.00    0.00       6/12          __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[38]     0.0    0.00    0.00      12         __strings_utils_MOD_to_upper [38]
+-----------------------------------------------
+                0.00    0.00       6/6           __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+[39]     0.0    0.00    0.00       6         __eft_pless_MOD_get_eft_radial_functions [39]
+-----------------------------------------------
+                0.00    0.00       2/6           __scattering_nn_variational_MOD_prepare_asymptotic_functions [11]
+                0.00    0.00       2/6           __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+                0.00    0.00       2/6           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[40]     0.0    0.00    0.00       6         __eft_pless_MOD_print_lecs [40]
+-----------------------------------------------
+                0.00    0.00       1/6           __quantum_operators_MOD_l2_operator_channel [58]
+                0.00    0.00       2/6           __quantum_operators_MOD_t12_operator_channel [176]
+                0.00    0.00       3/6           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[41]     0.0    0.00    0.00       6         __integration_mod_MOD_b5_single [41]
+-----------------------------------------------
+                0.00    0.00       6/6           __scattering_nn_variational_MOD_prepare_core_core_matrix_elements [2]
+[42]     0.0    0.00    0.00       6         __quantum_numbers_MOD_is_same_channel [42]
+-----------------------------------------------
+                0.00    0.00       2/5           __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+                0.00    0.00       3/5           MAIN__ [5]
+[43]     0.0    0.00    0.00       5         __scattering_nn_variational_MOD_set_energies [43]
+-----------------------------------------------
+                0.00    0.00       4/4           __scattering_nn_variational_MOD_prepare_grid [13]
+[44]     0.0    0.00    0.00       4         __integration_mod_MOD_b5 [44]
+-----------------------------------------------
+                0.00    0.00       1/3           __operating_system_linux_MOD_get_os_name [54]
+                0.00    0.00       1/3           __operating_system_linux_MOD_list_files_in_directory [142]
+                0.00    0.00       1/3           __eft_pless_MOD_adimensional_lecs_from_dimensional [52]
+[45]     0.0    0.00    0.00       3         __operating_system_linux_MOD_find_string_case_insensitive [45]
+-----------------------------------------------
+                0.00    0.00       3/3           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[46]     0.0    0.00    0.00       3         __quantum_numbers_MOD_get_channel_from_name [46]
+-----------------------------------------------
+                0.00    0.00       2/2           MAIN__ [5]
+[47]     0.0    0.00    0.00       2         __eft_pless_MOD_set_all_lecs [47]
+-----------------------------------------------
+                                   1             __quantum_numbers_MOD_channel_to_string [48]
+                0.00    0.00       1/2           MAIN__ [5]
+                0.00    0.00       1/2           __quantum_numbers_MOD_new_scattering_channel [166]
+[48]     0.0    0.00    0.00       2+1       __quantum_numbers_MOD_channel_to_string [48]
+                                   1             __quantum_numbers_MOD_channel_to_string [48]
+-----------------------------------------------
+                0.00    0.00       2/2           __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements [9]
+[49]     0.0    0.00    0.00       2         __quantum_operators_MOD_s12_operator_channel [49]
+-----------------------------------------------
+                0.00    0.00       2/2           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[50]     0.0    0.00    0.00       2         __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements [50]
+                0.00    0.00     168/2432        __strings_utils_MOD_to_string_array_double [27]
+                0.00    0.00      24/8877        __quantum_numbers_MOD_prepare_channels [26]
+                0.00    0.00      18/42          __reallocate_utils_MOD_reallocate_2d_real [32]
+                0.00    0.00       8/107         __reallocate_utils_MOD_reallocate_3d_real [28]
+                0.00    0.00       2/27          __quantum_numbers_MOD_assign_channel [36]
+                0.00    0.00       2/53          __quantum_numbers_MOD_get_channel_t [31]
+-----------------------------------------------
+                0.00    0.00       2/2           __scattering_nn_variational_MOD_reset_scattering_nn_variational [3]
+[51]     0.0    0.00    0.00       2         __scattering_nn_variational_MOD_set_channels [51]
+-----------------------------------------------
+                0.00    0.00       1/1           __eft_pless_MOD_eft_pless_pw [53]
+[52]     0.0    0.00    0.00       1         __eft_pless_MOD_adimensional_lecs_from_dimensional [52]
+                0.00    0.00       1/3           __operating_system_linux_MOD_find_string_case_insensitive [45]
+                0.00    0.00       1/1           __operating_system_linux_MOD_get_os_name [54]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [5]
+[53]     0.0    0.00    0.00       1         __eft_pless_MOD_eft_pless_pw [53]
+                0.00    0.00       1/1           __eft_pless_MOD_adimensional_lecs_from_dimensional [52]
+-----------------------------------------------
+                0.00    0.00       1/1           __eft_pless_MOD_adimensional_lecs_from_dimensional [52]
+[54]     0.0    0.00    0.00       1         __operating_system_linux_MOD_get_os_name [54]
+                0.00    0.00       1/3           __operating_system_linux_MOD_find_string_case_insensitive [45]
+-----------------------------------------------
+                0.00    0.00       1/1           __quantum_operators_MOD_t12_operator_channel [176]
+[55]     0.0    0.00    0.00       1         __potentials_MOD_pot_pw_params [55]
+-----------------------------------------------
+                0.00    0.00       1/1           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[56]     0.0    0.00    0.00       1         __potentials_MOD_pot_pw_rvalues [56]
+-----------------------------------------------
+                0.00    0.00       1/1           __scattering_MOD_calculate_phase_shifts_stapp_rad [187]
+[57]     0.0    0.00    0.00       1         __quantum_numbers_MOD_l_combinations [57]
+-----------------------------------------------
+                0.00    0.00       1/1           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[58]     0.0    0.00    0.00       1         __quantum_operators_MOD_l2_operator_channel [58]
+                0.00    0.00       1/6           __integration_mod_MOD_b5_single [41]
+-----------------------------------------------
+                0.00    0.00       1/1           __scattering_nn_variational_MOD_nn_scattering_variational [1]
+[59]     0.0    0.00    0.00       1         __quantum_operators_MOD_s12_operator_quantum_numbers [59]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [5]
+[60]     0.0    0.00    0.00       1         __scattering_MOD_calculate_phase_shifts_blatt_deg [60]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [5]
+[61]     0.0    0.00    0.00       1         __scattering_MOD_evaluate_zero_energies_observables_bb [61]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2025 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [5] MAIN__                 [48] __quantum_numbers_MOD_channel_to_string [50] __scattering_nn_variational_MOD_prepare_asymptotic_asymptotic_matrix_elements
+  [52] __eft_pless_MOD_adimensional_lecs_from_dimensional [46] __quantum_numbers_MOD_get_channel_from_name [9] __scattering_nn_variational_MOD_prepare_asymptotic_core_matrix_elements
+  [37] __eft_pless_MOD_combine_potential [31] __quantum_numbers_MOD_get_channel_t [11] __scattering_nn_variational_MOD_prepare_asymptotic_functions
+  [53] __eft_pless_MOD_eft_pless_pw [42] __quantum_numbers_MOD_is_same_channel [2] __scattering_nn_variational_MOD_prepare_core_core_matrix_elements
+  [39] __eft_pless_MOD_get_eft_radial_functions [57] __quantum_numbers_MOD_l_combinations [13] __scattering_nn_variational_MOD_prepare_grid
+  [40] __eft_pless_MOD_print_lecs [26] __quantum_numbers_MOD_prepare_channels [3] __scattering_nn_variational_MOD_reset_scattering_nn_variational
+  [47] __eft_pless_MOD_set_all_lecs [34] __quantum_numbers_MOD_set_channel [51] __scattering_nn_variational_MOD_set_channels
+  [44] __integration_mod_MOD_b5 [58] __quantum_operators_MOD_l2_operator_channel [43] __scattering_nn_variational_MOD_set_energies
+  [41] __integration_mod_MOD_b5_single [49] __quantum_operators_MOD_s12_operator_channel [35] __strings_utils_MOD_to_lower
+  [12] __laguerre_polynomial_mod_MOD_laguerre_polynomial [59] __quantum_operators_MOD_s12_operator_quantum_numbers [27] __strings_utils_MOD_to_string_array_double
+  [45] __operating_system_linux_MOD_find_string_case_insensitive [32] __reallocate_utils_MOD_reallocate_2d_real [10] __strings_utils_MOD_to_string_complex
+  [54] __operating_system_linux_MOD_get_os_name [28] __reallocate_utils_MOD_reallocate_3d_real [38] __strings_utils_MOD_to_upper
+  [55] __potentials_MOD_pot_pw_params [33] __reallocate_utils_MOD_reallocate_4d_real [30] _fini
+  [56] __potentials_MOD_pot_pw_rvalues [60] __scattering_MOD_calculate_phase_shifts_blatt_deg [18] r_second_order.4
+  [29] __quantum_numbers_MOD___final_quantum_numbers_Scattering_channel [61] __scattering_MOD_evaluate_zero_energies_observables_bb
+  [36] __quantum_numbers_MOD_assign_channel [1] __scattering_nn_variational_MOD_nn_scattering_variational
