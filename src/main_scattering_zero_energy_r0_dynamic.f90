@@ -2,22 +2,20 @@ PROGRAM MAIN_SCATTERING_ZERO_ENERGY_R0
   USE SCATTERING_NN_VARIATIONAL
   USE QUANTUM_NUMBERS
   USE SCATTERING
-  USE LOG, ONLY: LOG_OBJ => LOGGER
   USE EFT_PLESS, ONLY: LECS_EFT_PLESS, GET_LECS
-  USE strings_utils
   IMPLICIT NONE
 
   ! Parameters for my case of interest
   INTEGER, PARAMETER :: LMAX = 0, JMAX = 0, TZ = 0
   INTEGER, PARAMETER :: LEMP = 0
+  INTEGER, PARAMETER :: L = 1, S = 1
   
   ! Size parameters and some physical constants
-  INTEGER, PARAMETER :: NE = 2, NCHANNELS = 1, NEQ_MAX = 2, FIT_ORDER = 2
+  INTEGER, PARAMETER :: NE = 2, NCHANNELS = 3, RDIM = 2, FIT_ORDER = 2
   DOUBLE PRECISION, PARAMETER :: K_SMALL = 1.d-8
   DOUBLE PRECISION, PARAMETER :: PI = 4.D0*DATAN(1.D0)
 
   ! Variables for logging and messages
-  TYPE(LOG_OBJ) :: LOGGER
   CHARACTER(LEN=1024) :: MESSAGE
 
   ! Inputs and outputs for the scattering modules
@@ -28,9 +26,9 @@ PROGRAM MAIN_SCATTERING_ZERO_ENERGY_R0
   TYPE(LECS_EFT_PLESS) :: LECS
 
   ! R_BB matrices
-  DOUBLE PRECISION RBB0(NEQ_MAX,NEQ_MAX), RBB(NEQ_MAX,NEQ_MAX), K2, HTM, R0, A0, E
+  DOUBLE PRECISION RBB0(RDIM,RDIM), RBB(RDIM,RDIM), K2, HTM, R0, A0, E
 
-  INTEGER :: L, S, J, NEQ, ICH
+  INTEGER :: NEQ, ICH
   INTEGER, EXTERNAL :: DOUBLE_FACTORIAL
 
   ! Read E from first argument if provided
@@ -45,11 +43,9 @@ PROGRAM MAIN_SCATTERING_ZERO_ENERGY_R0
 
   CALL SET_MAX_LOG_LEVEL(0)
 
-  L = 1
-  S = 1
-  J = 1
-  CALL SET_CHANNEL(CHANNELS(1), J, L, S, TZ)
-  NEQ = CHANNELS(1)%NCH()
+  CALL SET_CHANNEL(CHANNELS(1), 0, L, S, TZ)
+  CALL SET_CHANNEL(CHANNELS(2), 1, L, S, TZ)
+  CALL SET_CHANNEL(CHANNELS(3), 2, L, S, TZ)
 
   CALL SET_DYNAMIC(.TRUE.)
   LECS = GET_LECS(10)
@@ -62,26 +58,26 @@ PROGRAM MAIN_SCATTERING_ZERO_ENERGY_R0
 
 
   CALL NN_SCATTERING_VARIATIONAL_ENERGIES_CHANNELS(ENERGIES, CHANNELS, LEMP, PS, LECS_FOR_PLESS=LECS)
-
-  ! Saving the R_BB matrix at zero energy and saving the scattering lengths
-  RBB0 = PS(1,1)%R_BB
-  ZEOBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(RBB0, NEQ, L)
-  A0 = ZEOBS%a1
   HTM = GET_HTM()
   CALL RESET_SCATTERING_NN_VARIATIONAL
 
-  ! Evaluating r_e using the R_BB matrix at non-zero energy
   K2 = ENERGIES(2)/HTM
   DO ICH = 1, NCHANNELS
-    RBB = PS(ICH,2)%R_BB
+    NEQ = CHANNELS(ICH)%NCH()
 
+    ! Saving the R_BB matrix at zero energy and saving the scattering lengths
+    RBB0 = PS(ICH,1)%R_BB
+    ZEOBS = EVALUATE_ZERO_ENERGIES_OBSERVABLES_STAPP(RBB0, NEQ, L)
+    A0 = ZEOBS%a1
+    
+    ! Evaluating r_e using the R_BB matrix at non-zero energy
+    RBB = PS(ICH,2)%R_BB
     IF ( SQRT(K2) > K_SMALL) THEN       ! K < K_SMALL
       RBB(1,1) =   RBB(1,1) * DOUBLE_FACTORIAL(2*L+1)**2 / SQRT(K2)**(2*L+1)
     ENDIF                           ! End of if about coupled or uncoupled channels
 
     R0 = -2 * DOUBLE_FACTORIAL(2*L+1)**2 * (RBB(1,1) - RBB0(1,1))/(K2 * RBB0(1,1)**2);
-    WRITE(*,*) E, SQRT(K2), A0, 0.D0, SQRT(K2) > K_SMALL
-    WRITE(*,*) E, SQRT(K2), R0, 0.D0, SQRT(K2) > K_SMALL
+    WRITE(*,*) LECS%RC(1,1), LECS%CNLO(4), LECS%CNLO(6), LECS%CNLO(7), A0, R0
   ENDDO
 
 
