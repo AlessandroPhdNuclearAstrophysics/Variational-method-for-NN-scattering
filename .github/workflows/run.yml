@@ -1,0 +1,33 @@
+name: Variational NN fit Simulation
+
+on:
+  workflow_dispatch:  # run manually from GitHub UI
+
+jobs:
+  run-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # max for GitHub Actions Free plan
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y gfortran libgsl-dev liblapack-dev make
+
+      - name: Build simulation
+        run: make -j
+
+      - name: Run simulation 2 (circa 6 hours)
+        run: time ./build/release/main_fitter_3Px_channels.x 1E-5 # or replace with your actual binary name
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results
+          path: |
+            "res_2_3P0.dat"
+            "res_2_3P1.dat"
+            "res_2_3P2.dat"
