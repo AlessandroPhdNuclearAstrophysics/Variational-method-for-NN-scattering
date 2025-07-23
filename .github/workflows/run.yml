@@ -38,6 +38,6 @@ jobs:
         with:
           name: simulation-results
           path: |
-            "/home/runner/work/Variational-method-for-NN-scattering/Variational-method-for-NN-scattering/res_2_3P0.dat"
-            "/home/runner/work/Variational-method-for-NN-scattering/Variational-method-for-NN-scattering/res_2_3P1.dat"
-            "/home/runner/work/Variational-method-for-NN-scattering/Variational-method-for-NN-scattering/res_2_3P2.dat"
+            res_2_3P0.dat
+            res_2_3P1.dat
+            res_2_3P2.dat
