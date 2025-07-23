@@ -1,0 +1,96 @@
+name: Variational NN fit Simulation multiple runs
+
+on:
+  workflow_dispatch:  # run manually from GitHub UI
+
+jobs:
+  run-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # max for GitHub Actions Free plan
+
+    steps:
+      - name: Checkout
+        run: |
+          ls > checkout.log
+          pwd >> checkout.log
+          cat checkout.log
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y gfortran libgsl-dev liblapack-dev make
+
+      - name: Build simulation
+        run: make -j
+
+      - name: Run simulation on two cores (1)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 0 15 & ./build/release/main_fitter_3Px_channels.x 16 31 &
+          wait
+
+      - name: Run simulation on two cores (2)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 32 47 & ./build/release/main_fitter_3Px_channels.x 48 63 &
+          wait
+
+      - name: Run simulation on two cores (3)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 64 79 & ./build/release/main_fitter_3Px_channels.x 80 95 &
+          wait
+
+      - name: Run simulation on two cores (4)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 96 111 & ./build/release/main_fitter_3Px_channels.x 112 127 &
+          wait
+
+      - name: Run simulation on two cores (5)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 128 143 & ./build/release/main_fitter_3Px_channels.x 144 159 &
+          wait
+
+      - name: Run simulation on two cores (6)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 160 175 & ./build/release/main_fitter_3Px_channels.x 176 191 &
+          wait
+
+      - name: Run simulation on two cores (7)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 192 207 & ./build/release/main_fitter_3Px_channels.x 208 223 &
+          wait
+
+      - name: Run simulation on two cores (8)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 224 239 & ./build/release/main_fitter_3Px_channels.x 240 255 &
+          wait
+
+      - name: Run simulation on two cores (9)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 256 271 & ./build/release/main_fitter_3Px_channels.x 272 287 &
+          wait
+
+      - name: Run simulation on two cores (10)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 288 303 & ./build/release/main_fitter_3Px_channels.x 304 319 &
+          wait
+
+      - name: Run simulation on two cores (11)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 320 335 & ./build/release/main_fitter_3Px_channels.x 336 351 &
+          wait
+
+      - name: Run simulation on two cores (12)
+        run: |
+          ./build/release/main_fitter_3Px_channels.x 352 360 & ./build/release/main_fitter_3Px_channels.x 360 368 &
+          wait
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results
+          path: |
+            res_3P0.dat
+            res_3P1.dat
+            res_3P2.dat
