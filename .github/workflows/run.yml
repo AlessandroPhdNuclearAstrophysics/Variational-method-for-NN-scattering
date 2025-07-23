@@ -21,7 +21,7 @@ jobs:
         run: make -j
 
       - name: Run simulation 2 (circa 6 hours)
-        run: time ./build/release/main_fitter_3Px_channels.x 1E-5 # or replace with your actual binary name
+        run: time ./build/release/main_fitter_3Px_channels.x 1E-5 > time; cat time; ls; pwd # or replace with your actual binary name
 
       - name: Upload results
         uses: actions/upload-artifact@v4
