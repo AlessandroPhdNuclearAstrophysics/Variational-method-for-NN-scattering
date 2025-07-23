@@ -28,6 +28,6 @@ jobs:
         with:
           name: simulation-results
           path: |
-            "res_2_3P0.dat"
-            "res_2_3P1.dat"
-            "res_2_3P2.dat"
+            "./res_2_3P0.dat"
+            "./res_2_3P1.dat"
+            "./res_2_3P2.dat"
