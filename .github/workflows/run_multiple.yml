@@ -28,62 +28,62 @@ jobs:
 
       - name: Run simulation on two cores (1)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 0 15 & ./build/release/main_fitter_3Px_channels.x 16 31 &
+          ./build/release/main_fitter_3Px_channels.x 0 15 "_1" & ./build/release/main_fitter_3Px_channels.x 16 31 "_2" & 
           wait
 
       - name: Run simulation on two cores (2)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 32 47 & ./build/release/main_fitter_3Px_channels.x 48 63 &
+          ./build/release/main_fitter_3Px_channels.x 32 47 "_1" & ./build/release/main_fitter_3Px_channels.x 48 63 "_2" & 
           wait
 
       - name: Run simulation on two cores (3)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 64 79 & ./build/release/main_fitter_3Px_channels.x 80 95 &
+          ./build/release/main_fitter_3Px_channels.x 64 79 "_1" & ./build/release/main_fitter_3Px_channels.x 80 95 "_2" & 
           wait
 
       - name: Run simulation on two cores (4)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 96 111 & ./build/release/main_fitter_3Px_channels.x 112 127 &
+          ./build/release/main_fitter_3Px_channels.x 96 111 "_1" & ./build/release/main_fitter_3Px_channels.x 112 127 "_2" & 
           wait
 
       - name: Run simulation on two cores (5)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 128 143 & ./build/release/main_fitter_3Px_channels.x 144 159 &
+          ./build/release/main_fitter_3Px_channels.x 128 143 "_1" & ./build/release/main_fitter_3Px_channels.x 144 159 "_2" & 
           wait
 
       - name: Run simulation on two cores (6)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 160 175 & ./build/release/main_fitter_3Px_channels.x 176 191 &
+          ./build/release/main_fitter_3Px_channels.x 160 175 "_1" & ./build/release/main_fitter_3Px_channels.x 176 191 "_2" & 
           wait
 
       - name: Run simulation on two cores (7)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 192 207 & ./build/release/main_fitter_3Px_channels.x 208 223 &
+          ./build/release/main_fitter_3Px_channels.x 192 207 "_1" & ./build/release/main_fitter_3Px_channels.x 208 223 "_2" & 
           wait
 
       - name: Run simulation on two cores (8)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 224 239 & ./build/release/main_fitter_3Px_channels.x 240 255 &
+          ./build/release/main_fitter_3Px_channels.x 224 239 "_1" & ./build/release/main_fitter_3Px_channels.x 240 255 "_2" & 
           wait
 
       - name: Run simulation on two cores (9)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 256 271 & ./build/release/main_fitter_3Px_channels.x 272 287 &
+          ./build/release/main_fitter_3Px_channels.x 256 271 "_1" & ./build/release/main_fitter_3Px_channels.x 272 287 "_2" & 
           wait
 
       - name: Run simulation on two cores (10)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 288 303 & ./build/release/main_fitter_3Px_channels.x 304 319 &
+          ./build/release/main_fitter_3Px_channels.x 288 303 "_1" & ./build/release/main_fitter_3Px_channels.x 304 319 "_2" & 
           wait
 
       - name: Run simulation on two cores (11)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 320 335 & ./build/release/main_fitter_3Px_channels.x 336 351 &
+          ./build/release/main_fitter_3Px_channels.x 320 335 "_1" & ./build/release/main_fitter_3Px_channels.x 336 351 "_2" & 
           wait
 
       - name: Run simulation on two cores (12)
         run: |
-          ./build/release/main_fitter_3Px_channels.x 352 360 & ./build/release/main_fitter_3Px_channels.x 360 368 &
+          ./build/release/main_fitter_3Px_channels.x 352 360 "_1" & ./build/release/main_fitter_3Px_channels.x 360 368 "_2" & 
           wait
 
       - name: Upload results
@@ -91,6 +91,9 @@ jobs:
         with:
           name: simulation-results
           path: |
-            res_3P0.dat
-            res_3P1.dat
-            res_3P2.dat
+            res_3P0_1.dat
+            res_3P0_2.dat
+            res_3P1_1.dat
+            res_3P1_2.dat
+            res_3P2_1.dat
+            res_3P2_2.dat
