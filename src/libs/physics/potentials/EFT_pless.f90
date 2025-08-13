@@ -40,6 +40,19 @@ MODULE EFT_PLESS
     PROCEDURE :: CONVERT_TO_DIMENSIONAL => CONVERT_LECS_TO_DIMENSIONAL
   END TYPE LECS_EFT_PLESS
 
+  !> \brief Structure for storing all LECs for a given EFT model with R depending on the order.
+  TYPE, PUBLIC :: LECS_EFT_PLESS_R_ORDER
+    INTEGER :: ILB = -1
+    INTEGER :: ORDER = -1
+    DOUBLE PRECISION :: R0(0:1,0:1) = 0.D0
+    DOUBLE PRECISION :: R1(0:1,0:1) = 0.D0
+    DOUBLE PRECISION :: R3(0:1,0:1) = 0.D0
+    DOUBLE PRECISION :: CLO(0:1)   = 0.D0
+    DOUBLE PRECISION :: CNLO(7) = 0.D0
+    DOUBLE PRECISION :: CN3LO(11)= 0.D0
+    DOUBLE PRECISION :: CIT(0:4)= 0.D0
+  END TYPE LECS_EFT_PLESS_R_ORDER
+
   !> \brief Structure for storing radial functions for a given cutoff and order.
   TYPE, PUBLIC :: EFT_RADIAL_FUNCTIONS
     INTEGER :: ORDER = -1
@@ -73,7 +86,7 @@ MODULE EFT_PLESS
   DOUBLE PRECISION   :: S12  (2,2)
   INTEGER            :: T12
 
-  PUBLIC :: EFT_PLESS_PW, EFT_PLESS_PW_LECS, LECS_TO_ST_LECS, ST_LECTS_TO_LECS
+  PUBLIC :: EFT_PLESS_PW, EFT_PLESS_PW_LECS, EFT_PLESS_PW_FITTED, LECS_TO_ST_LECS, ST_LECTS_TO_LECS
   PUBLIC :: SET_LECS, GET_LECS, PRINT_LECS
   PUBLIC :: GET_EFT_RADIAL_FUNCTIONS, COMBINE_POTENTIAL
   PUBLIC :: ADIMENSIONAL_LECS_FROM_DIMENSIONAL, DIMENSIONAL_LECS_FROM_ADIMENSIONAL
@@ -557,6 +570,19 @@ CONTAINS
     DOUBLE PRECISION :: RC
     INTEGER :: LS2(2,2)
 
+    ! FITTED POTENTIAL
+    IF     (ILB == 35) THEN
+      CALL EFT_PLESS_PW_FITTED(0, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+      RETURN
+    ELSEIF (ILB == 40) THEN
+      CALL EFT_PLESS_PW_FITTED(1, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+      RETURN
+    ELSEIF (ILB == 45) THEN 
+      CALL EFT_PLESS_PW_FITTED(3, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+      RETURN
+    ENDIF
+
+    ! NORMAL POTENTIAL
     VPW = 0
     TZ = (T1Z+T2Z)/2
     T = MOD(MOD((L+S),2)+1,2)
@@ -752,7 +778,7 @@ CONTAINS
   !!
   !! \param[in]  LECS_OLD  LECs in the operator basis
   !! \return     ST_LECS   LECs in the S,T-coupled basis, ready for fitting or storage
-  PURE FUNCTION LECS_TO_ST_LECS(LECS_OLD) RESULT(ST_LECS)
+  FUNCTION LECS_TO_ST_LECS(LECS_OLD) RESULT(ST_LECS)
     IMPLICIT NONE
     TYPE(LECS_EFT_PLESS), INTENT(IN) :: LECS_OLD
     TYPE(LECS_EFT_PLESS) :: ST_LECS
@@ -1231,5 +1257,190 @@ CONTAINS
     THIS%CIT(1:4) = THIS%CIT(1:4) * THIS%RC(S,T)**4
     THIS%ADIMENSIONAL = .FALSE.
   END SUBROUTINE CONVERT_LECS_TO_DIMENSIONAL
+
+
+
+
+  SUBROUTINE EFT_PLESS_PW_FITTED(ORDER_POTENTIAL, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+    USE AV18
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ORDER_POTENTIAL, L, S, J, T1Z, T2Z, LEMP
+    DOUBLE PRECISION, INTENT(IN) :: R
+    DOUBLE PRECISION, INTENT(OUT) :: VPW(2,2)
+    
+    INTEGER :: TZ, T, LS2(2,2)
+    DOUBLE PRECISION :: VEM(14)
+    DOUBLE PRECISION :: RC
+
+    IF (ORDER_POTENTIAL /= 0 .AND. ORDER_POTENTIAL /= 1 .AND. ORDER_POTENTIAL /= 3 ) THEN
+      WRITE(*,*) "EFT_PLESS::EFT_PLESS_FITTED:: Choose the right order, order chosen: ", ORDER_POTENTIAL
+      STOP
+    ENDIF
+
+    VPW = 0
+    TZ = (T1Z+T2Z)/2
+    T = MOD(MOD((L+S),2)+1,2)
+    
+    BLOCK
+      TYPE(SCATTERING_CHANNEL) :: CHANNEL_NEW
+      LOGICAL :: IS_NEW_CHANNEL
+      CALL CHANNEL_NEW%SET(J, L, S, TZ)
+      IS_NEW_CHANNEL = (CHANNEL /= CHANNEL_NEW)
+      CHANNEL = CHANNEL_NEW
+      
+      IF (FIRST_CALL) THEN
+        CALL SET_ALL_LECS
+        CALL PREPARE(10)
+        ! LECs are the same as in the article for ST = 01
+        ! Here we set ST = 00 and ST = 11
+        LECS%RC(0,0) = 0.77D0
+        LECS%CNLO(1) =-2.21333D0
+
+        LECS%RC(1,1) = 2.895676896183044D0
+        LECS%CNLO(4) = 0.722440350712463D0
+        LECS%CNLO(6) =-1.145046034106316D0
+        FIRST_CALL = .FALSE.
+      ELSEIF (IS_NEW_CHANNEL) THEN
+        CALL PREPARE(10)
+        ! LECs are the same as in the article for ST = 01
+        ! Here we set ST = 00 and ST = 11
+        LECS%RC(0,0) = 0.77D0
+        LECS%CNLO(1) =-2.21333D0
+        
+        LECS%RC(1,1) = 2.895676896183044D0
+        LECS%CNLO(4) = 0.722440350712463D0
+        LECS%CNLO(6) =-1.145046034106316D0
+      ENDIF
+    END BLOCK
+
+
+    VEM = 0
+    IF (LEMP.EQ.0) THEN
+      IF (T1Z+T2Z .EQ. 2) VEM(1) = ALPHA*HC/R
+    ELSE
+      CALL EMPOT(LEMP,R,VEM)
+    ENDIF
+
+    ! IMPLEMENT LEMP != 0
+
+    RC = LECS%RC(S,T)
+    ORDER = ORDER_POTENTIAL
+
+    IF ( S==0 .AND. T==0 ) THEN
+      SELECT CASE (ORDER)
+      CASE (0)
+        RETURN
+      CASE (1)
+        VPW = LECS%CNLO(1) * EFT_RADIAL_1(R, RC) * I2
+      CASE (3)
+        VPW = LECS%CNLO(1) * EFT_RADIAL_1(R, RC) * I2
+        VPW = VPW + LECS%CN3LO(1)  * EFT_RADIAL_4(R, RC) *I2 &
+                  + LECS%CN3LO(10) * EFT_RADIAL_7(RC) *L2
+      CASE DEFAULT
+        STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
+      END SELECT
+      VPW = VPW * CR(R, RC)
+    ENDIF
+
+    BLOCK 
+      USE ANGLES, ONLY: PI
+      DOUBLE PRECISION :: RHO, R10
+      DOUBLE PRECISION :: C10, D10, E10
+    IF ( S==1 .AND. T==0 ) THEN
+      SELECT CASE (ORDER)
+      CASE (0)
+        RHO = 1.56640D0
+        C10 =-0.52342D0 * PI**(1.5D0) * RHO**2
+        VPW(1,1) = C10 * CR(R, RHO)
+      CASE (1)
+        RHO = 1.97840D0
+        C10 =-0.26039D0 * PI**(1.5D0) * RHO**2
+        VPW(1,1) = C10 * CR(R, RHO)
+
+        R10 = 1.8D0
+        D10 =-0.17194D0  * PI**(1.5D0) * R10**4 / 3.D0
+        E10 = 0.36566D-1 * PI**(1.5D0) * R10**4
+
+        VPW(1,1) = VPW(1,1) + (D10 * ( 6.D0*R10**2 - 4.D0*R**2)/R10**4 - E10 * 4.D0 * (R/R10**2)**2 * S12(1,1))* CR(R,R10)
+        VPW(2,2) =            (D10 * ( 6.D0*R10**2 - 4.D0*R**2)/R10**4 - E10 * 4.D0 * (R/R10**2)**2 * S12(2,2))* CR(R,R10)
+        VPW(1,2) =            (                                        - E10 * 4.D0 * (R/R10**2)**2 * S12(2,1))* CR(R,R10)
+        VPW(2,1) =            (                                        - E10 * 4.D0 * (R/R10**2)**2 * S12(1,2))* CR(R,R10)
+      CASE (3)
+        STOP "NOT IMPLEMENTED POTENTIAL"
+      CASE DEFAULT
+        STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
+      END SELECT
+    ENDIF
+    END BLOCK
+
+    IF ( S==0 .AND. T==1 ) THEN
+      SELECT CASE (ORDER)
+      CASE (0)
+        VPW = LECS%CLO(T) * I2
+      CASE (1)
+        VPW = LECS%CLO(T) * I2
+        VPW = VPW + LECS%CNLO(3) * EFT_RADIAL_1(R, RC) * I2 &
+                  + LECS%CIT(0)                * T12 * I2
+      CASE (3)
+        VPW = LECS%CLO(T) * I2
+        VPW = VPW + LECS%CNLO(3)  * EFT_RADIAL_1(R, RC) * I2 &
+                  + LECS%CIT(0)                 * T12 * I2
+        VPW = VPW + LECS%CN3LO(3) * EFT_RADIAL_4(R, RC)     * I2 &
+                  + LECS%CN3LO(10)* EFT_RADIAL_7(RC)     * L2 &
+                  + LECS%CIT(1)   * EFT_RADIAL_1(R, RC)     * T12 * I2
+      CASE DEFAULT
+        STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
+      END SELECT
+      VPW = VPW * CR(R, RC)
+    ENDIF
+
+    IF ( S==1 .AND. T==1 ) THEN
+      SELECT CASE (ORDER)
+      CASE (0)
+        RETURN
+      CASE (1)
+        VPW =   LECS%CNLO(4) * EFT_RADIAL_1(R, RC) *  I2 &
+              + LECS%CNLO(6) * EFT_RADIAL_2(R, RC) *  S12 &
+              + LECS%CNLO(7) * EFT_RADIAL_3(RC) *  LS &
+              + LECS%CIT(0)                *  T12 * I2
+      CASE (3)
+        LS2 = MATMUL(LS, LS)
+        VPW =   LECS%CNLO(4) * EFT_RADIAL_1(R, RC) *  I2 &
+              + LECS%CNLO(6) * EFT_RADIAL_2(R, RC) *  S12 &
+              + LECS%CNLO(7) * EFT_RADIAL_3(RC) *  LS &
+              + LECS%CIT(0)                *  T12 * I2
+        VPW =   VPW &
+              + LECS%CN3LO(4) * EFT_RADIAL_4(R, RC)    * I2 &
+              + LECS%CN3LO(6) * EFT_RADIAL_5(R, RC)    * S12 &
+              + LECS%CN3LO(8) * EFT_RADIAL_6(R, RC)    * LS &
+              + LECS%CN3LO(9) * EFT_RADIAL_7(RC)    * LS2 &
+              + LECS%CN3LO(11)* EFT_RADIAL_7(RC)    * L2 &
+              +(  LECS%CIT(2) * EFT_RADIAL_1(R, RC)    * I2  + &
+                  LECS%CIT(3) * EFT_RADIAL_2(R, RC)    * S12 + &
+                  LECS%CIT(4) * EFT_RADIAL_3(RC)    * LS    &
+                                                        ) * T12
+      CASE DEFAULT
+        STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
+      END SELECT
+      VPW = VPW * CR(R, RC)
+    ENDIF
+
+    VPW = VPW * HTC
+    IF (R > 1.D-30) VPW = VPW + VEM(1) * I2
+
+    ! Check for NaN in VPW and stop if found
+    IF (ANY(VPW /= VPW)) THEN
+      PRINT *, "ERROR: VPW contains NaN."
+      STOP
+    END IF
+
+    IF (GET_CHANNEL_NCH(CHANNEL) == 1 ) THEN
+      VPW(1,2) = 0.D0
+      VPW(2,1) = 0.D0
+      VPW(2,2) = 0.D0
+    ENDIF
+    RETURN
+  END SUBROUTINE EFT_PLESS_PW_FITTED
+
 
 END MODULE EFT_PLESS
