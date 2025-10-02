@@ -1294,7 +1294,7 @@ CONTAINS
         ! LECs are the same as in the article for ST = 01
         ! Here we set ST = 00 and ST = 11
         LECS%RC(0,0) = 0.77D0
-        LECS%CNLO(1) =-2.21333D0
+        LECS%CNLO(1) =-2.213333D0
 
         LECS%RC(1,1) = 2.895676896183044D0
         LECS%CNLO(4) = 0.722440350712463D0
@@ -1305,7 +1305,7 @@ CONTAINS
         ! LECs are the same as in the article for ST = 01
         ! Here we set ST = 00 and ST = 11
         LECS%RC(0,0) = 0.77D0
-        LECS%CNLO(1) =-2.21333D0
+        LECS%CNLO(1) =-2.213333D0
         
         LECS%RC(1,1) = 2.895676896183044D0
         LECS%CNLO(4) = 0.722440350712463D0
@@ -1316,7 +1316,7 @@ CONTAINS
 
     VEM = 0
     IF (LEMP.EQ.0) THEN
-      IF (T1Z+T2Z .EQ. 2) VEM(1) = ALPHA*HC/R
+      IF (T1Z+T2Z .EQ. 2) VEM(1) = ALPHA*HTC/R
     ELSE
       CALL EMPOT(LEMP,R,VEM)
     ENDIF
@@ -1351,11 +1351,11 @@ CONTAINS
       CASE (0)
         RHO = 1.56640D0
         C10 =-0.52342D0 * PI**(1.5D0) * RHO**2
-        VPW(1,1) = C10 * CR(R, RHO)
+        IF ( L == 0 ) VPW(1,1) = C10 * CR(R, RHO)
       CASE (1)
         RHO = 1.97840D0
         C10 =-0.26039D0 * PI**(1.5D0) * RHO**2
-        VPW(1,1) = C10 * CR(R, RHO)
+        IF ( L == 0 ) VPW(1,1) = C10 * CR(R, RHO)
 
         R10 = 1.8D0
         D10 =-0.17194D0  * PI**(1.5D0) * R10**4 / 3.D0

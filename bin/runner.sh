@@ -20,13 +20,12 @@ fi
 
 # Default values for the parameters
 EMAX=1.D0
-NE=200
+NE=100
 TZ=0
 IPOT=18
 ILB=1
 LEMP=0
 PRINT_COEFF=".FALSE."
-OUTPUT_DIR="output/POT$IPOT/"
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -69,6 +68,17 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [ "$IPOT" -eq 14 ]; then 
+  POT_NAME="AV14"
+elif [ "$IPOT" -eq 18 ]; then
+  POT_NAME="AV18"
+elif [ "$IPOT" -eq 19 ]; then
+  POT_NAME="EFT_pless_$ILB"
+fi
+  
+
+OUTPUT_DIR="output/${POT_NAME}/"
 
 echo "OUTPUT_DIR: $OUTPUT_DIR"
 # Create a temporary namelist input file
