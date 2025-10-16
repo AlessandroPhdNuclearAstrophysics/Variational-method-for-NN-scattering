@@ -571,14 +571,8 @@ CONTAINS
     INTEGER :: LS2(2,2)
 
     ! FITTED POTENTIAL
-    IF     (ILB == 35) THEN
-      CALL EFT_PLESS_PW_FITTED(0, L, S, J, T1Z, T2Z, R, VPW, LEMP)
-      RETURN
-    ELSEIF (ILB == 40) THEN
-      CALL EFT_PLESS_PW_FITTED(1, L, S, J, T1Z, T2Z, R, VPW, LEMP)
-      RETURN
-    ELSEIF (ILB == 45) THEN 
-      CALL EFT_PLESS_PW_FITTED(3, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+    IF     (ILB >= 35) THEN
+      CALL EFT_PLESS_PW_FITTED(ILB, L, S, J, T1Z, T2Z, R, VPW, LEMP)
       RETURN
     ENDIF
 
@@ -1261,21 +1255,16 @@ CONTAINS
 
 
 
-  SUBROUTINE EFT_PLESS_PW_FITTED(ORDER_POTENTIAL, L, S, J, T1Z, T2Z, R, VPW, LEMP)
+  SUBROUTINE EFT_PLESS_PW_FITTED(ILB, L, S, J, T1Z, T2Z, R, VPW, LEMP)
     USE AV18
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ORDER_POTENTIAL, L, S, J, T1Z, T2Z, LEMP
+    INTEGER, INTENT(IN) :: ILB, L, S, J, T1Z, T2Z, LEMP
     DOUBLE PRECISION, INTENT(IN) :: R
     DOUBLE PRECISION, INTENT(OUT) :: VPW(2,2)
     
     INTEGER :: TZ, T, LS2(2,2)
     DOUBLE PRECISION :: VEM(14)
     DOUBLE PRECISION :: RC
-
-    IF (ORDER_POTENTIAL /= 0 .AND. ORDER_POTENTIAL /= 1 .AND. ORDER_POTENTIAL /= 3 ) THEN
-      WRITE(*,*) "EFT_PLESS::EFT_PLESS_FITTED:: Choose the right order, order chosen: ", ORDER_POTENTIAL
-      STOP
-    ENDIF
 
     VPW = 0
     TZ = (T1Z+T2Z)/2
@@ -1288,29 +1277,7 @@ CONTAINS
       IS_NEW_CHANNEL = (CHANNEL /= CHANNEL_NEW)
       CHANNEL = CHANNEL_NEW
       
-      IF (FIRST_CALL) THEN
-        CALL SET_ALL_LECS
-        CALL PREPARE(10)
-        ! LECs are the same as in the article for ST = 01
-        ! Here we set ST = 00 and ST = 11
-        LECS%RC(0,0) = 0.77D0
-        LECS%CNLO(1) =-2.213333D0
-
-        LECS%RC(1,1) = 2.895676896183044D0
-        LECS%CNLO(4) = 0.722440350712463D0
-        LECS%CNLO(6) =-1.145046034106316D0
-        FIRST_CALL = .FALSE.
-      ELSEIF (IS_NEW_CHANNEL) THEN
-        CALL PREPARE(10)
-        ! LECs are the same as in the article for ST = 01
-        ! Here we set ST = 00 and ST = 11
-        LECS%RC(0,0) = 0.77D0
-        LECS%CNLO(1) =-2.213333D0
-        
-        LECS%RC(1,1) = 2.895676896183044D0
-        LECS%CNLO(4) = 0.722440350712463D0
-        LECS%CNLO(6) =-1.145046034106316D0
-      ENDIF
+      CALL PREPARE_LECS_FITTED(ILB, IS_NEW_CHANNEL)
     END BLOCK
 
 
@@ -1324,7 +1291,6 @@ CONTAINS
     ! IMPLEMENT LEMP != 0
 
     RC = LECS%RC(S,T)
-    ORDER = ORDER_POTENTIAL
 
     IF ( S==0 .AND. T==0 ) THEN
       SELECT CASE (ORDER)
@@ -1337,7 +1303,7 @@ CONTAINS
         VPW = VPW + LECS%CN3LO(1)  * EFT_RADIAL_4(R, RC) *I2 &
                   + LECS%CN3LO(10) * EFT_RADIAL_7(RC) *L2
       CASE DEFAULT
-        STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=0"
+        STOP "ERROR IN EFT_PLESS_PW_FITTED:: S=0 AND T=0"
       END SELECT
       VPW = VPW * CR(R, RC)
     ENDIF
@@ -1368,7 +1334,7 @@ CONTAINS
       CASE (3)
         STOP "NOT IMPLEMENTED POTENTIAL"
       CASE DEFAULT
-        STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=0"
+        STOP "ERROR IN EFT_PLESS_PW_FITTED:: S=1 AND T=0"
       END SELECT
     ENDIF
     END BLOCK
@@ -1389,7 +1355,7 @@ CONTAINS
                   + LECS%CN3LO(10)* EFT_RADIAL_7(RC)     * L2 &
                   + LECS%CIT(1)   * EFT_RADIAL_1(R, RC)     * T12 * I2
       CASE DEFAULT
-        STOP "ERROR IN EFT_PLESS_PW:: S=0 AND T=1"
+        STOP "ERROR IN EFT_PLESS_PW_FITTED:: S=0 AND T=1"
       END SELECT
       VPW = VPW * CR(R, RC)
     ENDIF
@@ -1420,13 +1386,13 @@ CONTAINS
                   LECS%CIT(4) * EFT_RADIAL_3(RC)    * LS    &
                                                         ) * T12
       CASE DEFAULT
-        STOP "ERROR IN EFT_PLESS_PW:: S=1 AND T=1"
+        STOP "ERROR IN EFT_PLESS_PW_FITTED:: S=1 AND T=1"
       END SELECT
       VPW = VPW * CR(R, RC)
     ENDIF
 
     VPW = VPW * HTC
-    IF (R > 1.D-30) VPW = VPW + VEM(1) * I2
+    ! IF (R > 1.D-30) VPW = VPW + VEM(1) * I2
 
     ! Check for NaN in VPW and stop if found
     IF (ANY(VPW /= VPW)) THEN
@@ -1441,6 +1407,114 @@ CONTAINS
     ENDIF
     RETURN
   END SUBROUTINE EFT_PLESS_PW_FITTED
+
+  SUBROUTINE PREPARE_LECS_FITTED(ILB, NEW_CHANNEL)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ILB
+    LOGICAL, INTENT(INOUT) :: NEW_CHANNEL
+    INTEGER :: REL_ILB
+    
+    IF (FIRST_CALL) THEN
+        CALL SET_ALL_LECS
+        FIRST_CALL = .FALSE.
+    ENDIF
+    IF (NEW_CHANNEL .OR. FIRST_CALL) THEN
+      IF (ILB >= 35 .AND. ILB < 40) THEN            ! LO, only 01 and 10 contribute
+          CALL PREPARE(5)
+          ORDER = 0
+        ELSEIF (ILB >= 40 .AND. ILB < 50) THEN        ! NLO
+          CALL PREPARE(10)
+          ORDER = 1
+          SELECT CASE (ILB)
+            CASE (40)  ! v11 old fit
+              LECS%RC(0,0) = 0.77D0
+              LECS%CNLO(1) =-2.213333D0
+
+              LECS%RC(1,1) = 2.895676896183044D0
+              LECS%CNLO(4) = 0.722440350712463D0
+              LECS%CNLO(6) =-1.145046034106316D0
+              ! LECS%CNLO(7) -> standard from old ILB=10
+
+            CASE (41)  ! v11 aJ best fit
+              LECS%RC(0,0) = 0.77D0
+              LECS%CNLO(1) =-2.213333D0
+
+              LECS%RC(1,1) = 2.8D0
+              LECS%CNLO(4) =-0.607942908915985D0
+              LECS%CNLO(6) =-1.075304038853378D0
+              LECS%CNLO(7) =-0.837789899746530D0
+
+            CASE (42)  ! v11 rJ best fit
+              LECS%RC(0,0) = 0.77D0
+              LECS%CNLO(1) =-2.213333D0
+
+              LECS%RC(1,1) = 2.43D0
+              LECS%CNLO(4) =-0.708536842938800D0
+              LECS%CNLO(6) =-0.758503669329703D0
+              LECS%CNLO(7) =-0.252811651876925D0
+
+            CASE (43)  ! v11 aJ-rJ best fit
+              LECS%RC(0,0) = 0.77D0
+              LECS%CNLO(1) =-2.213333D0
+
+              LECS%RC(1,1) = 2.74D0
+              LECS%CNLO(4) =-0.786306173096756D0
+              LECS%CNLO(6) =-1.089791521668032D0
+              LECS%CNLO(7) =-1.136047421482726D0
+
+            CASE (44)  ! v11 old fit
+              LECS%RC(0,0) = 0.761781945701797D0
+              LECS%CNLO(1) =-2.144536513263479D0
+
+              LECS%RC(1,1) = 2.895676896183044D0
+              LECS%CNLO(4) = 0.722440350712463D0
+              LECS%CNLO(6) =-1.145046034106316D0
+              ! LECS%CNLO(7) -> standard from old ILB=10
+
+            CASE (45)  ! v11 aJ best fit
+              LECS%RC(0,0) = 0.761781945701797D0
+              LECS%CNLO(1) =-2.144536513263479D0
+
+              LECS%RC(1,1) = 2.8D0
+              LECS%CNLO(4) =-0.607942908915985D0
+              LECS%CNLO(6) =-1.075304038853378D0
+              LECS%CNLO(7) =-0.837789899746530D0
+
+            CASE (46)  ! v11 rJ best fit
+              LECS%RC(0,0) = 0.761781945701797D0
+              LECS%CNLO(1) =-2.144536513263479D0
+
+              LECS%RC(1,1) = 2.43D0
+              LECS%CNLO(4) =-0.708536842938800D0
+              LECS%CNLO(6) =-0.758503669329703D0
+              LECS%CNLO(7) =-0.252811651876925D0
+
+            CASE (47)  ! v11 aJ-rJ best fit
+              LECS%RC(0,0) = 0.761781945701797D0
+              LECS%CNLO(1) =-2.144536513263479D0
+
+              LECS%RC(1,1) = 2.74D0
+              LECS%CNLO(4) =-0.786306173096756D0
+              LECS%CNLO(6) =-1.089791521668032D0
+              LECS%CNLO(7) =-1.136047421482726D0
+
+            CASE DEFAULT
+              STOP "ERROR IN EFT_PLESS::PREPARE_LECS_FITTED:: Choose the right ILB"
+          END SELECT
+        ELSEIF (ILB >= 50) THEN                       ! N3LO
+          CALL PREPARE(15)
+          ORDER = 3
+          REL_ILB = ILB - 50 + 1
+          SELECT CASE (REL_ILB)
+
+            CASE DEFAULT
+              STOP "ERROR IN EFT_PLESS::PREPARE_LECS_FITTED:: Choose the right ILB"
+          END SELECT
+        ELSE
+          STOP "ERROR IN EFT_PLESS::PREPARE_LECS_FITTED:: Choose the right ILB"
+        ENDIF
+      ENDIF
+  END SUBROUTINE PREPARE_LECS_FITTED
 
 
 END MODULE EFT_PLESS
