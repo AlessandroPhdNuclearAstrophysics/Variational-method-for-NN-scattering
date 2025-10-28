@@ -1422,7 +1422,7 @@ CONTAINS
       IF (ILB >= 35 .AND. ILB < 40) THEN            ! LO, only 01 and 10 contribute
           CALL PREPARE(5)
           ORDER = 0
-        ELSEIF (ILB >= 40 .AND. ILB < 50) THEN        ! NLO
+      ELSEIF (ILB >= 40 .AND. ILB < 50) THEN        ! NLO
           CALL PREPARE(10)
           ORDER = 1
           SELECT CASE (ILB)
@@ -1498,10 +1498,28 @@ CONTAINS
               LECS%CNLO(6) =-1.089791521668032D0
               LECS%CNLO(7) =-1.136047421482726D0
 
+            CASE (48)  ! fit phase-shifts up to 10 MeV
+              LECS%RC(0,0) = 0.761781945701797D0
+              LECS%CNLO(1) =-2.144536513263479D0
+
+              LECS%RC(1,1) = 1.95D0
+              LECS%CNLO(4) =-0.425817969838348D0
+              LECS%CNLO(6) =-0.878891278691234D0
+              LECS%CNLO(7) =-1.266080805313151D0
+
+            CASE (49) ! fit Ylenia
+              LECS%RC(0,0) = 2.3724D0
+              LECS%CNLO(1) =-11.1708D0
+
+              LECS%RC(1,1) = 2.4521D0
+              LECS%CNLO(4) =-0.307845D0
+              LECS%CNLO(6) =-1.03235D0
+              LECS%CNLO(7) =-1.10120D0
+
             CASE DEFAULT
               STOP "ERROR IN EFT_PLESS::PREPARE_LECS_FITTED:: Choose the right ILB"
           END SELECT
-        ELSEIF (ILB >= 50) THEN                       ! N3LO
+      ELSEIF (ILB >= 50) THEN                       ! N3LO
           CALL PREPARE(15)
           ORDER = 3
           REL_ILB = ILB - 50 + 1
