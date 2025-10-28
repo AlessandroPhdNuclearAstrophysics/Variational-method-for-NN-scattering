@@ -40,19 +40,6 @@ MODULE EFT_PLESS
     PROCEDURE :: CONVERT_TO_DIMENSIONAL => CONVERT_LECS_TO_DIMENSIONAL
   END TYPE LECS_EFT_PLESS
 
-  !> \brief Structure for storing all LECs for a given EFT model with R depending on the order.
-  TYPE, PUBLIC :: LECS_EFT_PLESS_R_ORDER
-    INTEGER :: ILB = -1
-    INTEGER :: ORDER = -1
-    DOUBLE PRECISION :: R0(0:1,0:1) = 0.D0
-    DOUBLE PRECISION :: R1(0:1,0:1) = 0.D0
-    DOUBLE PRECISION :: R3(0:1,0:1) = 0.D0
-    DOUBLE PRECISION :: CLO(0:1)   = 0.D0
-    DOUBLE PRECISION :: CNLO(7) = 0.D0
-    DOUBLE PRECISION :: CN3LO(11)= 0.D0
-    DOUBLE PRECISION :: CIT(0:4)= 0.D0
-  END TYPE LECS_EFT_PLESS_R_ORDER
-
   !> \brief Structure for storing radial functions for a given cutoff and order.
   TYPE, PUBLIC :: EFT_RADIAL_FUNCTIONS
     INTEGER :: ORDER = -1
